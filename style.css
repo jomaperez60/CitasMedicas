@@ -9,7 +9,9 @@
   
   --bg-main: #f8fafc;
   --bg-card: rgba(255, 255, 255, 0.8);
-  --border-color: rgba(226, 232, 240, 0.5);
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --border-color: rgba(226, 232, 240, 0.8);
   
   --header-height: 70px;
   --sidebar-width: 280px;
@@ -25,10 +27,11 @@
 
 [data-theme='dark'] {
   --bg-main: #0f172a;
-  --bg-card: rgba(30, 41, 59, 0.8);
-  --border-color: rgba(51, 65, 85, 0.5);
+  --bg-card: rgba(30, 41, 59, 0.9);
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
+  --border-color: rgba(51, 65, 85, 0.8);
+  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -40,10 +43,11 @@
 body {
   font-family: var(--font-family);
   background: var(--bg-main);
-  color: #1e293b;
+  color: var(--text-main);
   overflow: hidden;
   height: 100vh;
   width: 100vw;
+  transition: background 0.3s, color 0.3s;
 }
 
 /* Glassmorphism utility */
@@ -142,6 +146,16 @@ body {
   justify-content: center;
   font-size: 0.75rem;
   color: var(--secondary);
+  position: relative;
+}
+
+.sub-slot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 15px; /* 60px / 4 */
+  border-bottom: 1px dashed var(--border-color);
+  opacity: 0.3;
 }
 
 /* Appointment Style */
@@ -369,15 +383,73 @@ body {
   z-index: 100;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .app-container {
-    grid-template-areas: 
-      "header"
-      "main";
-    grid-template-columns: 1fr;
+/* Search Bar */
+.search-container {
+  margin-bottom: 2rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  padding-left: 2.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 0.8rem center;
+  background-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s;
+  margin-right: 1rem;
+}
+
+.theme-toggle:hover {
+  transform: rotate(15deg) scale(1.1);
+  background: var(--border-color);
+}
+
+/* Print Overrides */
+@media print {
+  .header, .sidebar, .view-toggles, .date-nav, .user-profile, .btn-primary {
+    display: none !important;
   }
-  .sidebar {
-    display: none;
+  .app-container {
+    display: block !important;
+    height: auto !important;
+  }
+  .main-content {
+    overflow: visible !important;
+    position: static !important;
+  }
+  .column-header {
+    position: static !important;
+    border-bottom: 2px solid black !important;
+  }
+  .appointment {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
   }
 }

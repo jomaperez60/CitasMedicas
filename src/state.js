@@ -12,31 +12,50 @@ export const INITIAL_DOCTORS = [
 ];
 
 export const APPOINTMENT_TYPES = [
-  { id: 'consulta', label: 'Consulta' },
-  { id: 'endoscopia-alta', label: 'Endoscopia Alta' },
-  { id: 'colonoscopia', label: 'Colonoscopia' },
-  { id: 'cpre', label: 'CPRE' },
-  { id: 'manometria-esofagica', label: 'Manometría Esofágica' },
-  { id: 'manometria-anorectal', label: 'Manometría Anorectal' },
-  { id: 'phmetria', label: 'pHmetría' },
-  { id: 'fibroscan', label: 'Fibroscan' }
+  { id: 'consulta', label: 'Consulta', color: '#2563eb' },
+  { id: 'endoscopia-alta', label: 'Endoscopia Alta', color: '#dc2626' },
+  { id: 'colonoscopia', label: 'Colonoscopia', color: '#991b1b' },
+  { id: 'cpre', label: 'CPRE', color: '#7c3aed' },
+  { id: 'manometria-esofagica', label: 'Manometría Esofágica', color: '#059669' },
+  { id: 'manometria-anorectal', label: 'Manometría Anorectal', color: '#0891b2' },
+  { id: 'phmetria', label: 'pHmetría', color: '#d97706' },
+  { id: 'fibroscan', label: 'Fibroscan', color: '#4f46e5' }
 ];
 
 class AppState {
   constructor() {
     this.currentDate = new Date();
     this.viewMode = 'day'; // 'day' or 'week'
+    this.theme = localStorage.getItem('ced_theme') || 'light';
     this.selectedProviderId = null; // Used for week view
     this.doctors = JSON.parse(localStorage.getItem('ced_doctors')) || INITIAL_DOCTORS;
     this.rooms = JSON.parse(localStorage.getItem('ced_rooms')) || INITIAL_ROOMS;
     this.appointments = JSON.parse(localStorage.getItem('ced_appointments')) || [];
     this.selectedAppointment = null;
+    this.searchTerm = '';
   }
 
   save() {
     localStorage.setItem('ced_doctors', JSON.stringify(this.doctors));
     localStorage.setItem('ced_rooms', JSON.stringify(this.rooms));
     localStorage.setItem('ced_appointments', JSON.stringify(this.appointments));
+    localStorage.setItem('ced_theme', this.theme);
+  }
+
+  hasConflict(newApp, excludeId = null) {
+    const start = new Date(newApp.startTime).getTime();
+    const end = start + newApp.duration * 60000;
+
+    return this.appointments.some(app => {
+      if (app.id === excludeId) return false;
+      if (app.providerId !== newApp.providerId) return false;
+
+      const appStart = new Date(app.startTime).getTime();
+      const appEnd = appStart + app.duration * 60000;
+
+      // Overlap condition: (StartA < EndB) and (EndA > StartB)
+      return start < appEnd && end > appStart;
+    });
   }
 
   toggleVisibility(id) {
