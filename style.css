@@ -184,11 +184,13 @@ body {
 
 .classic-time-header {
   height: 90px;
+  min-height: 90px; /* Force height */
   background: var(--time-col-bg);
   border-bottom: 1px solid #ccc;
   position: sticky;
   top: 0;
-  z-index: 101; /* Above the grid columns but level with their headers */
+  z-index: 101;
+  flex-shrink: 0;
 }
 
 .classic-time-col .hour-slot-container {
