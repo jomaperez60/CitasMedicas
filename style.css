@@ -217,13 +217,21 @@ body {
 }
 
 /* Grid Pro Exact */
-.classic-grid { display: flex; flex: 1; }
+.classic-grid { 
+  display: flex; 
+  flex: 1; 
+  align-items: stretch;
+  min-height: min-content; /* Allow grid to expand with content */
+}
 
 .classic-provider-col {
   min-width: 250px;
   flex: 1;
   border-right: 1px solid var(--grid-border);
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: auto;
 }
 
 .classic-col-header {
