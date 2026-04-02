@@ -172,12 +172,14 @@ body {
 
 .classic-time-col {
   width: 70px;
-  background: var(--time-col-bg);
   border-right: 1px solid var(--grid-border);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  height: auto;
+}
+
+.classic-time-col .hour-slot-container {
+  background: var(--time-col-bg);
 }
 
 .hour-slot-container {
@@ -330,4 +332,51 @@ body {
 /* Modal & Tools */
 .classic-table th { background: linear-gradient(to bottom, #dbe9f9, #a3c1e8); border: 1px solid #7192b7; padding: 10px; }
 .classic-modal { width: 700px; border: 2px solid #7192b7; }
-.icon-sm { width: 30px; height: 30px; padding: 0; }
+/* Drag Selection & Context Menu */
+.drag-selection {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  background: rgba(37, 99, 235, 0.2);
+  border: 1px solid #2563eb;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.classic-context-menu {
+  position: fixed;
+  z-index: 2000;
+  background: #fff;
+  border: 1px solid #7192B7;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+  min-width: 180px;
+  padding: 2px;
+  font-family: var(--font-family);
+  font-size: 11px;
+}
+
+.context-menu-item {
+  padding: 4px 10px 4px 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  position: relative;
+  transition: background 0.1s;
+}
+
+.context-menu-item:hover {
+  background: #e1f5fe;
+}
+
+.context-menu-item .icon-placeholder {
+  position: absolute;
+  left: 6px;
+  width: 16px;
+  text-align: center;
+}
+
+.context-menu-separator {
+  height: 1px;
+  background: #ccc;
+  margin: 2px 5px;
+}

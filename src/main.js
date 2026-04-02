@@ -2,6 +2,7 @@ import { state, APPOINTMENT_TYPES, HONDURAS_INSURANCES } from './state.js';
 import { formatDate, formatTime, getISOStringFromDate, calculatePosition, calculateHeight, getTimeFromPosition, getWeekDates } from './utils.js';
 
 const elements = {
+  // ... existing elements ...
   tabButtons: document.querySelectorAll('.tab-btn'),
   tabContents: document.querySelectorAll('.tab-content'),
   dateText: document.getElementById('current-date-text'),
@@ -36,7 +37,19 @@ const elements = {
   clinicalNotes: document.getElementById('clinical-notes'),
   treatmentNotes: document.getElementById('treatment-notes'),
   appointmentsListBody: document.getElementById('appointments-list-body'),
-  patientsListBody: document.getElementById('patients-list-body')
+  patientsListBody: document.getElementById('patients-list-body'),
+  contextMenu: null // Dynamic
+};
+
+let selectionInfo = {
+  isDragging: false,
+  startY: 0,
+  currentY: 0,
+  providerId: null,
+  active: false,
+  startTime: null,
+  duration: 30,
+  selectionEl: null
 };
 
 function init() {
@@ -287,7 +300,10 @@ function attachEventListeners() {
     refreshUI();
   };
 
+  document.addEventListener('mousedown', () => closeContextMenu());
+
   document.addEventListener('change', (e) => {
+    // ... filtering checkboxes ...
     if (e.target.closest('.classic-filter-list input')) {
       state.toggleVisibility(e.target.dataset.id);
       if (state.viewMode === 'week') state.selectedProviderId = e.target.dataset.id;
@@ -320,6 +336,7 @@ function attachEventListeners() {
     else state.addAppointment(data);
 
     elements.modal.style.display = 'none';
+    clearSelection();
     refreshUI();
   };
 }
@@ -331,6 +348,7 @@ function openModal(defs = {}) {
   elements.conflictWarning.style.display = 'none';
   if (defs.startTime) document.getElementById('start-time').value = defs.startTime;
   if (defs.providerId) elements.providerSelect.value = defs.providerId;
+  if (defs.duration) document.getElementById('duration').value = defs.duration;
   elements.modal.style.display = 'flex';
 }
 
@@ -349,15 +367,108 @@ function editAppointment(app) {
 
 function attachGridEventsPro() {
   document.querySelectorAll('.classic-provider-col').forEach(col => {
-    col.onclick = (e) => {
-      if (!e.target.closest('.appointment')) {
-        const rect = col.getBoundingClientRect();
-        const y = e.clientY - rect.top;
-        const time = getTimeFromPosition(y, 90, 80);
-        openModal({ startTime: time, providerId: col.dataset.providerId });
+    col.onmousedown = (e) => {
+      if (e.button !== 0) return; // Only left click for selection
+      if (e.target.closest('.appointment')) return;
+
+      selectionInfo.isDragging = true;
+      selectionInfo.active = true;
+      selectionInfo.providerId = col.dataset.providerId;
+      const rect = col.getBoundingClientRect();
+      selectionInfo.startY = e.clientY - rect.top;
+      
+      if (selectionInfo.selectionEl) selectionInfo.selectionEl.remove();
+      selectionInfo.selectionEl = document.createElement('div');
+      selectionInfo.selectionEl.className = 'drag-selection';
+      selectionInfo.selectionEl.style.top = `${selectionInfo.startY}px`;
+      selectionInfo.selectionEl.style.height = `0px`;
+      col.appendChild(selectionInfo.selectionEl);
+    };
+
+    col.onmousemove = (e) => {
+      if (!selectionInfo.isDragging) return;
+      const rect = col.getBoundingClientRect();
+      const currentY = e.clientY - rect.top;
+      const top = Math.min(selectionInfo.startY, currentY);
+      const height = Math.abs(currentY - selectionInfo.startY);
+      selectionInfo.selectionEl.style.top = `${top}px`;
+      selectionInfo.selectionEl.style.height = `${height}px`;
+    };
+
+    col.onmouseup = (e) => {
+      if (!selectionInfo.isDragging) return;
+      selectionInfo.isDragging = false;
+      const rect = col.getBoundingClientRect();
+      const endY = e.clientY - rect.top;
+      
+      const top = Math.min(selectionInfo.startY, endY);
+      const bottom = Math.max(selectionInfo.startY, endY);
+      const height = bottom - top;
+
+      selectionInfo.startTime = getTimeFromPosition(top, 90, 80);
+      const durationHours = height / 80;
+      selectionInfo.duration = Math.max(15, Math.round(durationHours * 60 / 15) * 15);
+      
+      if (height < 10) { // Small click
+        openModal({ startTime: selectionInfo.startTime, providerId: selectionInfo.providerId });
+        clearSelection();
       }
     };
+
+    col.oncontextmenu = (e) => {
+      if (!selectionInfo.active || e.target.closest('.appointment')) return;
+      e.preventDefault();
+      showContextMenu(e.clientX, e.clientY);
+    };
   });
+}
+
+function clearSelection() {
+  if (selectionInfo.selectionEl) selectionInfo.selectionEl.remove();
+  selectionInfo.isDragging = false;
+  selectionInfo.active = false;
+  selectionInfo.selectionEl = null;
+}
+
+function showContextMenu(x, y) {
+  closeContextMenu();
+  const menu = document.createElement('div');
+  menu.className = 'classic-context-menu';
+  menu.style.left = `${x}px`;
+  menu.style.top = `${y}px`;
+
+  const items = [
+    { label: 'Nuevo Evento...', icon: '📅', action: () => openModal({ startTime: selectionInfo.startTime, providerId: selectionInfo.providerId, duration: selectionInfo.duration }) },
+    { label: 'Nuevo Evento Todo el Día', icon: '⏰', action: () => openModal({ startTime: '06:00', providerId: selectionInfo.providerId, duration: 840 }) },
+    { label: 'Nuevo Evento Recurrente...', icon: '🔁', action: () => openModal({ startTime: selectionInfo.startTime, providerId: selectionInfo.providerId, duration: selectionInfo.duration }) },
+    { type: 'separator' },
+    { label: 'Hoy', icon: '🏠', action: () => { state.currentDate = new Date(); state.save(); refreshUI(); updateStatusMessage(); } },
+    { label: 'Ir a Fecha...', icon: '🔍', action: () => alert('Use el calendario lateral para navegar') }
+  ];
+
+  items.forEach(item => {
+    if (item.type === 'separator') {
+      const sep = document.createElement('div');
+      sep.className = 'context-menu-separator';
+      menu.appendChild(sep);
+    } else {
+      const el = document.createElement('div');
+      el.className = 'context-menu-item';
+      el.innerHTML = `<span class="icon-placeholder">${item.icon}</span>${item.label}`;
+      el.onclick = (e) => { e.stopPropagation(); item.action(); closeContextMenu(); };
+      menu.appendChild(el);
+    }
+  });
+
+  document.body.appendChild(menu);
+  elements.contextMenu = menu;
+}
+
+function closeContextMenu() {
+  if (elements.contextMenu) {
+    elements.contextMenu.remove();
+    elements.contextMenu = null;
+  }
 }
 
 init();
