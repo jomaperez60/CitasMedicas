@@ -64,12 +64,10 @@ function refreshUI() {
     renderTimeSlots();
     renderGrid();
     renderAppointments();
-  } else if (state.activeTab === 'lista') {
+  } else {
     elements.sidebarControls.style.display = 'none';
-    renderAppointmentsList();
-  } else if (state.activeTab === 'pacientes') {
-    elements.sidebarControls.style.display = 'none';
-    renderPatientsList();
+    if (state.activeTab === 'lista') renderAppointmentsList();
+    if (state.activeTab === 'pacientes') renderPatientsList();
   }
 }
 
@@ -83,12 +81,10 @@ function updateTimeFormatButton() {
 }
 
 function populateDropdowns() {
-  // Insurances
   elements.insuranceSelect.innerHTML = HONDURAS_INSURANCES.map(i => `
     <option value="${i}">${i}</option>
   `).join('');
 
-  // Providers
   const all = [...state.rooms, ...state.doctors];
   elements.providerSelect.innerHTML = all.map(p => `
     <option value="${p.id}">${p.name}</option>
@@ -97,10 +93,10 @@ function populateDropdowns() {
 
 function renderTypesSelection() {
   elements.typesSelection.innerHTML = APPOINTMENT_TYPES.map(t => `
-    <label class="type-checkbox">
+    <label class="premium-checkbox-item">
       <input type="checkbox" name="appointment-type" value="${t.id}">
-      <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${t.color}; margin-right: 4px;"></span>
-      <span>${t.label}</span>
+      <span class="type-dot" style="background: ${t.color}"></span>
+      <span class="type-label-text">${t.label}</span>
     </label>
   `).join('');
 }
@@ -109,15 +105,13 @@ function updateDateDisplay() {
   elements.dateDisplay.textContent = formatDate(state.currentDate);
 }
 
-// --- Dynamic Rendering ---
-
 function renderTimeSlots() {
   const slots = [];
   for (let h = 6; h <= 20; h++) {
     const timeLabel = state.timeFormat === '24h' ? `${h}:00` : (h > 12 ? `${h-12} PM` : (h === 12 ? '12 PM' : `${h} AM`));
     slots.push(`<div class="time-slot">${timeLabel}</div>`);
   }
-  elements.timeColumn.innerHTML = `<div style="height: 60px;"></div>` + slots.join('');
+  elements.timeColumn.innerHTML = `<div style="height: 70px;"></div>` + slots.join('');
 }
 
 function renderGrid() {
@@ -132,7 +126,7 @@ function renderGrid() {
     elements.calendarGrid.innerHTML = visibleProviders.map(p => `
       <div class="provider-column" data-provider-id="${p.id}">
         <div class="column-header">
-          <span style="font-size: 0.85rem;">${p.name}</span>
+          <span>${p.name}</span>
         </div>
         ${Array.from({ length: 15 }).map(() => `<div class="time-slot">${subSlotsHtml}</div>`).join('')}
       </div>
@@ -145,8 +139,8 @@ function renderGrid() {
     elements.calendarGrid.innerHTML = weekDates.map(d => `
       <div class="provider-column" data-provider-id="${provider.id}" data-date="${d.toISOString()}">
         <div class="column-header">
-          <span style="font-size: 0.85rem; text-transform: capitalize;">${new Intl.DateTimeFormat('es', { weekday: 'short' }).format(d)}</span>
-          <span style="font-size: 0.7rem; opacity: 0.7;">${d.getDate()} / ${d.getMonth() + 1}</span>
+          <span style="text-transform: capitalize;">${new Intl.DateTimeFormat('es', { weekday: 'short' }).format(d)}</span>
+          <span class="date-sub">${d.getDate()} / ${d.getMonth() + 1}</span>
         </div>
         ${Array.from({ length: 15 }).map(() => `<div class="time-slot">${subSlotsHtml}</div>`).join('')}
       </div>
@@ -189,20 +183,17 @@ function drawAppointment(app, dateContext = null) {
   const appTypes = app.types || (app.type ? [app.type] : []);
   const primaryType = APPOINTMENT_TYPES.find(t => appTypes.includes(t.id)) || APPOINTMENT_TYPES[0];
   
-  div.className = `appointment status-${app.status}`;
-  div.style.background = `linear-gradient(135deg, ${primaryType.color}15 0%, ${primaryType.color}30 100%)`;
-  div.style.borderLeft = `4px solid ${primaryType.color}`;
-  div.style.color = state.theme === 'dark' ? '#fff' : primaryType.color;
-  div.dataset.appId = app.id;
-  div.draggable = true;
-
+  div.className = `appointment view-fade-in status-${app.status}`;
+  div.style.background = `rgba(255, 255, 255, 0.9)`;
+  div.style.borderLeft = `5px solid ${primaryType.color}`;
+  
   const typeLabels = appTypes.map(tid => APPOINTMENT_TYPES.find(t => t.id === tid)?.label || tid);
   const timeStr = formatTimeEnterprise(app.startTime);
   
   div.innerHTML = `
-    <div style="font-weight: 700;">${app.patientName}</div>
-    <div style="font-size: 0.7rem; opacity: 0.9;">${timeStr} - ${typeLabels.join(', ')}</div>
-    ${app.treatmentNotes ? `<div style="font-size: 0.6rem; margin-top: 2px; font-style: italic; opacity: 0.8;">Rx: ${app.treatmentNotes.substring(0, 25)}...</div>` : ''}
+    <div style="font-weight: 800; color: var(--text-main);">${app.patientName}</div>
+    <div style="font-size: 0.75rem; color: ${primaryType.color}; font-weight: 600;">${timeStr} - ${typeLabels[0]}${typeLabels.length > 1 ? '...' : ''}</div>
+    ${app.treatmentNotes ? `<div style="font-size: 0.7rem; color: var(--text-muted); font-style: italic; margin-top: 2px;">Rx: ${app.treatmentNotes.substring(0, 20)}...</div>` : ''}
   `;
 
   div.style.top = `${calculatePosition(app.startTime)}px`;
@@ -235,13 +226,13 @@ function renderAppointmentsList() {
     const provider = [...state.rooms, ...state.doctors].find(p => p.id === app.providerId);
     const types = (app.types || []).map(tid => APPOINTMENT_TYPES.find(t => t.id === tid)?.label).join(', ');
     return `
-      <tr>
-        <td>${formatTimeEnterprise(app.startTime)}</td>
-        <td><strong>${app.patientName}</strong></td>
+      <tr class="view-fade-in">
+        <td style="font-weight: 700;">${formatTimeEnterprise(app.startTime)}</td>
+        <td style="font-weight: 600;">${app.patientName}</td>
         <td>${provider?.name || 'N/A'}</td>
-        <td style="font-size: 0.8rem;">${types}</td>
-        <td><span class="badge">${app.insurance || 'Privado'}</span></td>
-        <td><span class="status-pill status-${app.status}">${app.status}</span></td>
+        <td style="font-size: 0.8rem; color: var(--secondary);">${types}</td>
+        <td><span class="glass" style="padding: 4px 10px; border-radius: 8px; font-size: 0.8rem;">${app.insurance || 'Privado'}</span></td>
+        <td><span class="status-indicator status-${app.status}" style="font-weight:600; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; background: rgba(0,0,0,0.05);">● ${app.status}</span></td>
       </tr>
     `;
   }).join('');
@@ -249,63 +240,33 @@ function renderAppointmentsList() {
 
 function renderPatientsList() {
   elements.patientsListBody.innerHTML = state.patients.map(p => `
-    <tr>
-      <td><strong>${p.name}</strong></td>
+    <tr class="view-fade-in">
+      <td style="font-weight: 700;">${p.name}</td>
       <td>${p.phone || '-'}</td>
       <td>${p.insurance || 'Privado'}</td>
       <td>${p.dob || '-'}</td>
       <td>
-        <button class="btn btn-outline btn-sm edit-patient" data-id="${p.id}">✏️</button>
+        <button class="btn btn-glass btn-sm edit-patient" data-id="${p.id}">✏️</button>
       </td>
     </tr>
   `).join('');
 }
 
-// --- Autocomplete ---
-
-function handlePatientInput(e) {
-  const val = e.target.value.toLowerCase();
-  if (val.length < 2) {
-    elements.patientSuggestions.style.display = 'none';
-    return;
-  }
-
-  const matches = state.patients.filter(p => p.name.toLowerCase().includes(val));
-  if (matches.length > 0) {
-    elements.patientSuggestions.innerHTML = matches.map(p => `
-      <div class="suggestion-item" data-id="${p.id}">${p.name} (${p.phone || 'Sin tel.'})</div>
-    `).join('');
-    elements.patientSuggestions.style.display = 'block';
-  } else {
-    elements.patientSuggestions.style.display = 'none';
-  }
-}
-
-function selectPatient(patient) {
-  elements.patientName.value = patient.name;
-  elements.patientPhone.value = patient.phone || '';
-  elements.insuranceSelect.value = patient.insurance || 'Privado / Sin Seguro';
-  elements.patientDob.value = patient.dob || '';
-  elements.clinicalNotes.value = patient.notes || '';
-  elements.patientSuggestions.style.display = 'none';
-}
-
 // --- Event Handlers ---
 
 function attachEventListeners() {
-  // Tabs
   elements.activeTabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       state.activeTab = btn.dataset.tab;
       elements.activeTabButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       elements.tabContents.forEach(tc => tc.classList.remove('active'));
-      document.getElementById(`tab-${state.activeTab}`).classList.add('active');
+      const activeTabContent = document.getElementById(`tab-${state.activeTab}`);
+      activeTabContent.classList.add('active');
       refreshUI();
     });
   });
 
-  // Time Navigation
   elements.prevDay.addEventListener('click', () => {
     const delta = state.viewMode === 'day' ? 1 : 7;
     state.currentDate.setDate(state.currentDate.getDate() - delta);
@@ -320,7 +281,6 @@ function attachEventListeners() {
     refreshUI();
   });
 
-  // Toggles
   elements.themeToggle.addEventListener('click', () => {
     state.theme = state.theme === 'light' ? 'dark' : 'light';
     state.save();
@@ -339,12 +299,11 @@ function attachEventListeners() {
 
   elements.patientSearch.addEventListener('input', (e) => {
     state.searchTerm = e.target.value;
-    renderAppointments();
+    if (state.activeTab === 'agenda') renderAppointments();
     if (state.activeTab === 'lista') renderAppointmentsList();
     if (state.activeTab === 'pacientes') renderPatientsList();
   });
 
-  // Filters
   elements.roomsFilter.addEventListener('change', (e) => {
     state.toggleVisibility(e.target.dataset.id);
     if (state.viewMode === 'week') state.selectedProviderId = e.target.dataset.id;
@@ -359,7 +318,6 @@ function attachEventListeners() {
     renderAppointments();
   });
 
-  // Views
   elements.viewDay.addEventListener('click', () => {
     state.viewMode = 'day';
     elements.viewDay.classList.add('active');
@@ -376,16 +334,38 @@ function attachEventListeners() {
     renderAppointments();
   });
 
-  // Modal logic
   elements.addBtn.addEventListener('click', () => openModal());
   elements.cancelModal.addEventListener('click', () => elements.modal.style.display = 'none');
   
-  elements.patientName.addEventListener('input', handlePatientInput);
+  elements.patientName.addEventListener('input', (e) => {
+    const val = e.target.value.toLowerCase();
+    if (val.length < 2) {
+      elements.patientSuggestions.style.display = 'none';
+      return;
+    }
+    const matches = state.patients.filter(p => p.name.toLowerCase().includes(val));
+    if (matches.length > 0) {
+      elements.patientSuggestions.innerHTML = matches.map(p => `
+        <div class="suggestion-item" data-id="${p.id}">${p.name}</div>
+      `).join('');
+      elements.patientSuggestions.style.display = 'block';
+    } else {
+      elements.patientSuggestions.style.display = 'none';
+    }
+  });
+
   elements.patientSuggestions.addEventListener('click', (e) => {
     const item = e.target.closest('.suggestion-item');
     if (item) {
       const patient = state.patients.find(p => p.id === item.dataset.id);
-      if (patient) selectPatient(patient);
+      if (patient) {
+        elements.patientName.value = patient.name;
+        elements.patientPhone.value = patient.phone || '';
+        elements.insuranceSelect.value = patient.insurance || 'Privado / Sin Seguro';
+        elements.patientDob.value = patient.dob || '';
+        elements.clinicalNotes.value = patient.notes || '';
+        elements.patientSuggestions.style.display = 'none';
+      }
     }
   });
 
@@ -406,7 +386,7 @@ function attachEventListeners() {
     };
 
     if (state.hasConflict(data, state.selectedAppointment?.id)) {
-      elements.conflictWarning.style.display = 'block';
+      elements.conflictWarning.style.display = 'flex';
       return;
     }
 
@@ -421,14 +401,14 @@ function attachEventListeners() {
   });
 
   elements.deleteBtn.addEventListener('click', () => {
-    if (state.selectedAppointment && confirm('¿Eliminar esta cita?')) {
+    if (state.selectedAppointment && confirm('¿Eliminar esta cita permanentemente?')) {
       state.deleteAppointment(state.selectedAppointment.id);
       elements.modal.style.display = 'none';
       refreshUI();
     }
   });
 
-  document.querySelectorAll('.status-btn').forEach(btn => {
+  document.querySelectorAll('.status-btn-ultra').forEach(btn => {
     btn.addEventListener('click', () => {
       if (state.selectedAppointment) {
         state.updateAppointment(state.selectedAppointment.id, { status: btn.dataset.status });
@@ -502,7 +482,7 @@ function openModal(defaults = {}) {
   state.selectedAppointment = null;
   elements.deleteBtn.style.display = 'none';
   elements.conflictWarning.style.display = 'none';
-  elements.status-group.style.display = 'none';
+  document.getElementById('status-group').style.display = 'none';
   
   if (defaults.startTime) document.getElementById('start-time').value = defaults.startTime;
   if (defaults.providerId) elements.providerSelect.value = defaults.providerId;
@@ -516,7 +496,7 @@ function editAppointment(app) {
   state.selectedAppointment = app;
   elements.deleteBtn.style.display = 'block';
   elements.conflictWarning.style.display = 'none';
-  document.getElementById('modal-title').textContent = 'Editar Cita';
+  document.getElementById('modal-title').textContent = 'Edición de Cita';
   elements.patientName.value = app.patientName;
   elements.patientPhone.value = app.phone || '';
   elements.insuranceSelect.value = app.insurance || 'Privado / Sin Seguro';
@@ -531,7 +511,7 @@ function editAppointment(app) {
     cb.checked = (app.types || []).includes(cb.value);
   });
 
-  document.getElementById('status-group').style.display = 'block';
+  document.getElementById('status-group').style.display = 'flex';
   elements.modal.style.display = 'flex';
 }
 
@@ -574,10 +554,10 @@ function renderMiniCalendar() {
 
 function renderFilters() {
   elements.roomsFilter.innerHTML = state.rooms.map(r => `
-    <label><input type="checkbox" data-id="${r.id}" ${r.visible ? 'checked' : ''}><span>${r.name}</span></label>
+    <label class="premium-checkbox-item"><input type="checkbox" data-id="${r.id}" ${r.visible ? 'checked' : ''}><span class="type-label-text">${r.name}</span></label>
   `).join('');
   elements.doctorsFilter.innerHTML = state.doctors.map(d => `
-    <label><input type="checkbox" data-id="${d.id}" ${d.visible ? 'checked' : ''}><span style="color:${d.color}">${d.name}</span></label>
+    <label class="premium-checkbox-item"><input type="checkbox" data-id="${d.id}" ${d.visible ? 'checked' : ''}><span class="type-dot" style="background:${d.color}"></span><span class="type-label-text">${d.name}</span></label>
   `).join('');
 }
 
