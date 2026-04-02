@@ -227,17 +227,20 @@ body {
 .classic-provider-col {
   min-width: 250px;
   flex: 1;
-  border-right: 1px solid var(--grid-border);
   position: relative;
   display: flex;
   flex-direction: column;
-  height: auto;
+}
+
+.classic-provider-col .hour-slot-container {
+  border-right: 1px solid var(--grid-border);
 }
 
 .classic-col-header {
   height: 90px;
   background: linear-gradient(to bottom, #fff, #f0f0f0);
   border-bottom: 1px solid #ccc;
+  border-right: 1px solid var(--grid-border);
   display: flex;
   flex-direction: column;
   align-items: center;
