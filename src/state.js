@@ -141,6 +141,19 @@ class AppState {
     
     return this.appointments.filter(a => a.startTime.startsWith(localDatePrefix));
   }
+
+  toggleVisibility(id) {
+    const doctor = this.doctors.find(d => d.id === id);
+    if (doctor) {
+      doctor.visible = !doctor.visible;
+    } else {
+      const room = this.rooms.find(r => r.id === id);
+      if (room) {
+        room.visible = !room.visible;
+      }
+    }
+    this.save();
+  }
 }
 
 export const state = new AppState();

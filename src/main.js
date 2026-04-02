@@ -50,6 +50,7 @@ function init() {
 function refreshUI() {
   renderDateNavigatorRight();
   renderPhysicianSidebar();
+  populateDropdowns(); // Update dropdowns when visibility changes
   
   if (state.activeTab === 'agenda') {
     renderTimeSlotsPro();
@@ -71,8 +72,8 @@ function populateDropdowns() {
     <option value="${i}">${i}</option>
   `).join('');
 
-  const all = [...state.rooms, ...state.doctors];
-  elements.providerSelect.innerHTML = all.map(p => `
+  const visibleProviders = [...state.rooms, ...state.doctors].filter(p => p.visible);
+  elements.providerSelect.innerHTML = visibleProviders.map(p => `
     <option value="${p.id}">${p.name}</option>
   `).join('');
 }
@@ -107,9 +108,12 @@ function renderTimeSlotsPro() {
 }
 
 function renderGridPro() {
+  const allProviders = [...state.rooms, ...state.doctors];
+  const visibleProviders = allProviders.filter(p => p.visible);
+
   const providers = state.viewMode === 'day' 
-    ? [...state.rooms, ...state.doctors].filter(p => p.visible)
-    : [([...state.rooms, ...state.doctors].find(p => p.id === state.selectedProviderId) || state.rooms[0])];
+    ? visibleProviders
+    : [visibleProviders.find(p => p.id === state.selectedProviderId) || visibleProviders[0] || allProviders[0]];
 
   if (state.viewMode === 'day') {
     elements.calendarGrid.innerHTML = providers.map(p => `
