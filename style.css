@@ -175,6 +175,9 @@ body {
   background: var(--time-col-bg);
   border-right: 1px solid var(--grid-border);
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  height: auto;
 }
 
 .hour-slot-container {
