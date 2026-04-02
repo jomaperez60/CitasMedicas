@@ -123,7 +123,14 @@ function renderGridPro() {
            <div class="header-name">${p.name}</div>
            <div class="header-sub">${formatDate(state.currentDate)}</div>
         </div>
-        ${Array.from({ length: 15 }).map(() => `<div class="hour-slot-container" style="border-bottom: 1px solid #eee;"></div>`).join('')}
+        ${Array.from({ length: 15 }).map(() => `
+          <div class="hour-slot-container">
+            <div class="grid-sub-slot"></div>
+            <div class="grid-sub-slot"></div>
+            <div class="grid-sub-slot"></div>
+            <div class="grid-sub-slot"></div>
+          </div>
+        `).join('')}
       </div>
     `).join('');
   } else {
@@ -136,7 +143,14 @@ function renderGridPro() {
            <div class="header-name">${new Intl.DateTimeFormat('es', { weekday: 'long' }).format(d)}</div>
            <div class="header-sub">${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</div>
         </div>
-        ${Array.from({ length: 15 }).map(() => `<div class="hour-slot-container" style="border-bottom: 1px solid #eee;"></div>`).join('')}
+        ${Array.from({ length: 15 }).map(() => `
+          <div class="hour-slot-container">
+            <div class="grid-sub-slot"></div>
+            <div class="grid-sub-slot"></div>
+            <div class="grid-sub-slot"></div>
+            <div class="grid-sub-slot"></div>
+          </div>
+        `).join('')}
       </div>
     `).join('');
   }
@@ -198,8 +212,8 @@ function renderPhysicianSidebar() {
       </div>
     `).join('');
   };
-  render(state.doctors, elements.doctorsFilter);
   render(state.rooms, elements.roomsFilter);
+  render(state.doctors, elements.doctorsFilter);
 }
 
 function renderDateNavigatorRight() {

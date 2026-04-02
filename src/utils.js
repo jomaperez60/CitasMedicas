@@ -28,12 +28,10 @@ export function getISOStringFromDate(date, timeString) {
   return `${year}-${month}-${day}T${hh}:${mm}`;
 }
 
-export function calculatePosition(isoString) {
+export function calculatePosition(isoString, headerHeight = 90, slotHeight = 80) {
   const date = new Date(isoString);
   const hours = date.getHours();
   const minutes = date.getMinutes();
-  const headerHeight = 60;
-  const slotHeight = 60; // 60px per hour
   
   // Start calendar at 6 AM
   const startHour = 6;
@@ -41,14 +39,11 @@ export function calculatePosition(isoString) {
   return headerHeight + (relativeMinutes / 60) * slotHeight;
 }
 
-export function calculateHeight(durationMinutes) {
-  const slotHeight = 60;
+export function calculateHeight(durationMinutes, slotHeight = 80) {
   return (durationMinutes / 60) * slotHeight;
 }
 
-export function getTimeFromPosition(y) {
-  const headerHeight = 60;
-  const slotHeight = 60;
+export function getTimeFromPosition(y, headerHeight = 90, slotHeight = 80) {
   const startHour = 6;
   
   const relativeY = y - headerHeight;

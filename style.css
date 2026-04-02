@@ -179,9 +179,18 @@ body {
 
 .hour-slot-container {
   height: var(--slot-height);
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid #ccc; /* Solid line for the hour */
   display: flex;
   flex-direction: column;
+}
+
+.grid-sub-slot {
+  flex: 1;
+  border-bottom: 1px dotted #ddd; /* Dotted line for quarter hours */
+}
+
+.grid-sub-slot:last-child {
+  border-bottom: none;
 }
 
 .hour-label {
