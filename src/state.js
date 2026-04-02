@@ -11,6 +11,22 @@ export const INITIAL_DOCTORS = [
   { id: 'dr3', name: 'Dr. Roberto Méndez', color: '#059669', visible: true, type: 'doctor' }
 ];
 
+export const HONDURAS_INSURANCES = [
+  'Privado / Sin Seguro',
+  'Seguros Atlántida',
+  'Seguros Ficohsa',
+  'Seguros Bolívar',
+  'Seguros Continental',
+  'Seguros del País',
+  'Seguros Lafise',
+  'Mapfre Honduras',
+  'PALIC (Pan-American Life)',
+  'Seguros Crefisa',
+  'Seguros Banrural',
+  'ASSA Compañía de Seguros',
+  'Interamericana de Seguros'
+];
+
 export const APPOINTMENT_TYPES = [
   { id: 'consulta', label: 'Consulta', color: '#2563eb' },
   { id: 'endoscopia-alta', label: 'Endoscopia Alta', color: '#dc2626' },
@@ -26,11 +42,14 @@ class AppState {
   constructor() {
     this.currentDate = new Date();
     this.viewMode = 'day'; // 'day' or 'week'
+    this.activeTab = 'agenda'; // 'agenda', 'lista', 'pacientes'
+    this.timeFormat = localStorage.getItem('ced_time_format') || '24h';
     this.theme = localStorage.getItem('ced_theme') || 'light';
-    this.selectedProviderId = null; // Used for week view
+    this.selectedProviderId = null;
     this.doctors = JSON.parse(localStorage.getItem('ced_doctors')) || INITIAL_DOCTORS;
     this.rooms = JSON.parse(localStorage.getItem('ced_rooms')) || INITIAL_ROOMS;
     this.appointments = JSON.parse(localStorage.getItem('ced_appointments')) || [];
+    this.patients = JSON.parse(localStorage.getItem('ced_patients')) || [];
     this.selectedAppointment = null;
     this.searchTerm = '';
   }
@@ -39,9 +58,27 @@ class AppState {
     localStorage.setItem('ced_doctors', JSON.stringify(this.doctors));
     localStorage.setItem('ced_rooms', JSON.stringify(this.rooms));
     localStorage.setItem('ced_appointments', JSON.stringify(this.appointments));
+    localStorage.setItem('ced_patients', JSON.stringify(this.patients));
     localStorage.setItem('ced_theme', this.theme);
+    localStorage.setItem('ced_time_format', this.timeFormat);
   }
 
+  // --- Patients Logic ---
+  getPatient(name) {
+    return this.patients.find(p => p.name.toLowerCase() === name.toLowerCase());
+  }
+
+  addOrUpdatePatient(patientData) {
+    const index = this.patients.findIndex(p => p.name.toLowerCase() === patientData.name.toLowerCase());
+    if (index >= 0) {
+      this.patients[index] = { ...this.patients[index], ...patientData };
+    } else {
+      this.patients.push({ id: Date.now().toString(), ...patientData });
+    }
+    this.save();
+  }
+
+  // --- Appointment Logic ---
   hasConflict(newApp, excludeId = null) {
     const start = new Date(newApp.startTime).getTime();
     const end = start + newApp.duration * 60000;
@@ -53,15 +90,35 @@ class AppState {
       const appStart = new Date(app.startTime).getTime();
       const appEnd = appStart + app.duration * 60000;
 
-      // Overlap condition: (StartA < EndB) and (EndA > StartB)
       return start < appEnd && end > appStart;
     });
   }
 
-  toggleVisibility(id) {
-    const provider = [...this.doctors, ...this.rooms].find(p => p.id === id);
-    if (provider) {
-      provider.visible = !provider.visible;
+  addAppointment(data) {
+    const app = { id: Date.now().toString(), ...data, status: 'scheduled' };
+    this.appointments.push(app);
+    // Auto-save patient
+    this.addOrUpdatePatient({
+      name: data.patientName,
+      phone: data.phone,
+      insurance: data.insurance,
+      dob: data.dob
+    });
+    this.save();
+    return app;
+  }
+
+  updateAppointment(id, data) {
+    const index = this.appointments.findIndex(app => app.id === id);
+    if (index >= 0) {
+      this.appointments[index] = { ...this.appointments[index], ...data };
+      // Auto-update patient if data changed
+      this.addOrUpdatePatient({
+        name: data.patientName,
+        phone: data.phone,
+        insurance: data.insurance,
+        dob: data.dob
+      });
       this.save();
     }
   }

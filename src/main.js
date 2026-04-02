@@ -1,7 +1,9 @@
-import { state, APPOINTMENT_TYPES } from './state.js';
+import { state, APPOINTMENT_TYPES, HONDURAS_INSURANCES } from './state.js';
 import { formatDate, formatTime, getISOStringFromDate, calculatePosition, calculateHeight, getTimeFromPosition, getWeekDates } from './utils.js';
 
 const elements = {
+  activeTabButtons: document.querySelectorAll('.nav-tab'),
+  tabContents: document.querySelectorAll('.tab-content'),
   dateDisplay: document.getElementById('current-date-display'),
   prevDay: document.getElementById('prev-day'),
   nextDay: document.getElementById('next-day'),
@@ -22,7 +24,18 @@ const elements = {
   themeToggle: document.getElementById('theme-toggle'),
   printBtn: document.getElementById('print-btn'),
   patientSearch: document.getElementById('patient-search'),
-  conflictWarning: document.getElementById('conflict-warning')
+  conflictWarning: document.getElementById('conflict-warning'),
+  timeFormatToggle: document.getElementById('time-format-toggle'),
+  insuranceSelect: document.getElementById('patient-insurance'),
+  patientName: document.getElementById('patient-name'),
+  patientPhone: document.getElementById('patient-phone'),
+  patientDob: document.getElementById('patient-dob'),
+  patientSuggestions: document.getElementById('patient-suggestions'),
+  clinicalNotes: document.getElementById('clinical-notes'),
+  treatmentNotes: document.getElementById('treatment-notes'),
+  appointmentsListBody: document.getElementById('appointments-list-body'),
+  patientsListBody: document.getElementById('patients-list-body'),
+  sidebarControls: document.getElementById('agenda-sidebar-controls')
 };
 
 let isDragging = false;
@@ -34,20 +47,52 @@ let dragElement = null;
 
 function init() {
   applyTheme();
-  populateProviders();
+  updateTimeFormatButton();
+  populateDropdowns();
   renderTypesSelection();
   updateDateDisplay();
+  refreshUI();
+  attachEventListeners();
+}
+
+function refreshUI() {
   renderMiniCalendar();
   renderFilters();
-  renderTimeSlots();
-  renderGrid();
-  renderAppointments();
-  attachEventListeners();
+  
+  if (state.activeTab === 'agenda') {
+    elements.sidebarControls.style.display = 'block';
+    renderTimeSlots();
+    renderGrid();
+    renderAppointments();
+  } else if (state.activeTab === 'lista') {
+    elements.sidebarControls.style.display = 'none';
+    renderAppointmentsList();
+  } else if (state.activeTab === 'pacientes') {
+    elements.sidebarControls.style.display = 'none';
+    renderPatientsList();
+  }
 }
 
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.theme);
   elements.themeToggle.textContent = state.theme === 'light' ? '🌙' : '☀️';
+}
+
+function updateTimeFormatButton() {
+  elements.timeFormatToggle.textContent = state.timeFormat === '24h' ? '24h' : '12h';
+}
+
+function populateDropdowns() {
+  // Insurances
+  elements.insuranceSelect.innerHTML = HONDURAS_INSURANCES.map(i => `
+    <option value="${i}">${i}</option>
+  `).join('');
+
+  // Providers
+  const all = [...state.rooms, ...state.doctors];
+  elements.providerSelect.innerHTML = all.map(p => `
+    <option value="${p.id}">${p.name}</option>
+  `).join('');
 }
 
 function renderTypesSelection() {
@@ -64,56 +109,13 @@ function updateDateDisplay() {
   elements.dateDisplay.textContent = formatDate(state.currentDate);
 }
 
-function renderMiniCalendar() {
-  const dates = [];
-  const today = new Date(state.currentDate);
-  for (let i = -3; i < 11; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    dates.push(d);
-  }
-
-  elements.miniCalendar.innerHTML = dates.map(d => {
-    const isActive = d.toDateString() === state.currentDate.toDateString();
-    return `
-      <div class="calendar-day-btn ${isActive ? 'active' : ''}" data-date="${d.toISOString()}">
-        <span>${new Intl.DateTimeFormat('es', { weekday: 'short' }).format(d)}</span>
-        <span>${d.getDate()}</span>
-      </div>
-    `;
-  }).join('');
-
-  document.querySelectorAll('.calendar-day-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      state.currentDate = new Date(btn.dataset.date);
-      updateDateDisplay();
-      renderMiniCalendar();
-      renderGrid();
-      renderAppointments();
-    });
-  });
-}
-
-function renderFilters() {
-  elements.roomsFilter.innerHTML = state.rooms.map(r => `
-    <label style="display: flex; align-items: center; margin-bottom: 0.5rem; cursor: pointer;">
-      <input type="checkbox" data-id="${r.id}" ${r.visible ? 'checked' : ''} style="margin-right: 0.5rem;">
-      <span style="color: var(--text-main); font-weight: 500;">${r.name}</span>
-    </label>
-  `).join('');
-
-  elements.doctorsFilter.innerHTML = state.doctors.map(d => `
-    <label style="display: flex; align-items: center; margin-bottom: 0.5rem; cursor: pointer;">
-      <input type="checkbox" data-id="${d.id}" ${d.visible ? 'checked' : ''} style="margin-right: 0.5rem;">
-      <span style="color: ${d.color}; font-weight: 500;">${d.name}</span>
-    </label>
-  `).join('');
-}
+// --- Dynamic Rendering ---
 
 function renderTimeSlots() {
   const slots = [];
   for (let h = 6; h <= 20; h++) {
-    slots.push(`<div class="time-slot">${h}:00</div>`);
+    const timeLabel = state.timeFormat === '24h' ? `${h}:00` : (h > 12 ? `${h-12} PM` : (h === 12 ? '12 PM' : `${h} AM`));
+    slots.push(`<div class="time-slot">${timeLabel}</div>`);
   }
   elements.timeColumn.innerHTML = `<div style="height: 60px;"></div>` + slots.join('');
 }
@@ -144,7 +146,7 @@ function renderGrid() {
       <div class="provider-column" data-provider-id="${provider.id}" data-date="${d.toISOString()}">
         <div class="column-header">
           <span style="font-size: 0.85rem; text-transform: capitalize;">${new Intl.DateTimeFormat('es', { weekday: 'short' }).format(d)}</span>
-          <span class="date-sub">${d.getDate()} / ${d.getMonth() + 1}</span>
+          <span style="font-size: 0.7rem; opacity: 0.7;">${d.getDate()} / ${d.getMonth() + 1}</span>
         </div>
         ${Array.from({ length: 15 }).map(() => `<div class="time-slot">${subSlotsHtml}</div>`).join('')}
       </div>
@@ -195,26 +197,23 @@ function drawAppointment(app, dateContext = null) {
   div.draggable = true;
 
   const typeLabels = appTypes.map(tid => APPOINTMENT_TYPES.find(t => t.id === tid)?.label || tid);
+  const timeStr = formatTimeEnterprise(app.startTime);
   
   div.innerHTML = `
     <div style="font-weight: 700;">${app.patientName}</div>
-    <div style="font-size: 0.7rem; opacity: 0.9;">${formatTime(app.startTime)} - ${typeLabels.join(', ')}</div>
-    ${app.notes ? `<div style="font-size: 0.65rem; margin-top: 2px; font-style: italic;">"${app.notes.substring(0, 30)}..."</div>` : ''}
+    <div style="font-size: 0.7rem; opacity: 0.9;">${timeStr} - ${typeLabels.join(', ')}</div>
+    ${app.treatmentNotes ? `<div style="font-size: 0.6rem; margin-top: 2px; font-style: italic; opacity: 0.8;">Rx: ${app.treatmentNotes.substring(0, 25)}...</div>` : ''}
   `;
 
-  const top = calculatePosition(app.startTime);
-  const height = calculateHeight(app.duration);
-  div.style.top = `${top}px`;
-  div.style.height = `${height}px`;
+  div.style.top = `${calculatePosition(app.startTime)}px`;
+  div.style.height = `${calculateHeight(app.duration)}px`;
 
   div.addEventListener('click', (e) => {
     e.stopPropagation();
     editAppointment(app);
   });
 
-  // Drag to reschedule
   div.addEventListener('dragstart', (e) => {
-    e.stopPropagation();
     isMovingExisting = true;
     movingAppId = app.id;
     div.style.opacity = '0.5';
@@ -228,35 +227,112 @@ function drawAppointment(app, dateContext = null) {
   column.appendChild(div);
 }
 
-function populateProviders() {
-  const all = [...state.rooms, ...state.doctors];
-  elements.providerSelect.innerHTML = all.map(p => `
-    <option value="${p.id}">${p.name}</option>
+// --- Tab Renderers ---
+
+function renderAppointmentsList() {
+  const apps = state.getAppointmentsForDate(state.currentDate);
+  elements.appointmentsListBody.innerHTML = apps.map(app => {
+    const provider = [...state.rooms, ...state.doctors].find(p => p.id === app.providerId);
+    const types = (app.types || []).map(tid => APPOINTMENT_TYPES.find(t => t.id === tid)?.label).join(', ');
+    return `
+      <tr>
+        <td>${formatTimeEnterprise(app.startTime)}</td>
+        <td><strong>${app.patientName}</strong></td>
+        <td>${provider?.name || 'N/A'}</td>
+        <td style="font-size: 0.8rem;">${types}</td>
+        <td><span class="badge">${app.insurance || 'Privado'}</span></td>
+        <td><span class="status-pill status-${app.status}">${app.status}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderPatientsList() {
+  elements.patientsListBody.innerHTML = state.patients.map(p => `
+    <tr>
+      <td><strong>${p.name}</strong></td>
+      <td>${p.phone || '-'}</td>
+      <td>${p.insurance || 'Privado'}</td>
+      <td>${p.dob || '-'}</td>
+      <td>
+        <button class="btn btn-outline btn-sm edit-patient" data-id="${p.id}">✏️</button>
+      </td>
+    </tr>
   `).join('');
 }
 
+// --- Autocomplete ---
+
+function handlePatientInput(e) {
+  const val = e.target.value.toLowerCase();
+  if (val.length < 2) {
+    elements.patientSuggestions.style.display = 'none';
+    return;
+  }
+
+  const matches = state.patients.filter(p => p.name.toLowerCase().includes(val));
+  if (matches.length > 0) {
+    elements.patientSuggestions.innerHTML = matches.map(p => `
+      <div class="suggestion-item" data-id="${p.id}">${p.name} (${p.phone || 'Sin tel.'})</div>
+    `).join('');
+    elements.patientSuggestions.style.display = 'block';
+  } else {
+    elements.patientSuggestions.style.display = 'none';
+  }
+}
+
+function selectPatient(patient) {
+  elements.patientName.value = patient.name;
+  elements.patientPhone.value = patient.phone || '';
+  elements.insuranceSelect.value = patient.insurance || 'Privado / Sin Seguro';
+  elements.patientDob.value = patient.dob || '';
+  elements.clinicalNotes.value = patient.notes || '';
+  elements.patientSuggestions.style.display = 'none';
+}
+
+// --- Event Handlers ---
+
 function attachEventListeners() {
+  // Tabs
+  elements.activeTabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.activeTab = btn.dataset.tab;
+      elements.activeTabButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      elements.tabContents.forEach(tc => tc.classList.remove('active'));
+      document.getElementById(`tab-${state.activeTab}`).classList.add('active');
+      refreshUI();
+    });
+  });
+
+  // Time Navigation
   elements.prevDay.addEventListener('click', () => {
     const delta = state.viewMode === 'day' ? 1 : 7;
     state.currentDate.setDate(state.currentDate.getDate() - delta);
     updateDateDisplay();
-    renderMiniCalendar();
-    renderAppointments();
+    refreshUI();
   });
 
   elements.nextDay.addEventListener('click', () => {
     const delta = state.viewMode === 'day' ? 1 : 7;
     state.currentDate.setDate(state.currentDate.getDate() + delta);
     updateDateDisplay();
-    renderMiniCalendar();
-    renderAppointments();
+    refreshUI();
   });
 
+  // Toggles
   elements.themeToggle.addEventListener('click', () => {
     state.theme = state.theme === 'light' ? 'dark' : 'light';
     state.save();
     applyTheme();
-    renderAppointments(); // Re-render to adjust colors if needed
+    refreshUI();
+  });
+
+  elements.timeFormatToggle.addEventListener('click', () => {
+    state.timeFormat = state.timeFormat === '24h' ? '12h' : '24h';
+    state.save();
+    updateTimeFormatButton();
+    refreshUI();
   });
 
   elements.printBtn.addEventListener('click', () => window.print());
@@ -264,19 +340,26 @@ function attachEventListeners() {
   elements.patientSearch.addEventListener('input', (e) => {
     state.searchTerm = e.target.value;
     renderAppointments();
+    if (state.activeTab === 'lista') renderAppointmentsList();
+    if (state.activeTab === 'pacientes') renderPatientsList();
   });
 
-  const handleFilterChange = (e) => {
-    const id = e.target.getAttribute('data-id');
-    state.toggleVisibility(id);
-    if (state.viewMode === 'week') state.selectedProviderId = id;
+  // Filters
+  elements.roomsFilter.addEventListener('change', (e) => {
+    state.toggleVisibility(e.target.dataset.id);
+    if (state.viewMode === 'week') state.selectedProviderId = e.target.dataset.id;
     renderGrid();
     renderAppointments();
-  };
+  });
 
-  elements.roomsFilter.addEventListener('change', handleFilterChange);
-  elements.doctorsFilter.addEventListener('change', handleFilterChange);
+  elements.doctorsFilter.addEventListener('change', (e) => {
+    state.toggleVisibility(e.target.dataset.id);
+    if (state.viewMode === 'week') state.selectedProviderId = e.target.dataset.id;
+    renderGrid();
+    renderAppointments();
+  });
 
+  // Views
   elements.viewDay.addEventListener('click', () => {
     state.viewMode = 'day';
     elements.viewDay.classList.add('active');
@@ -293,26 +376,38 @@ function attachEventListeners() {
     renderAppointments();
   });
 
+  // Modal logic
   elements.addBtn.addEventListener('click', () => openModal());
   elements.cancelModal.addEventListener('click', () => elements.modal.style.display = 'none');
   
+  elements.patientName.addEventListener('input', handlePatientInput);
+  elements.patientSuggestions.addEventListener('click', (e) => {
+    const item = e.target.closest('.suggestion-item');
+    if (item) {
+      const patient = state.patients.find(p => p.id === item.dataset.id);
+      if (patient) selectPatient(patient);
+    }
+  });
+
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
     const selectedTypes = Array.from(document.querySelectorAll('input[name="appointment-type"]:checked')).map(cb => cb.value);
     const data = {
-      patientName: document.getElementById('patient-name').value,
-      phone: document.getElementById('patient-phone').value,
+      patientName: elements.patientName.value,
+      phone: elements.patientPhone.value,
+      insurance: elements.insuranceSelect.value,
+      dob: elements.patientDob.value,
       providerId: elements.providerSelect.value,
       types: selectedTypes,
       duration: parseInt(document.getElementById('duration').value),
       startTime: getISOStringFromDate(state.currentDate, document.getElementById('start-time').value),
-      notes: document.getElementById('appointment-notes').value,
-      status: state.selectedAppointment?.status || 'scheduled'
+      clinicalNotes: elements.clinicalNotes.value,
+      treatmentNotes: elements.treatmentNotes.value
     };
 
     if (state.hasConflict(data, state.selectedAppointment?.id)) {
       elements.conflictWarning.style.display = 'block';
-      return; // Stop and wait for user to fix or acknowledge? (USER asked for All, usually meaning block or warn)
+      return;
     }
 
     if (state.selectedAppointment) {
@@ -322,28 +417,14 @@ function attachEventListeners() {
     }
 
     elements.modal.style.display = 'none';
-    renderAppointments();
-  });
-
-  // Re-check conflict on change
-  ['start-time', 'duration', 'provider-id'].forEach(id => {
-    document.getElementById(id).addEventListener('change', () => {
-      const selectedTypes = Array.from(document.querySelectorAll('input[name="appointment-type"]:checked')).map(cb => cb.value);
-      const data = {
-        providerId: elements.providerSelect.value,
-        duration: parseInt(document.getElementById('duration').value),
-        startTime: getISOStringFromDate(state.currentDate, document.getElementById('start-time').value),
-        types: selectedTypes
-      };
-      elements.conflictWarning.style.display = state.hasConflict(data, state.selectedAppointment?.id) ? 'block' : 'none';
-    });
+    refreshUI();
   });
 
   elements.deleteBtn.addEventListener('click', () => {
     if (state.selectedAppointment && confirm('¿Eliminar esta cita?')) {
       state.deleteAppointment(state.selectedAppointment.id);
       elements.modal.style.display = 'none';
-      renderAppointments();
+      refreshUI();
     }
   });
 
@@ -351,8 +432,8 @@ function attachEventListeners() {
     btn.addEventListener('click', () => {
       if (state.selectedAppointment) {
         state.updateAppointment(state.selectedAppointment.id, { status: btn.dataset.status });
-        renderAppointments();
         elements.modal.style.display = 'none';
+        refreshUI();
       }
     });
   });
@@ -361,14 +442,12 @@ function attachEventListeners() {
 function attachGridEvents() {
   document.querySelectorAll('.provider-column').forEach(column => {
     column.addEventListener('mousedown', (e) => {
-      if (e.target !== column && !e.target.classList.contains('time-slot') && !e.target.classList.contains('sub-slot')) return;
-      
+      if (!e.target.classList.contains('time-slot') && !e.target.classList.contains('sub-slot')) return;
       isDragging = true;
       dragProviderId = column.dataset.providerId;
       const rect = column.getBoundingClientRect();
       const y = e.clientY - rect.top + column.scrollTop;
       dragStartTime = getTimeFromPosition(y);
-      
       if (column.dataset.date) state.currentDate = new Date(column.dataset.date);
 
       dragElement = document.createElement('div');
@@ -378,50 +457,42 @@ function attachGridEvents() {
       column.appendChild(dragElement);
     });
 
-    // Handle dropping an existing app
     column.addEventListener('dragover', (e) => e.preventDefault());
     column.addEventListener('drop', (e) => {
       if (!isMovingExisting) return;
       const rect = column.getBoundingClientRect();
       const y = e.clientY - rect.top + column.scrollTop;
-      const newStartTimeStr = getTimeFromPosition(y);
-      const newProviderId = column.dataset.providerId;
-      const newDate = column.dataset.date ? new Date(column.dataset.date) : state.currentDate;
-      const newFullStartTime = getISOStringFromDate(newDate, newStartTimeStr);
-
+      const time = getTimeFromPosition(y);
+      const start = getISOStringFromDate(column.dataset.date ? new Date(column.dataset.date) : state.currentDate, time);
+      
       const app = state.appointments.find(a => a.id === movingAppId);
-      if (app) {
-        const updates = { startTime: newFullStartTime, providerId: newProviderId };
-        if (!state.hasConflict({ ...app, ...updates }, app.id)) {
-          state.updateAppointment(app.id, updates);
-          renderAppointments();
-        } else {
-          alert('Conflicto detectado: No se puede mover la cita a este horario.');
-        }
+      if (app && !state.hasConflict({ ...app, startTime: start, providerId: column.dataset.providerId }, app.id)) {
+        state.updateAppointment(app.id, { startTime: start, providerId: column.dataset.providerId });
+        refreshUI();
+      } else {
+        alert('Conflicto detectado.');
       }
     });
   });
 
   window.addEventListener('mousemove', (e) => {
     if (!isDragging || !dragElement) return;
-    const column = dragElement.parentElement;
-    const rect = column.getBoundingClientRect();
-    const currentY = e.clientY - rect.top + column.scrollTop;
-    const startY = parseFloat(dragElement.style.top);
-    const height = Math.max(15, currentY - startY);
-    dragElement.style.height = `${Math.round(height / 15) * 15}px`;
+    const rect = dragElement.parentElement.getBoundingClientRect();
+    const curY = e.clientY - rect.top + dragElement.parentElement.scrollTop;
+    const sY = parseFloat(dragElement.style.top);
+    dragElement.style.height = `${Math.max(15, Math.round((curY - sY)/15)*15)}px`;
   });
 
   window.addEventListener('mouseup', () => {
     if (!isDragging) return;
     isDragging = false;
     if (dragElement) {
-      const duration = Math.round(parseFloat(dragElement.style.height) / 60 * 60);
-      const startTime = dragStartTime;
-      const providerId = dragProviderId;
+      const dur = Math.round(parseFloat(dragElement.style.height) / 60 * 60);
+      const start = dragStartTime;
+      const pid = dragProviderId;
       dragElement.remove();
       dragElement = null;
-      openModal({ startTime, providerId, duration });
+      openModal({ startTime: start, providerId: pid, duration: dur });
     }
   });
 }
@@ -431,8 +502,7 @@ function openModal(defaults = {}) {
   state.selectedAppointment = null;
   elements.deleteBtn.style.display = 'none';
   elements.conflictWarning.style.display = 'none';
-  document.getElementById('modal-title').textContent = 'Agendar Cita';
-  document.getElementById('status-group').style.display = 'none';
+  elements.status-group.style.display = 'none';
   
   if (defaults.startTime) document.getElementById('start-time').value = defaults.startTime;
   if (defaults.providerId) elements.providerSelect.value = defaults.providerId;
@@ -442,24 +512,73 @@ function openModal(defaults = {}) {
   elements.modal.style.display = 'flex';
 }
 
-function editAppointment(appointment) {
-  state.selectedAppointment = appointment;
+function editAppointment(app) {
+  state.selectedAppointment = app;
   elements.deleteBtn.style.display = 'block';
   elements.conflictWarning.style.display = 'none';
   document.getElementById('modal-title').textContent = 'Editar Cita';
-  document.getElementById('patient-name').value = appointment.patientName;
-  document.getElementById('patient-phone').value = appointment.phone || '';
-  elements.providerSelect.value = appointment.providerId;
-  document.getElementById('duration').value = appointment.duration;
-  document.getElementById('start-time').value = new Date(appointment.startTime).toTimeString().substring(0, 5);
-  document.getElementById('appointment-notes').value = appointment.notes || '';
+  elements.patientName.value = app.patientName;
+  elements.patientPhone.value = app.phone || '';
+  elements.insuranceSelect.value = app.insurance || 'Privado / Sin Seguro';
+  elements.patientDob.value = app.dob || '';
+  elements.providerSelect.value = app.providerId;
+  document.getElementById('duration').value = app.duration;
+  document.getElementById('start-time').value = new Date(app.startTime).toTimeString().substring(0, 5);
+  elements.clinicalNotes.value = app.clinicalNotes || '';
+  elements.treatmentNotes.value = app.treatmentNotes || '';
   
   document.querySelectorAll('input[name="appointment-type"]').forEach(cb => {
-    cb.checked = appointment.types.includes(cb.value);
+    cb.checked = (app.types || []).includes(cb.value);
   });
 
   document.getElementById('status-group').style.display = 'block';
   elements.modal.style.display = 'flex';
+}
+
+function formatTimeEnterprise(iso) {
+  const date = new Date(iso);
+  if (state.timeFormat === '24h') {
+    return date.toTimeString().substring(0, 5);
+  } else {
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; 
+    return `${hours}:${minutes} ${ampm}`;
+  }
+}
+
+function renderMiniCalendar() {
+  const dates = [];
+  const today = new Date(state.currentDate);
+  for (let i = -3; i < 11; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    dates.push(d);
+  }
+  elements.miniCalendar.innerHTML = dates.map(d => `
+    <div class="calendar-day-btn ${d.toDateString() === state.currentDate.toDateString() ? 'active' : ''}" data-date="${d.toISOString()}">
+      <span>${new Intl.DateTimeFormat('es', { weekday: 'short' }).format(d)}</span>
+      <span>${d.getDate()}</span>
+    </div>
+  `).join('');
+  document.querySelectorAll('.calendar-day-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.currentDate = new Date(btn.dataset.date);
+      refreshUI();
+      updateDateDisplay();
+    });
+  });
+}
+
+function renderFilters() {
+  elements.roomsFilter.innerHTML = state.rooms.map(r => `
+    <label><input type="checkbox" data-id="${r.id}" ${r.visible ? 'checked' : ''}><span>${r.name}</span></label>
+  `).join('');
+  elements.doctorsFilter.innerHTML = state.doctors.map(d => `
+    <label><input type="checkbox" data-id="${d.id}" ${d.visible ? 'checked' : ''}><span style="color:${d.color}">${d.name}</span></label>
+  `).join('');
 }
 
 init();
