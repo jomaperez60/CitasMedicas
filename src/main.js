@@ -301,8 +301,11 @@ function attachEventListeners() {
   };
 
   document.addEventListener('mousedown', (e) => {
-    closeContextMenu();
-    if (!e.target.closest('.classic-grid')) {
+    // Only close if clicking outside the menu
+    if (elements.contextMenu && !elements.contextMenu.contains(e.target)) {
+      closeContextMenu();
+    }
+    if (!e.target.closest('.classic-grid') && !e.target.closest('.classic-context-menu')) {
       clearSelection();
     }
   });
