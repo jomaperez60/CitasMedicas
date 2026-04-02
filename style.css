@@ -243,6 +243,132 @@ body {
 .btn-primary { background: var(--primary); color: white; }
 .btn-primary:hover { background: var(--primary-hover); }
 
+/* Multi-select Type List */
+.types-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.type-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s;
+}
+
+.type-checkbox:hover {
+  background: #eff6ff;
+}
+
+.type-checkbox input {
+  cursor: pointer;
+}
+
+/* View Toggles */
+.view-toggles {
+  display: flex;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  padding: 0.3rem;
+  border-radius: 10px;
+}
+
+.btn-toggle {
+  padding: 0.4rem 1rem;
+  border-radius: 7px;
+  font-size: 0.85rem;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--secondary);
+  transition: all 0.2s;
+}
+
+.btn-toggle.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+/* Mini Calendar */
+.mini-calendar {
+  display: flex;
+  overflow-x: auto;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  margin-top: 1rem;
+}
+
+.calendar-day-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 45px;
+  padding: 0.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.calendar-day-btn:hover {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.calendar-day-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+.calendar-day-btn span:first-child {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.calendar-day-btn span:last-child {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Weekly View Column Header */
+.column-header .date-sub {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+/* Delete Button */
+.btn-danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.btn-danger:hover {
+  background: #fecaca;
+}
+
+/* Dragging visual */
+.drag-preview {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  background: rgba(37, 99, 235, 0.2);
+  border: 2px dashed var(--primary);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 100;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .app-container {
@@ -252,6 +378,6 @@ body {
     grid-template-columns: 1fr;
   }
   .sidebar {
-    display: none; /* Mobile logic: side menu or bottom bar */
+    display: none;
   }
 }
