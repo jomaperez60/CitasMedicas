@@ -28,6 +28,7 @@ let dragStartTime = null;
 let dragElement = null;
 
 function init() {
+  populateProviders();
   renderTypesSelection();
   updateDateDisplay();
   renderMiniCalendar();
@@ -35,7 +36,6 @@ function init() {
   renderTimeSlots();
   renderGrid();
   renderAppointments();
-  populateProviders();
   attachEventListeners();
 }
 
@@ -163,10 +163,12 @@ function drawAppointment(app, dateContext = null) {
   if (!column) return;
 
   const div = document.createElement('div');
-  const isEndoscopy = app.types.some(t => t !== 'consulta');
+  // Soporte para datos viejos (app.type) o nuevos (app.types)
+  const appTypes = app.types || (app.type ? [app.type] : []);
+  const isEndoscopy = appTypes.some(t => t !== 'consulta');
   div.className = `appointment ${isEndoscopy ? 'endoscopy' : 'consultation'} status-${app.status}`;
   
-  const typeLabels = app.types.map(tid => APPOINTMENT_TYPES.find(t => t.id === tid)?.label || tid);
+  const typeLabels = appTypes.map(tid => APPOINTMENT_TYPES.find(t => t.id === tid)?.label || tid);
   
   div.innerHTML = `
     <div style="font-weight: 700;">${app.patientName}</div>
