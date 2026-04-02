@@ -95,9 +95,14 @@ class AppState {
   }
 
   addAppointment(data) {
-    const app = { id: Date.now().toString(), ...data, status: 'scheduled' };
+    const app = { 
+      id: Date.now().toString(), 
+      ...data, 
+      status: 'scheduled',
+      types: data.types || []
+    };
     this.appointments.push(app);
-    // Auto-save patient
+    // Auto-guardar paciente
     this.addOrUpdatePatient({
       name: data.patientName,
       phone: data.phone,
@@ -112,33 +117,13 @@ class AppState {
     const index = this.appointments.findIndex(app => app.id === id);
     if (index >= 0) {
       this.appointments[index] = { ...this.appointments[index], ...data };
-      // Auto-update patient if data changed
+      // Auto-actualizar paciente
       this.addOrUpdatePatient({
         name: data.patientName,
         phone: data.phone,
         insurance: data.insurance,
         dob: data.dob
       });
-      this.save();
-    }
-  }
-
-  addAppointment(appointment) {
-    this.appointments.push({
-      ...appointment,
-      id: Date.now().toString(),
-      status: 'scheduled',
-      types: appointment.types || [],
-      phone: appointment.phone || '',
-      notes: appointment.notes || ''
-    });
-    this.save();
-  }
-
-  updateAppointment(id, updates) {
-    const index = this.appointments.findIndex(a => a.id === id);
-    if (index !== -1) {
-      this.appointments[index] = { ...this.appointments[index], ...updates };
       this.save();
     }
   }

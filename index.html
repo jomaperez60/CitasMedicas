@@ -12,12 +12,12 @@
   <!-- Classic Ribbon Toolbar -->
   <header class="ribbon-bar">
     <div class="ribbon-tab-header">
-      <div class="active-tab">Home</div>
-      <div>Vertical Timeline</div>
-      <div>Horizontal Timeline</div>
-      <div>Options</div>
-      <div>Security</div>
-      <div>Help</div>
+      <div class="active-tab">Inicio</div>
+      <div>Línea Vertical</div>
+      <div>Línea Horizontal</div>
+      <div>Opciones</div>
+      <div>Seguridad</div>
+      <div>Ayuda</div>
     </div>
     
     <div class="ribbon-group-container">
@@ -56,9 +56,9 @@
     </div>
   </header>
 
-  <!-- Yellow Status Bar -->
+  <!-- Barra de Mensajes Amarilla -->
   <div class="status-bar-yellow">
-    <strong>CED Information:</strong> <span id="status-message">Usted está viendo citas para el día <span id="current-date-text"></span></span>
+    <strong>Información CED:</strong> <span id="status-message">Usted está viendo citas para el día <span id="current-date-text"></span></span>
   </div>
 
   <div class="main-app-layout">
@@ -70,9 +70,9 @@
     </div>
 
     <div class="content-wrapper">
-      <!-- Physician Sidebar -->
+      <!-- Barra de Médicos -->
       <aside class="sidebar-physicians">
-        <h3 class="classic-label">Physicians:</h3>
+        <h3 class="classic-label">Médicos:</h3>
         <div id="doctors-filter" class="classic-filter-list"></div>
         
         <h3 class="classic-label" style="margin-top: 20px;">Salas:</h3>
@@ -99,12 +99,12 @@
             <table class="classic-table">
               <thead>
                 <tr>
-                  <th>Start Reception</th>
-                  <th>Finish Reception</th>
-                  <th>Patient Name</th>
-                  <th>Physician/Resource</th>
-                  <th>Status</th>
-                  <th>Details</th>
+                  <th>Inicio Recepción</th>
+                  <th>Fin Recepción</th>
+                  <th>Nombre Paciente</th>
+                  <th>Médico / Recurso</th>
+                  <th>Estado</th>
+                  <th>Detalles</th>
                 </tr>
               </thead>
               <tbody id="appointments-list-body"></tbody>
@@ -116,17 +116,17 @@
           <div class="classic-grid-card">
             <h2 class="grid-card-title">Directorio de Pacientes Registrados</h2>
             <div style="padding: 10px; border-bottom: 1px solid #7192B7; display: flex; gap: 10px;">
-                <button id="export-patients-btn" class="classic-btn-action">Export To Excel (xls)</button>
-                <button class="classic-btn-action">Add Patient</button>
+                <button id="export-patients-btn" class="classic-btn-action">Exportar a Excel (xls)</button>
+                <button class="classic-btn-action">Añadir Paciente</button>
             </div>
             <table class="classic-table">
               <thead>
                 <tr>
-                  <th>Patient Name</th>
-                  <th>Phone Number</th>
-                  <th>Insurance</th>
-                  <th>Date of Birth</th>
-                  <th>Last Visit</th>
+                  <th>Nombre Paciente</th>
+                  <th>Número Teléfono</th>
+                  <th>Seguro Médico</th>
+                  <th>Fecha Nac.</th>
+                  <th>Última Visita</th>
                 </tr>
               </thead>
               <tbody id="patients-list-body"></tbody>
@@ -140,36 +140,36 @@
   <!-- Classic Modal Dialog -->
   <div id="appointment-modal" class="classic-modal-overlay" style="display: none;">
     <div class="classic-modal">
-      <div class="modal-title-bar">Event - CED Medical Calendar <button id="cancel-modal-x" class="title-bar-close">X</button></div>
+      <div class="modal-title-bar">Evento - Calendario Médico CED <button id="cancel-modal-x" class="title-bar-close">X</button></div>
       
       <form id="appointment-form" class="classic-modal-body">
         
         <div id="conflict-warning" style="background: yellow; color: red; padding: 5px; margin-bottom: 10px; font-weight: bold; border: 1px solid red; display: none;">
-           Conflict Warning: Time collision detected for this resource!
+           Advertencia: ¡Conflicto de horario detectado para este recurso!
         </div>
 
         <div class="modal-field-group">
-          <label>Patient Name:</label>
+          <label>Nombre Paciente:</label>
           <div style="position: relative; flex: 1;">
             <input type="text" id="patient-name" required class="classic-input">
             <div id="patient-suggestions" class="classic-suggestions" style="display: none;"></div>
           </div>
-          <button type="button" class="classic-icon-btn">🔍 Search...</button>
+          <button type="button" class="classic-icon-btn">🔍 Buscar...</button>
         </div>
 
         <div class="modal-field-row">
-           <div class="field-item"><label>Phone:</label><input type="tel" id="patient-phone" class="classic-input"></div>
-           <div class="field-item"><label>Insurance:</label>
+           <div class="field-item"><label>Teléfono:</label><input type="tel" id="patient-phone" class="classic-input"></div>
+           <div class="field-item"><label>Seguro Médico:</label>
              <select id="patient-insurance" class="classic-input"></select>
            </div>
-           <div class="field-item"><label>Date Birth:</label><input type="date" id="patient-dob" class="classic-input"></div>
+           <div class="field-item"><label>F. Nacimiento:</label><input type="date" id="patient-dob" class="classic-input"></div>
         </div>
 
         <hr class="classic-hr">
 
         <div class="modal-field-row">
-          <div class="field-item"><label>Start time:</label><input type="time" id="start-time" required class="classic-input"></div>
-          <div class="field-item"><label>Duration:</label>
+          <div class="field-item"><label>Hora inicio:</label><input type="time" id="start-time" required class="classic-input"></div>
+          <div class="field-item"><label>Duración:</label>
             <select id="duration" class="classic-input">
               <option value="15">15 min</option>
               <option value="30" selected>30 min</option>
@@ -178,24 +178,24 @@
               <option value="120">2 horas</option>
             </select>
           </div>
-          <div class="field-item"><label>Resource:</label><select id="provider-id" required class="classic-input"></select></div>
+          <div class="field-item"><label>Recurso:</label><select id="provider-id" required class="classic-input"></select></div>
         </div>
 
         <div class="modal-field-group" style="margin-top: 10px;">
-           <label>Procedures:</label>
+           <label>Procedimientos:</label>
            <div id="types-selection" class="classic-checkbox-grid"></div>
         </div>
 
         <hr class="classic-hr">
 
-        <label>Medical Information / Address / Details:</label>
+        <label>Información Médica / Dirección / Detalles:</label>
         <textarea id="clinical-notes" rows="4" class="classic-textarea"></textarea>
 
-        <label style="margin-top: 10px;">Treatment type, recommendations:</label>
+        <label style="margin-top: 10px;">Tipo Tratamiento, Recomendaciones:</label>
         <textarea id="treatment-notes" rows="3" class="classic-textarea" style="background: #e1f5fe;"></textarea>
 
         <div id="status-group" class="modal-status-area" style="display: none;">
-           <label>Status Label:</label>
+           <label>Estado de Cita:</label>
            <div class="status-btns">
               <button type="button" class="status-pill arrived" data-status="arrived">Llegó</button>
               <button type="button" class="status-pill in_session" data-status="in_session">En Consulta</button>
@@ -204,9 +204,9 @@
         </div>
 
         <div class="modal-action-bar">
-          <button type="submit" class="classic-btn-action">OK</button>
-          <button type="button" id="cancel-modal" class="classic-btn-action">Cancel</button>
-          <button type="button" id="delete-appointment-btn" class="classic-btn-action" style="color: red;">Delete</button>
+          <button type="submit" class="classic-btn-action">Guardar</button>
+          <button type="button" id="cancel-modal" class="classic-btn-action">Cancelar</button>
+          <button type="button" id="delete-appointment-btn" class="classic-btn-action" style="color: red;">Eliminar</button>
         </div>
       </form>
     </div>
