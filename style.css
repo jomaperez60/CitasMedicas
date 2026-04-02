@@ -1,49 +1,39 @@
 :root {
-  --ribbon-bg: linear-gradient(to bottom, #dbe9f9, #c2d9f7);
+  --ribbon-bg: linear-gradient(to bottom, #dbe9f9, #a3c1e8);
   --ribbon-border: #7192b7;
   --ribbon-text: #1e3a5f;
   --active-btn-bg: linear-gradient(to bottom, #ffeb3b, #fbc02d);
-  --classic-blue: #a3c1e8;
-  --classic-border: #7192b7;
-  --message-yellow: #fff200;
-  --message-text: #000;
-  --bg-main: #f0f0f0;
-  --text-main: #000;
+  --sidebar-bg: #f8f8f8;
+  --sidebar-border: #7192b7;
+  --grid-border: #ccc;
+  --time-col-bg: #f0f0f0;
+  --bg-main: #fff;
+  --slot-height: 80px; /* Increased to accommodate 4 segments of 15m */
   --font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-  --slot-height: 50px;
-  --column-width: 250px;
+  
+  --navigator-right-width: 220px;
 }
 
 [data-theme='dark'] {
   --bg-main: #121212;
-  --text-main: #e0e0e0;
-  --ribbon-bg: linear-gradient(to bottom, #2c2c2c, #1a1a1a);
-  --ribbon-border: #444;
-  --ribbon-text: #ddd;
-  --classic-blue: #333;
-  --classic-border: #555;
-  --message-yellow: #444400;
-  --message-text: #fff;
+  --sidebar-bg: #1a1a1a;
+  --ribbon-bg: linear-gradient(to bottom, #222, #111);
+  --sidebar-border: #444;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: var(--font-family);
   background: var(--bg-main);
-  color: var(--text-main);
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-size: 0.9rem;
+  font-size: 13px;
 }
 
-/* Ribbon Toolbar */
+/* Ribbon Bar Exact */
 .ribbon-bar {
   background: var(--ribbon-bg);
   border-bottom: 1px solid var(--ribbon-border);
@@ -53,432 +43,268 @@ body {
 .ribbon-tab-header {
   display: flex;
   padding: 2px 10px 0;
-  gap: 2px;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .ribbon-tab-header div {
-  padding: 3px 12px;
-  font-size: 0.75rem;
+  padding: 4px 15px;
+  font-size: 11px;
   border-radius: 4px 4px 0 0;
   cursor: pointer;
-  border: 1px solid transparent;
 }
 
-.ribbon-tab-header div.active-tab {
-  background: var(--bg-main);
-  border-color: var(--ribbon-border);
-  border-bottom-color: var(--bg-main);
+.active-tab {
+  background: #fff;
+  border: 1px solid var(--ribbon-border);
+  border-bottom: none;
   font-weight: bold;
 }
 
 .ribbon-group-container {
   display: flex;
   padding: 5px;
-  gap: 1px;
-  background: rgba(255, 255, 255, 0.5);
+  gap: 5px;
 }
 
 .ribbon-group {
   display: flex;
   flex-direction: column;
+  padding: 0 10px;
+  border-right: 1px solid rgba(0,0,0,0.1);
   align-items: center;
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
-  padding: 0 8px;
-}
-
-.ribbon-buttons {
-  display: flex;
-  gap: 2px;
-  margin-bottom: 3px;
 }
 
 .ribbon-btn {
   background: transparent;
   border: 1px solid transparent;
-  padding: 5px 8px;
-  min-width: 60px;
+  padding: 4px 8px;
   text-align: center;
   border-radius: 4px;
   cursor: pointer;
-  color: var(--ribbon-text);
-  font-size: 0.7rem;
-}
-
-.ribbon-btn:hover {
-  background: rgba(255, 255, 255, 0.4);
-  border-color: #fbc02d;
+  min-width: 50px;
 }
 
 .ribbon-btn.active {
   background: var(--active-btn-bg);
   border-color: #fbc02d;
-  font-weight: bold;
 }
 
-.ribbon-btn.small-btn {
-  min-width: auto;
-  border: 1px solid var(--ribbon-border);
-  padding: 2px 5px;
-}
-
-.ribbon-btn .icon {
-  font-size: 1.4rem;
-  margin-bottom: 2px;
-  display: block;
-}
-
-.ribbon-group-label {
-  font-size: 0.65rem;
-  color: var(--secondary);
-  opacity: 0.8;
-}
+.ribbon-btn .icon { font-size: 1.5rem; display: block; margin-bottom: 2px; }
+.ribbon-group-label { font-size: 10px; opacity: 0.7; margin-top: 2px; }
 
 /* Status Bar Yellow */
 .status-bar-yellow {
-  background: var(--message-yellow);
-  color: var(--message-text);
-  padding: 4px 15px;
-  font-size: 0.8rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: inset 0 -2px 5px rgba(0,0,0,0.05);
-}
-
-.main-app-layout {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-}
-
-/* Date Navigator Strip */
-.date-navigator-strip {
-  background: var(--classic-blue);
-  border-bottom: 1px solid var(--classic-border);
-  display: flex;
-  align-items: center;
+  background: #fff200;
+  color: #000;
   padding: 5px 15px;
-  gap: 15px;
+  font-size: 12px;
+  border-bottom: 1px solid #ccc;
+  box-shadow: inset 0 -1px 3px rgba(0,0,0,0.1);
 }
 
-.months-container {
-  display: flex;
-  gap: 20px;
+/* Main App Layout Exact */
+.main-app-layout {
   flex: 1;
-  overflow-x: auto;
-}
-
-.nav-arrow-classic {
-  background: #fff;
-  border: 1px solid var(--classic-border);
-  cursor: pointer;
-  padding: 2px 5px;
-  font-size: 10px;
-}
-
-/* Sidebar & Workspace */
-.content-wrapper {
   display: flex;
-  flex: 1;
   overflow: hidden;
 }
 
-.sidebar-physicians {
-  width: 200px;
-  background: #f7f7f7;
-  border-right: 1px solid var(--classic-border);
+.workspace-container {
   display: flex;
-  flex-direction: column;
-  padding: 10px;
-  overflow-y: auto;
-}
-
-.classic-label {
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: #1e3a5f;
-  margin-bottom: 8px;
-  border-bottom: 1px solid #ddd;
-}
-
-.classic-filter-list {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.classic-physician-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.classic-physician-item:hover {
-  background: #eef;
-}
-
-.physician-avatar {
-  width: 32px;
-  height: 32px;
-  background: #fff;
-  border: 1px solid #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  border-radius: 4px;
-}
-
-.sidebar-search-box {
-  margin-top: auto;
-  padding-top: 15px;
-  border-top: 1px solid #ddd;
-}
-
-/* Main Workspace & Scheduler */
-.main-workspace {
-  flex: 1;
-  background: white;
-  overflow: hidden;
-  position: relative;
-}
-
-.tab-content {
-  display: none;
-  height: 100%;
   width: 100%;
 }
 
-.tab-content.active {
-  display: block;
-}
-
-/* Classic Scheduler Grid */
-.classic-scheduler {
+/* Resizable Left Sidebar (Medical List) */
+.sidebar-resizable {
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  position: relative;
+  transition: width 0.3s ease;
+  width: 200px;
   display: flex;
-  height: 100%;
-  overflow: auto;
 }
 
-.classic-time-col {
-  width: 60px;
-  flex-shrink: 0;
-  background: #f0f0f0;
-  border-right: 1px solid #ccc;
+.sidebar-resizable.collapsed {
+  width: 25px;
 }
 
-.classic-time-slot {
-  height: var(--slot-height);
-  border-bottom: 1px solid #ddd;
+.sidebar-content {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.sidebar-resizable.collapsed .sidebar-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-handle {
+  width: 25px;
+  background: linear-gradient(to right, #e0e0e0, #ccc);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  border-left: 1px solid #aaa;
+}
+
+.handle-dots {
+  font-size: 18px;
   color: #666;
 }
 
-.classic-grid {
-  display: flex;
+/* Workspace Central */
+.main-workspace {
   flex: 1;
+  overflow: hidden;
+  background: #fff;
+  border-right: 1px solid var(--sidebar-border);
 }
 
-.classic-provider-col {
-  min-width: var(--column-width);
+.tab-content { display: none; height: 100%; }
+.tab-content.active { display: block; }
+
+/* Time Column Pro (00, 15, 30, 45) */
+.classic-scheduler { display: flex; height: 100%; overflow: auto; }
+
+.classic-time-col {
+  width: 70px;
+  background: var(--time-col-bg);
+  border-right: 1px solid var(--grid-border);
+  flex-shrink: 0;
+}
+
+.hour-slot-container {
+  height: var(--slot-height);
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+}
+
+.hour-label {
   flex: 1;
-  border-right: 1px solid #ddd;
+  font-weight: bold;
+  font-size: 18px;
+  padding-left: 5px;
+  border-bottom: 1px solid #eee;
+}
+
+.quarter-scale {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+}
+
+.quarter-slot {
+  flex: 1;
+  text-align: right;
+  padding-right: 5px;
+  font-size: 10px;
+  color: #777;
+  border-bottom: 1px dotted #ccc;
+}
+
+/* Grid Pro Exact */
+.classic-grid { display: flex; flex: 1; }
+
+.classic-provider-col {
+  min-width: 250px;
+  flex: 1;
+  border-right: 1px solid var(--grid-border);
   position: relative;
 }
 
 .classic-col-header {
-  height: 40px;
-  background: linear-gradient(to bottom, #fff, #e0e0e0);
+  height: 90px;
+  background: linear-gradient(to bottom, #fff, #f0f0f0);
   border-bottom: 1px solid #ccc;
   display: flex;
-  align-items: center;
-  padding-left: 10px;
-  font-weight: bold;
-  font-size: 0.8rem;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-/* Appointments Classic Style */
-.appointment {
-  position: absolute;
-  left: 3px;
-  right: 3px;
-  background: #fff;
-  border: 1px solid #888;
-  padding: 4px;
-  font-size: 0.75rem;
-  overflow: hidden;
-  cursor: pointer;
-  box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-}
-
-.appointment:hover {
-  border-color: #000;
-  z-index: 50;
-}
-
-/* Tables Classic */
-.classic-grid-card {
-  height: 100%;
-  display: flex;
   flex-direction: column;
-}
-
-.grid-card-title {
-  background: #1e3a5f;
-  color: white;
-  padding: 8px 15px;
-  font-size: 0.9rem;
-}
-
-.classic-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.classic-table th {
-  background: linear-gradient(to bottom, #dbe9f9, #c2d9f7);
-  border: 1px solid #7192b7;
-  padding: 8px;
-  text-align: left;
-  font-size: 0.75rem;
-}
-
-.classic-table td {
-  border: 1px solid #ddd;
-  padding: 6px 8px;
-  font-size: 0.8rem;
-}
-
-.classic-table tr:nth-child(even) { background: #f9f9f9; }
-
-/* Modal Classic Dialog */
-.classic-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  padding: 5px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-.classic-modal {
-  width: 600px;
-  background: #f0f0f0;
-  border: 1px solid #7192b7;
-  box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+.header-icon { font-size: 2.2rem; margin-bottom: 3px; }
+.header-name { font-weight: bold; font-size: 13px; }
+.header-sub { font-size: 11px; color: #666; }
+
+/* Right Sidebar (Navigator) */
+.sidebar-navigator-right {
+  width: var(--navigator-right-width);
+  background: var(--sidebar-bg);
   display: flex;
   flex-direction: column;
+  padding: 10px;
 }
 
-.modal-title-bar {
-  background: linear-gradient(to bottom, #dbe9f9, #9ab7d9);
-  color: #1e3a5f;
-  padding: 5px 10px;
-  font-weight: bold;
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px solid #7192b7;
-}
-
-.title-bar-close {
-  background: #e74c3c;
-  color: white;
-  border: 1px solid #c0392b;
-  width: 18px;
-  height: 18px;
-  font-size: 10px;
-  cursor: pointer;
-}
-
-.classic-modal-body {
-  padding: 15px;
-}
-
-.modal-field-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.modal-field-row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.field-item {
+.navigator-container-v {
   flex: 1;
-}
-
-label {
-  display: block;
-  font-size: 0.75rem;
-  margin-bottom: 3px;
-  font-weight: bold;
-}
-
-.classic-input {
-  width: 100%;
-  padding: 4px 6px;
-  border: 1px solid #999;
-  font-size: 0.85rem;
-}
-
-.classic-textarea {
-  width: 100%;
-  border: 1px solid #999;
-  padding: 5px;
-  font-family: inherit;
-  font-size: 0.8rem;
-}
-
-.classic-hr {
-  margin: 10px 0;
-  border: none;
-  border-top: 1px solid #ddd;
-}
-
-.modal-action-bar {
-  margin-top: 15px;
+  overflow-y: auto;
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.classic-btn-action {
-  padding: 5px 15px;
-  background: linear-gradient(to bottom, #fff, #e0e0e0);
-  border: 1px solid #999;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.classic-btn-action:hover { background: #eee; }
-
-/* Utils */
+/* Mini Calendars Right */
 .mini-month-navigator {
-  background: white;
+  background: #fff;
   border: 1px solid #ccc;
   padding: 5px;
-  font-size: 0.7rem;
 }
 
-.classic-checkbox-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
+.mini-month-navigator .month-title {
+  background: #e1f5fe;
+  text-align: center;
+  font-weight: bold;
+  padding: 4px;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 5px;
 }
+
+.mini-month-navigator .days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+}
+
+.mini-month-navigator .day-box {
+  padding: 3px 0;
+  text-align: center;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.mini-month-navigator .day-box:hover { background: #ffd54f; }
+.mini-month-navigator .day-box.active { background: #2563eb; color: #fff; font-weight: bold; }
+.mini-month-navigator .day-box.today { border: 1px solid #2563eb; }
+
+/* Appointments Style Exact */
+.appointment {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  background: #fff;
+  border: 1px solid #777;
+  padding: 5px;
+  font-size: 11px;
+  line-height: 1.2;
+  overflow: hidden;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+}
+
+.appointment .app-time { font-weight: bold; color: #2563eb; }
+.appointment .app-patient { font-weight: bold; margin-bottom: 2px; }
+.appointment .app-details { font-size: 9px; color: #444; font-style: italic; }
+
+/* Modal & Tools */
+.classic-table th { background: linear-gradient(to bottom, #dbe9f9, #a3c1e8); border: 1px solid #7192b7; padding: 10px; }
+.classic-modal { width: 700px; border: 2px solid #7192b7; }
+.icon-sm { width: 30px; height: 30px; padding: 0; }

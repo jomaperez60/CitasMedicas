@@ -6,13 +6,13 @@ const elements = {
   tabContents: document.querySelectorAll('.tab-content'),
   dateText: document.getElementById('current-date-text'),
   statusMessage: document.getElementById('status-message'),
-  prevMonthNav: document.getElementById('prev-month-navigator'),
-  nextMonthNav: document.getElementById('next-month-navigator'),
-  dateNavigatorMonths: document.getElementById('date-navigator-months'),
+  dateNavigatorContainer: document.getElementById('date-navigator-container'),
   doctorsFilter: document.getElementById('doctors-filter'),
   roomsFilter: document.getElementById('rooms-filter'),
   timeColumn: document.getElementById('time-column'),
   calendarGrid: document.getElementById('calendar-grid'),
+  leftSidebar: document.getElementById('left-sidebar'),
+  sidebarHandle: document.getElementById('sidebar-handle'),
   modal: document.getElementById('appointment-modal'),
   form: document.getElementById('appointment-form'),
   cancelModal: document.getElementById('cancel-modal'),
@@ -48,13 +48,13 @@ function init() {
 }
 
 function refreshUI() {
-  renderDateNavigator();
+  renderDateNavigatorRight();
   renderPhysicianSidebar();
   
   if (state.activeTab === 'agenda') {
-    renderTimeSlots();
-    renderGrid();
-    renderAppointments();
+    renderTimeSlotsPro();
+    renderGridPro();
+    renderAppointmentsPro();
   } else if (state.activeTab === 'lista') {
     renderAppointmentsList();
   } else if (state.activeTab === 'pacientes') {
@@ -79,50 +79,67 @@ function populateDropdowns() {
 
 function renderTypesSelection() {
   elements.typesSelection.innerHTML = APPOINTMENT_TYPES.map(t => `
-    <label style="font-size: 0.7rem; display: flex; align-items: center; gap: 4px;">
+    <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 8px;">
       <input type="checkbox" name="appointment-type" value="${t.id}">
       <span>${t.label}</span>
     </label>
   `).join('');
 }
 
-// --- Classic Rendering ---
+// --- Pro Exact Rendering ---
 
-function renderTimeSlots() {
+function renderTimeSlotsPro() {
   const slots = [];
   for (let h = 6; h <= 20; h++) {
     const timeLabel = state.timeFormat === '24h' ? `${h}:00` : (h > 12 ? `${h-12} PM` : (h === 12 ? '12 PM' : `${h} AM`));
-    slots.push(`<div class="classic-time-slot">${timeLabel}</div>`);
+    slots.push(`
+      <div class="hour-slot-container">
+        <div class="hour-label">${timeLabel}</div>
+        <div class="quarter-scale">
+          <div class="quarter-slot">15</div>
+          <div class="quarter-slot">30</div>
+          <div class="quarter-slot">45</div>
+        </div>
+      </div>
+    `);
   }
-  elements.timeColumn.innerHTML = `<div style="height: 40px;"></div>` + slots.join('');
+  elements.timeColumn.innerHTML = `<div style="height: 90px; border-bottom: 1px solid #ccc;"></div>` + slots.join('');
 }
 
-function renderGrid() {
+function renderGridPro() {
+  const providers = state.viewMode === 'day' 
+    ? [...state.rooms, ...state.doctors].filter(p => p.visible)
+    : [([...state.rooms, ...state.doctors].find(p => p.id === state.selectedProviderId) || state.rooms[0])];
+
   if (state.viewMode === 'day') {
-    const visibleProviders = [...state.rooms, ...state.doctors].filter(p => p.visible);
-    elements.calendarGrid.innerHTML = visibleProviders.map(p => `
+    elements.calendarGrid.innerHTML = providers.map(p => `
       <div class="classic-provider-col" data-provider-id="${p.id}">
-        <div class="classic-col-header">${p.name}</div>
-        ${Array.from({ length: 15 }).map(() => `<div class="classic-time-slot"></div>`).join('')}
+        <div class="classic-col-header">
+           <div class="header-icon">${p.type === 'doctor' ? '👨‍⚕️' : '🏥'}</div>
+           <div class="header-name">${p.name}</div>
+           <div class="header-sub">${formatDate(state.currentDate)}</div>
+        </div>
+        ${Array.from({ length: 15 }).map(() => `<div class="hour-slot-container" style="border-bottom: 1px solid #eee;"></div>`).join('')}
       </div>
     `).join('');
   } else {
-    const provider = [...state.rooms, ...state.doctors].find(p => p.id === state.selectedProviderId) || state.rooms[0];
+    const provider = providers[0];
     const weekDates = getWeekDates(state.currentDate);
     elements.calendarGrid.innerHTML = weekDates.map(d => `
       <div class="classic-provider-col" data-provider-id="${provider.id}" data-date="${d.toISOString()}">
-        <div class="classic-col-header" style="flex-direction: column; align-items: flex-start; height: 50px;">
-           <span style="font-size: 0.8rem;">${new Intl.DateTimeFormat('es', { weekday: 'short' }).format(d)}</span>
-           <span style="font-size: 0.65rem; color: #666;">${d.getDate()}/${d.getMonth()+1}</span>
+        <div class="classic-col-header">
+           <div class="header-icon">📅</div>
+           <div class="header-name">${new Intl.DateTimeFormat('es', { weekday: 'long' }).format(d)}</div>
+           <div class="header-sub">${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</div>
         </div>
-        ${Array.from({ length: 15 }).map(() => `<div class="classic-time-slot"></div>`).join('')}
+        ${Array.from({ length: 15 }).map(() => `<div class="hour-slot-container" style="border-bottom: 1px solid #eee;"></div>`).join('')}
       </div>
     `).join('');
   }
-  attachGridEvents();
+  attachGridEventsPro();
 }
 
-function renderAppointments() {
+function renderAppointmentsPro() {
   document.querySelectorAll('.appointment').forEach(el => el.remove());
   
   const draw = (app, dateContext = null) => {
@@ -137,14 +154,17 @@ function renderAppointments() {
     const div = document.createElement('div');
     div.className = 'appointment';
     const primaryType = APPOINTMENT_TYPES.find(t => (app.types || []).includes(t.id)) || APPOINTMENT_TYPES[0];
-    div.style.backgroundColor = primaryType.color + '22';
-    div.style.borderLeft = `3px solid ${primaryType.color}`;
-    div.style.top = `${calculatePosition(app.startTime, 40, 50)}px`;
-    div.style.height = `${calculateHeight(app.duration, 50)}px`;
+    div.style.borderLeft = `4px solid ${primaryType.color}`;
+    
+    // Position calc (Header is 90px, Slot is 80px)
+    div.style.top = `${calculatePosition(app.startTime, 90, 80)}px`;
+    div.style.height = `${calculateHeight(app.duration, 80)}px`;
     
     div.innerHTML = `
-      <div style="font-weight: bold; overflow: hidden; white-space: nowrap;">${app.patientName}</div>
-      <div style="font-size: 0.65rem;">${formatTime(app.startTime)} - ${primaryType.label}</div>
+      <div class="app-time">${formatTime(app.startTime)} - ${formatTime(new Date(new Date(app.startTime).getTime() + app.duration * 60000))}</div>
+      <div class="app-patient">${app.patientName.toUpperCase()}</div>
+      <div class="app-details">${primaryType.label} ${app.phone ? `| T: ${app.phone}` : ''}</div>
+      ${app.treatmentNotes ? `<div class="app-details" style="color:red; font-weight:bold;">Rx: ${app.treatmentNotes.substring(0, 30)}</div>` : ''}
     `;
     
     div.onclick = () => editAppointment(app);
@@ -162,94 +182,70 @@ function renderAppointments() {
   }
 }
 
-// --- Sidebar & Navigation ---
+// --- Sidebar & Navigator Pro ---
 
 function renderPhysicianSidebar() {
-  const renderList = (data, container) => {
+  const render = (data, container) => {
     container.innerHTML = data.map(p => `
-      <div class="classic-physician-item">
-        <input type="checkbox" data-id="${p.id}" ${p.visible ? 'checked' : ''}>
-        <div class="physician-avatar">${p.type === 'doctor' ? '👨‍⚕️' : '🏥'}</div>
-        <span style="font-size: 0.75rem;">${p.name}</span>
+      <div class="classic-physician-item" style="padding: 10px; border-bottom: 1px solid #ddd; display: flex; align-items: center; gap: 8px;">
+        <input type="checkbox" data-id="${p.id}" ${p.visible ? 'checked' : ''} style="width: 18px; height: 18px;">
+        <div style="font-size: 1.2rem;">${p.type === 'doctor' ? '👨‍⚕️' : '🏥'}</div>
+        <span style="font-weight: bold; font-size: 0.8rem;">${p.name}</span>
       </div>
     `).join('');
   };
-  renderList(state.doctors, elements.doctorsFilter);
-  renderList(state.rooms, elements.roomsFilter);
+  render(state.doctors, elements.doctorsFilter);
+  render(state.rooms, elements.roomsFilter);
 }
 
-function renderDateNavigator() {
-  const start = new Date(state.currentDate);
-  start.setDate(1);
-  start.setMonth(start.getMonth() - 1);
+function renderDateNavigatorRight() {
+  const current = new Date(state.currentDate);
+  const next = new Date(current);
+  next.setMonth(current.getMonth() + 1);
   
-  let html = '';
-  for (let i = 0; i < 4; i++) {
-    const d = new Date(start);
-    d.setMonth(start.getMonth() + i);
-    html += `
-      <div class="mini-month-navigator">
-        <div style="font-weight: bold; text-align: center; border-bottom: 1px solid #ddd; margin-bottom: 5px;">
-          ${new Intl.DateTimeFormat('es', { month: 'short', year: 'numeric' }).format(d)}
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;">
-           ${['D','L','M','M','J','V','S'].map(day => `<span style="font-size: 0.6rem; opacity: 0.5;">${day}</span>`).join('')}
-           ${renderMonthDays(d)}
-        </div>
+  elements.dateNavigatorContainer.innerHTML = [current, next].map(m => `
+    <div class="mini-month-navigator">
+      <div class="month-title">${new Intl.DateTimeFormat('es', { month: 'long', year: 'numeric' }).format(m)}</div>
+      <div class="days-grid">
+         ${['D','L','M','M','J','V','S'].map(d => `<div style="text-align:center; font-size: 8px; opacity: 0.5;">${d}</div>`).join('')}
+         ${renderMiniMonthDays(m)}
       </div>
-    `;
-  }
-  elements.dateNavigatorMonths.innerHTML = html;
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.day-box').forEach(box => {
+    box.onclick = () => {
+      state.currentDate = new Date(box.dataset.date);
+      state.save();
+      updateStatusMessage();
+      refreshUI();
+    };
+  });
 }
 
-function renderMonthDays(date) {
+function renderMiniMonthDays(date) {
   const days = [];
-  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  const lastDate = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const startDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  const endDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   
-  for (let i = 0; i < firstDay; i++) days.push('<span></span>');
-  for (let i = 1; i <= lastDate; i++) {
-    const isCurrent = (i === state.currentDate.getDate() && date.getMonth() === state.currentDate.getMonth());
-    days.push(`<span class="day-num ${isCurrent ? 'active' : ''}" style="cursor:pointer; text-align:center; ${isCurrent ? 'background: #ffd54f;' : ''}">${i}</span>`);
+  for (let i = 0; i < startDay; i++) days.push('<div></div>');
+  for (let i = 1; i <= endDay; i++) {
+    const d = new Date(date.getFullYear(), date.getMonth(), i);
+    const active = d.toDateString() === state.currentDate.toDateString();
+    const today = d.toDateString() === new Date().toDateString();
+    days.push(`<div class="day-box ${active ? 'active' : ''} ${today ? 'today' : ''}" data-date="${d.toISOString()}">${i}</div>`);
   }
   return days.join('');
 }
 
-// --- Table Views ---
-
-function renderAppointmentsList() {
-  const apps = state.getAppointmentsForDate(state.currentDate);
-  elements.appointmentsListBody.innerHTML = apps.map(app => {
-    const provider = [...state.rooms, ...state.doctors].find(p => p.id === app.providerId);
-    return `
-      <tr>
-        <td>${formatTime(app.startTime)}</td>
-        <td>${new Date(new Date(app.startTime).getTime() + app.duration * 60000).toTimeString().substring(0, 5)}</td>
-        <td><strong>${app.patientName}</strong></td>
-        <td>${provider?.name}</td>
-        <td><span class="status-pill ${app.status}">${app.status}</span></td>
-        <td>${app.clinicalNotes || ''}</td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function renderPatientsList() {
-  elements.patientsListBody.innerHTML = state.patients.map(p => `
-    <tr>
-      <td><strong>${p.name}</strong></td>
-      <td>${p.phone || '-'}</td>
-      <td>${p.insurance || 'Privado'}</td>
-      <td>${p.dob || '-'}</td>
-      <td>${p.lastVisit || '-'}</td>
-    </tr>
-  `).join('');
-}
-
-// --- Event Handlers ---
+// --- Interaction Logic ---
 
 function attachEventListeners() {
-  // Tabs
+  // Collapsible Sidebar
+  elements.sidebarHandle.onclick = () => {
+    elements.leftSidebar.classList.toggle('collapsed');
+  };
+
   elements.tabButtons.forEach(btn => {
     btn.onclick = () => {
       state.activeTab = btn.dataset.tab;
@@ -261,26 +257,11 @@ function attachEventListeners() {
     };
   });
 
-  // Toolbar Actions
-  elements.viewDay.onclick = () => {
-    state.viewMode = 'day';
-    elements.viewDay.classList.add('active');
-    elements.viewWeek.classList.remove('active');
-    refreshUI();
-  };
-  elements.viewWeek.onclick = () => {
-    state.viewMode = 'week';
-    elements.viewWeek.classList.add('active');
-    elements.viewDay.classList.remove('active');
-    refreshUI();
-  };
+  elements.viewDay.onclick = () => { state.viewMode = 'day'; refreshUI(); };
+  elements.viewWeek.onclick = () => { state.viewMode = 'week'; refreshUI(); };
   elements.addBtn.onclick = () => openModal();
   elements.printBtn.onclick = () => window.print();
-  elements.themeToggle.onclick = () => {
-    state.theme = state.theme === 'light' ? 'dark' : 'light';
-    state.save();
-    document.documentElement.setAttribute('data-theme', state.theme);
-  };
+
   elements.timeFormatToggle.onclick = () => {
     state.timeFormat = state.timeFormat === '24h' ? '12h' : '24h';
     state.save();
@@ -288,7 +269,6 @@ function attachEventListeners() {
     refreshUI();
   };
 
-  // Sidebar Filters
   document.addEventListener('change', (e) => {
     if (e.target.closest('.classic-filter-list input')) {
       state.toggleVisibility(e.target.dataset.id);
@@ -297,9 +277,7 @@ function attachEventListeners() {
     }
   });
 
-  // Modal logic
   elements.cancelModal.onclick = elements.cancelModalX.onclick = () => elements.modal.style.display = 'none';
-  
   elements.form.onsubmit = (e) => {
     e.preventDefault();
     const data = {
@@ -351,12 +329,13 @@ function editAppointment(app) {
   elements.modal.style.display = 'flex';
 }
 
-function attachGridEvents() {
+function attachGridEventsPro() {
   document.querySelectorAll('.classic-provider-col').forEach(col => {
     col.onclick = (e) => {
-      if (e.target.classList.contains('classic-time-slot')) {
-        const y = e.offsetY + e.target.offsetTop;
-        const time = getTimeFromPosition(y, 40, 50);
+      if (!e.target.closest('.appointment')) {
+        const rect = col.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        const time = getTimeFromPosition(y, 90, 80);
         openModal({ startTime: time, providerId: col.dataset.providerId });
       }
     };

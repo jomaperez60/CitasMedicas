@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CED - Medical Calendar Classic Pro v4.8</title>
+  <title>CED - Calendario Médico Pro Exact v4.9</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body class="classic-app">
@@ -62,29 +62,28 @@
   </div>
 
   <div class="main-app-layout">
-    <!-- Date Navigator Strip (Multi-month) -->
-    <div class="date-navigator-strip">
-       <button id="prev-month-navigator" class="nav-arrow-classic">◀</button>
-       <div id="date-navigator-months" class="months-container"></div>
-       <button id="next-month-navigator" class="nav-arrow-classic">▶</button>
-    </div>
-
-    <div class="content-wrapper">
-      <!-- Barra de Médicos -->
-      <aside class="sidebar-physicians">
-        <h3 class="classic-label">Médicos:</h3>
-        <div id="doctors-filter" class="classic-filter-list"></div>
-        
-        <h3 class="classic-label" style="margin-top: 20px;">Salas:</h3>
-        <div id="rooms-filter" class="classic-filter-list"></div>
-
-        <div class="sidebar-search-box">
-          <label>Buscar Paciente:</label>
-          <input type="text" id="patient-search" class="classic-input" placeholder="Nombre...">
+    <!-- Layout PRO Exact: [Sidebar Izq] | [Workspace Central] | [Navigator Der] -->
+    <div class="workspace-container">
+      
+      <!-- Left Collapsible Sidebar -->
+      <aside id="left-sidebar" class="sidebar-resizable collapsed">
+        <div class="sidebar-content">
+          <h3 class="classic-label">Médicos:</h3>
+          <div id="doctors-filter" class="classic-filter-list"></div>
+          <h3 class="classic-label" style="margin-top: 20px;">Salas:</h3>
+          <div id="rooms-filter" class="classic-filter-list"></div>
+          <div class="sidebar-search-box">
+            <label>Buscar Paciente:</label>
+            <input type="text" id="patient-search" class="classic-input" placeholder="Nombre...">
+          </div>
+        </div>
+        <!-- Handle to drag and open the sidebar -->
+        <div id="sidebar-handle" class="sidebar-handle">
+           <div class="handle-dots">⋮</div>
         </div>
       </aside>
 
-      <!-- Main Scheduler / Tables -->
+      <!-- Main Scheduler -->
       <main class="main-workspace">
         <div id="tab-agenda" class="tab-content active">
           <div class="classic-scheduler">
@@ -134,6 +133,21 @@
           </div>
         </div>
       </main>
+
+      <!-- Right Navigator Bar (Static as per image) -->
+      <aside class="sidebar-navigator-right">
+        <div id="date-navigator-container" class="navigator-container-v">
+           <!-- Two months will be rendered here via main.js -->
+        </div>
+        <div class="navigator-footer">
+          <input type="text" class="classic-input" placeholder="Patient Search..." style="width: 100%;">
+          <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+             <button class="classic-btn-action icon-sm">🔍</button>
+             <button class="classic-btn-action icon-sm">👥</button>
+          </div>
+        </div>
+      </aside>
+
     </div>
   </div>
 
