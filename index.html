@@ -8,8 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/CitasMedicas/assets/index-CcK5_PLi.js"></script>
-    <link rel="stylesheet" crossorigin href="/CitasMedicas/assets/index-Ujzco3Pe.css">
+    <script type="module" crossorigin src="/CitasMedicas/assets/index-Oj2XXn9j.js"></script>
+    <link rel="stylesheet" crossorigin href="/CitasMedicas/assets/index-C_60ASAf.css">
   </head>
   <body>
     <div id="app" class="app-container">
@@ -23,10 +23,14 @@
           <button id="view-week" class="btn-toggle">Vista Semana</button>
         </div>
 
-        <div class="date-nav">
-          <button id="prev-day" class="btn">◀</button>
-          <span id="current-date-display" style="font-weight: 600; margin: 0 1rem; min-width: 150px; text-align: center;"></span>
-          <button id="next-day" class="btn">▶</button>
+        <div style="display: flex; align-items: center;">
+          <button id="theme-toggle" class="theme-toggle" title="Cambiar Tema">🌙</button>
+          <button id="print-btn" class="btn" style="margin-right: 1rem;" title="Imprimir Agenda">🖨️</button>
+          <div class="date-nav">
+            <button id="prev-day" class="btn">◀</button>
+            <span id="current-date-display" style="font-weight: 600; margin: 0 1rem; min-width: 150px; text-align: center;"></span>
+            <button id="next-day" class="btn">▶</button>
+          </div>
         </div>
         <div class="user-profile">
           <button id="add-appointment-btn" class="btn btn-primary">+ Nueva Cita</button>
@@ -34,6 +38,9 @@
       </header>
 
       <aside class="sidebar glass">
+        <div class="search-container">
+          <input type="text" id="patient-search" class="search-input" placeholder="Buscar paciente...">
+        </div>
         <section class="calendar-nav">
           <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--secondary); letter-spacing: 0.05em;">Calendario</h3>
           <div id="mini-calendar" class="mini-calendar">
@@ -74,6 +81,9 @@
         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
           <h2 id="modal-title">Agendar Cita</h2>
           <button type="button" id="delete-appointment-btn" class="btn btn-danger" style="display: none;">Eliminar</button>
+        </div>
+        <div id="conflict-warning" style="display: none; background: #fee2e2; color: #dc2626; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; border: 1px solid #fecaca;">
+          ⚠️ <strong>Conflicto:</strong> Ya hay otra cita en este horario con el mismo médico/sala.
         </div>
         <form id="appointment-form">
           <div class="form-row" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
