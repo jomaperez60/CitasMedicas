@@ -300,7 +300,12 @@ function attachEventListeners() {
     refreshUI();
   };
 
-  document.addEventListener('mousedown', () => closeContextMenu());
+  document.addEventListener('mousedown', (e) => {
+    closeContextMenu();
+    if (!e.target.closest('.classic-grid')) {
+      clearSelection();
+    }
+  });
 
   document.addEventListener('change', (e) => {
     // ... filtering checkboxes ...
@@ -409,9 +414,10 @@ function attachGridEventsPro() {
       const durationHours = height / 80;
       selectionInfo.duration = Math.max(15, Math.round(durationHours * 60 / 15) * 15);
       
-      if (height < 10) { // Small click
-        openModal({ startTime: selectionInfo.startTime, providerId: selectionInfo.providerId });
+      if (height < 15) { // Small click
         clearSelection();
+      } else {
+        selectionInfo.active = true;
       }
     };
 

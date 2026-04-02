@@ -331,7 +331,30 @@ body {
 
 /* Modal & Tools */
 .classic-table th { background: linear-gradient(to bottom, #dbe9f9, #a3c1e8); border: 1px solid #7192b7; padding: 10px; }
-.classic-modal { width: 700px; border: 2px solid #7192b7; }
+
+.classic-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 3000;
+  display: none; /* Controlled by JS */
+  align-items: center;
+  justify-content: center;
+}
+
+.classic-modal {
+  width: 760px;
+  background: #fff;
+  border: 1px solid #7192b7;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow-y: auto;
+}
 /* Drag Selection & Context Menu */
 .drag-selection {
   position: absolute;
