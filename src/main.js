@@ -117,7 +117,7 @@ function renderTimeSlotsPro() {
       </div>
     `);
   }
-  elements.timeColumn.innerHTML = `<div style="height: 90px; border-bottom: 1px solid #ccc;"></div>` + slots.join('');
+  elements.timeColumn.innerHTML = `<div class="classic-time-header"></div>` + slots.join('');
 }
 
 function renderGridPro() {
@@ -376,11 +376,16 @@ function attachGridEventsPro() {
       if (e.button !== 0) return; // Only left click for selection
       if (e.target.closest('.appointment')) return;
 
+      const rect = col.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      if (y < 90) return; // Ignore click on header
+
       selectionInfo.isDragging = true;
       selectionInfo.active = true;
       selectionInfo.providerId = col.dataset.providerId;
-      const rect = col.getBoundingClientRect();
-      selectionInfo.startY = e.clientY - rect.top;
+      
+      // Snap start position (Step 20px = 15m)
+      selectionInfo.startY = Math.floor((y - 90) / 20) * 20 + 90;
       
       if (selectionInfo.selectionEl) selectionInfo.selectionEl.remove();
       selectionInfo.selectionEl = document.createElement('div');
@@ -393,9 +398,15 @@ function attachGridEventsPro() {
     col.onmousemove = (e) => {
       if (!selectionInfo.isDragging) return;
       const rect = col.getBoundingClientRect();
-      const currentY = e.clientY - rect.top;
-      const top = Math.min(selectionInfo.startY, currentY);
-      const height = Math.abs(currentY - selectionInfo.startY);
+      const currentRawY = e.clientY - rect.top;
+      
+      // Snap current position
+      const snappedCurrentY = Math.ceil((currentRawY - 90) / 20) * 20 + 90;
+      
+      const top = Math.min(selectionInfo.startY, snappedCurrentY);
+      const bottom = Math.max(selectionInfo.startY, snappedCurrentY);
+      const height = bottom - top;
+      
       selectionInfo.selectionEl.style.top = `${top}px`;
       selectionInfo.selectionEl.style.height = `${height}px`;
     };
@@ -404,17 +415,19 @@ function attachGridEventsPro() {
       if (!selectionInfo.isDragging) return;
       selectionInfo.isDragging = false;
       const rect = col.getBoundingClientRect();
-      const endY = e.clientY - rect.top;
-      
-      const top = Math.min(selectionInfo.startY, endY);
-      const bottom = Math.max(selectionInfo.startY, endY);
+      const endRawY = e.clientY - rect.top;
+      const snappedEndY = Math.ceil((endRawY - 90) / 20) * 20 + 90;
+
+      const top = Math.min(selectionInfo.startY, snappedEndY);
+      const bottom = Math.max(selectionInfo.startY, snappedEndY);
       const height = bottom - top;
 
       selectionInfo.startTime = getTimeFromPosition(top, 90, 80);
       const durationHours = height / 80;
-      selectionInfo.duration = Math.max(15, Math.round(durationHours * 60 / 15) * 15);
+      selectionInfo.duration = Math.max(15, Math.round(durationHours * 60));
       
-      if (height < 15) { // Small click
+      if (height < 15) { // Small click - open default slot
+        openModal({ startTime: selectionInfo.startTime, providerId: selectionInfo.providerId, duration: 30 });
         clearSelection();
       } else {
         selectionInfo.active = true;
