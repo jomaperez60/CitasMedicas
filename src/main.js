@@ -351,9 +351,22 @@ function openModal(defs = {}) {
   state.selectedAppointment = null;
   elements.deleteBtn.style.display = 'none';
   elements.conflictWarning.style.display = 'none';
+  
   if (defs.startTime) document.getElementById('start-time').value = defs.startTime;
   if (defs.providerId) elements.providerSelect.value = defs.providerId;
-  if (defs.duration) document.getElementById('duration').value = defs.duration;
+  
+  if (defs.duration) {
+    const durationSelect = document.getElementById('duration');
+    const existingOption = Array.from(durationSelect.options).find(o => parseInt(o.value) === defs.duration);
+    if (!existingOption) {
+      const newOpt = new Option(`${defs.duration} min (seleccionado)`, defs.duration);
+      durationSelect.add(newOpt);
+      durationSelect.value = defs.duration;
+    } else {
+      durationSelect.value = defs.duration;
+    }
+  }
+  
   elements.modal.style.display = 'flex';
 }
 
