@@ -1,0 +1,257 @@
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --secondary: #64748b;
+  --accent: #f59e0b;
+  --success: #10b981;
+  --danger: #ef4444;
+  --info: #0ea5e9;
+  
+  --bg-main: #f8fafc;
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --border-color: rgba(226, 232, 240, 0.5);
+  
+  --header-height: 70px;
+  --sidebar-width: 280px;
+  --slot-height: 60px;
+  --column-width: 300px;
+  
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme='dark'] {
+  --bg-main: #0f172a;
+  --bg-card: rgba(30, 41, 59, 0.8);
+  --border-color: rgba(51, 65, 85, 0.5);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--bg-main);
+  color: #1e293b;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: var(--bg-card);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--glass-shadow);
+}
+
+.app-container {
+  display: grid;
+  grid-template-areas: 
+    "header header"
+    "sidebar main";
+  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-rows: var(--header-height) 1fr;
+  height: 100vh;
+}
+
+.header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  z-index: 100;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar {
+  grid-area: sidebar;
+  padding: 1.5rem;
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+  z-index: 90;
+}
+
+.main-content {
+  grid-area: main;
+  overflow: auto;
+  position: relative;
+  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.05), transparent 40%),
+              radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.05), transparent 40%);
+}
+
+/* Calendar Grid */
+.calendar-container {
+  display: flex;
+  min-height: 100%;
+}
+
+.time-column {
+  width: 80px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-color);
+  background: var(--bg-card);
+  position: sticky;
+  left: 0;
+  z-index: 20;
+}
+
+.calendar-grid {
+  display: flex;
+  flex-grow: 1;
+}
+
+.provider-column {
+  width: var(--column-width);
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-color);
+  position: relative;
+}
+
+.column-header {
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  border-bottom: 2px solid var(--primary);
+  font-weight: 600;
+}
+
+.time-slot {
+  height: var(--slot-height);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--secondary);
+}
+
+/* Appointment Style */
+.appointment {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  padding: 0.5rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.appointment:hover {
+  transform: scale(1.02);
+  z-index: 15;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.appointment.consultation {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-left: 4px solid var(--primary);
+  color: #1e3a8a;
+}
+
+.appointment.endoscopy {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-left: 4px solid var(--danger);
+  color: #991b1b;
+}
+
+/* Status Modifiers */
+.appointment.status-arrived {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 2px solid var(--success);
+  animation: pulse-border 2s infinite;
+}
+
+.appointment.status-in_session {
+  background: linear-gradient(135deg, #fefce8 0%, #fef08a 100%);
+  border: 2px solid var(--accent);
+  color: #854d0e;
+}
+
+.appointment.status-completed {
+  opacity: 0.6;
+  filter: grayscale(0.5);
+  background: #f1f5f9;
+  border-left: 4px solid #94a3b8;
+  color: #64748b;
+}
+
+@keyframes pulse-border {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  width: 100%;
+  max-width: 500px;
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-hover); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app-container {
+    grid-template-areas: 
+      "header"
+      "main";
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: none; /* Mobile logic: side menu or bottom bar */
+  }
+}
