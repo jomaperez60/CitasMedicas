@@ -7,12 +7,28 @@ export function formatDate(date) {
   }).format(date);
 }
 
-export function formatTime(isoString) {
-  const date = new Date(isoString);
-  return date.toLocaleTimeString('es-ES', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+export function formatTime(isoString, format = '24h') {
+  let date;
+  if (typeof isoString === 'string' && isoString.includes(':') && !isoString.includes('-')) {
+    // Handle HH:MM format
+    const [h, m] = isoString.split(':');
+    date = new Date();
+    date.setHours(parseInt(h), parseInt(m), 0, 0);
+  } else {
+    date = new Date(isoString);
+  }
+
+  if (isNaN(date.getTime())) return 'Hora no válida';
+  
+  if (format === '12h') {
+    let h = date.getHours();
+    const m = String(date.getMinutes()).padStart(2, '0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    h = h ? h : 12;
+    return `${h}:${m} ${ampm}`;
+  }
+  return date.toTimeString().substring(0, 5);
 }
 
 export function getISOStringFromDate(date, timeString) {

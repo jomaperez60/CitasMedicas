@@ -293,6 +293,13 @@ function attachEventListeners() {
     };
   });
 
+  document.querySelectorAll('.recurrence-pattern-opt').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.recurrence-pattern-opt').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+  });
+
   elements.viewDay.onclick = () => { state.viewMode = 'day'; refreshUI(); };
   elements.viewWeek.onclick = () => { state.viewMode = 'week'; refreshUI(); };
   elements.addBtn.onclick = () => openModal();
@@ -390,10 +397,17 @@ function openModal(defs = {}) {
 }
 
 function openRecurrenceModal(defs = {}) {
-  const startStr = defs.startTime || '10:15 AM';
+  const startStr = defs.startTime || '10:15';
   const duration = defs.duration || 30;
   
+  // Calculate end time
+  const [h, m] = startStr.split(':');
+  const startDate = new Date();
+  startDate.setHours(parseInt(h), parseInt(m), 0, 0);
+  const endDate = new Date(startDate.getTime() + duration * 60000);
+  
   document.getElementById('rec-start-display').textContent = formatTime(startStr, '12h');
+  document.getElementById('rec-end-display').textContent = formatTime(endDate.toISOString(), '12h');
   document.getElementById('rec-duration-display').textContent = `${duration} minutos`;
   document.getElementById('rec-range-start').value = state.currentDate.toISOString().split('T')[0];
   
