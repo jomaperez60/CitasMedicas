@@ -398,7 +398,7 @@ function attachEventListeners() {
 
   elements.timeColumn.oncontextmenu = (e) => {
     e.preventDefault();
-    showScaleMenu(e.clientX, e.clientY);
+    showZoomMenu(e.pageX, e.pageY);
   };
 
   document.addEventListener('mousedown', (e) => {
@@ -709,35 +709,36 @@ function closeContextMenu() {
   }
 }
 
-function showScaleMenu(x, y) {
+function showZoomMenu(x, y) {
   closeContextMenu();
   const menu = document.createElement('div');
   menu.className = 'classic-context-menu';
   menu.style.left = `${x}px`;
   menu.style.top = `${y}px`;
 
-  const scales = [
-    { label: '60 Minutos', value: 60 },
-    { label: '30 Minutos', value: 100 },
-    { label: '15 Minutos', value: 160 },
-    { label: '10 Minutos', value: 240 },
-    { label: '6 Minutos', value: 400 },
-    { label: '5 Minutos', value: 480 }
+  const options = [
+    { label: 'Escala: 60 Minutos', value: 80 },
+    { label: 'Escala: 30 Minutos (Estándar)', value: 160 },
+    { label: 'Escala: 15 Minutos', value: 320 },
+    { label: 'Escala: 10 Minutos', value: 480 },
+    { label: 'Escala: 5 Minutos (Máximo)', value: 960 }
   ];
 
-  scales.forEach(s => {
-    const el = document.createElement('div');
-    el.className = 'context-menu-item';
-    const isActive = Math.abs(state.slotHeight - s.value) < 5;
-    el.innerHTML = `<span class="icon-placeholder">${isActive ? '✓' : ''}</span>${s.label}`;
-    el.onclick = () => {
-      state.slotHeight = s.value;
+  options.forEach(opt => {
+    const item = document.createElement('div');
+    item.className = 'context-menu-item';
+    const isActive = Math.abs(state.slotHeight - opt.value) < 5;
+    if (isActive) item.classList.add('active');
+    
+    item.innerHTML = `<span>${opt.label}</span>`;
+    item.onclick = () => {
+      state.slotHeight = opt.value;
       state.save();
-      document.documentElement.style.setProperty('--slot-height', `${s.value}px`);
+      document.documentElement.style.setProperty('--slot-height', `${opt.value}px`);
       refreshUI();
       closeContextMenu();
     };
-    menu.appendChild(el);
+    menu.appendChild(item);
   });
 
   document.body.appendChild(menu);

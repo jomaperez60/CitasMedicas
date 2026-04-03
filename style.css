@@ -62,8 +62,22 @@ body {
 .ribbon-tab-header div.active-tab {
   background: #fff;
   font-weight: bold;
-  border-bottom: 2px solid #1a73e8;
-  color: #1a73e8;
+  border-bottom: 3px solid #1e3a5f;
+  color: #1e3a5f;
+}
+
+.ribbon-branding {
+  display: flex;
+  align-items: center;
+  padding: 5px 15px;
+  background: #fff;
+  border-right: 1px solid #e2e8f0;
+}
+
+.ribbon-logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
 }
 
 .ribbon-group-container {
@@ -230,14 +244,16 @@ body {
 }
 
 .hour-label {
-  height: 100%;
+  height: 0;
   padding-left: 8px;
   display: flex;
   align-items: center;
-  font-weight: bold;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 13px;
   color: #1e3a5f;
   box-sizing: border-box;
+  transform: translateY(-50%); /* Center the text ON the line */
+  white-space: nowrap;
 }
 
 .quarter-scale {
@@ -269,7 +285,7 @@ body {
   display: flex;
   flex-direction: column;
   background-image: 
-    linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px);
+    linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
   background-size: 100% calc(var(--slot-height) / 4);
   box-sizing: border-box;
 }
@@ -710,4 +726,56 @@ body {
   color: #1e3a5f;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* Context Menu for Zoom/Intervals */
+.classic-context-menu {
+  position: fixed;
+  background: #ffffff;
+  border: 1px solid #7192b7;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  border-radius: 4px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 5px 0;
+  animation: menuFadeIn 0.15s ease-out;
+}
+
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.context-menu-item {
+  padding: 10px 15px;
+  font-size: 13px;
+  color: #1e3a5f;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.1s;
+}
+
+.context-menu-item:hover {
+  background: #f0f7ff;
+  color: #1a73e8;
+}
+
+.context-menu-item.active {
+  font-weight: bold;
+  background: #f3f6fa;
+}
+
+.context-menu-item.active::after {
+  content: '✓';
+  color: #1a73e8;
+}
+
+.context-menu-divider {
+  height: 1px;
+  background: #eee;
+  margin: 5px 0;
 }
