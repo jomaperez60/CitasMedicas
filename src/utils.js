@@ -1,10 +1,19 @@
 export function formatDate(date) {
-  return new Intl.DateTimeFormat('es-ES', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(date);
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const weekday = new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(d);
+  
+  return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)}, ${day}-${month}-${year}`;
+}
+
+export function formatDateShort(date) {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
 }
 
 export function formatTime(isoString, format = '24h') {
