@@ -1,6 +1,9 @@
 import { state, APPOINTMENT_TYPES, HONDURAS_INSURANCES } from './state.js';
 import { formatDate, formatTime, getISOStringFromDate, calculatePosition, calculateHeight, getTimeFromPosition, getWeekDates } from './utils.js';
 
+const ICON_DOCTOR = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #1a73e8;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>`;
+const ICON_ROOM = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ea4335;"><path d="M3 21h18"></path><path d="M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3"></path><path d="M19 21V11"></path><path d="M5 21V11"></path></svg>`;
+
 const elements = {
   // ... existing elements ...
   tabButtons: document.querySelectorAll('.tab-btn'),
@@ -200,9 +203,9 @@ function renderGridPro() {
     elements.calendarGrid.innerHTML = providers.map(p => `
       <div class="classic-provider-col" data-provider-id="${p.id}">
         <div class="classic-col-header">
-           <div class="header-icon">${p.type === 'doctor' ? '👨‍⚕️' : '🏥'}</div>
+           <div class="header-icon">${p.type === 'doctor' ? ICON_DOCTOR : ICON_ROOM}</div>
            <div class="header-name">${p.name}</div>
-           <div class="header-sub">${formatDate(state.currentDate)}</div>
+           <div class="header-sub">${formatDate(state.currentDate).toUpperCase()}</div>
         </div>
         ${Array.from({ length: 15 }).map(() => `
           <div class="hour-slot-container">
@@ -291,10 +294,10 @@ function renderAppointmentsPro() {
 function renderPhysicianSidebar() {
   const render = (data, container) => {
     container.innerHTML = data.map(p => `
-      <div class="classic-physician-item" style="padding: 10px; border-bottom: 1px solid #ddd; display: flex; align-items: center; gap: 8px;">
-        <input type="checkbox" data-id="${p.id}" ${p.visible ? 'checked' : ''} style="width: 18px; height: 18px;">
-        <div style="font-size: 1.2rem;">${p.type === 'doctor' ? '👨‍⚕️' : '🏥'}</div>
-        <span style="font-weight: bold; font-size: 0.8rem;">${p.name}</span>
+      <div class="classic-physician-item" style="padding: 10px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 12px; transition: background 0.2s;">
+        <input type="checkbox" data-id="${p.id}" ${p.visible ? 'checked' : ''} style="width: 16px; height: 16px; cursor: pointer;">
+        <div class="sidebar-icon-wrap">${p.type === 'doctor' ? ICON_DOCTOR : ICON_ROOM}</div>
+        <span style="font-weight: 500; font-size: 0.85rem; color: #444;">${p.name}</span>
       </div>
     `).join('');
   };
