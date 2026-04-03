@@ -481,3 +481,52 @@ body {
 }
 
 .classic-hr { border: 0; border-top: 1px solid #ddd; margin: 5px 0; }
+
+/* Drag Selection & Context Menu */
+.drag-selection {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  background: rgba(37, 99, 235, 0.35);
+  border: 1px solid #2563eb;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.classic-context-menu {
+  position: fixed;
+  z-index: 4000; /* Higher than modal */
+  background: #fff;
+  border: 1px solid #7192B7;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+  min-width: 180px;
+  padding: 2px;
+  font-family: var(--font-family);
+  font-size: 11px;
+}
+
+.context-menu-item {
+  padding: 6px 10px 6px 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  position: relative;
+  transition: background 0.1s;
+}
+
+.context-menu-item:hover {
+  background: #e1f5fe;
+}
+
+.context-menu-item .icon-placeholder {
+  position: absolute;
+  left: 6px;
+  width: 16px;
+  text-align: center;
+}
+
+.context-menu-separator {
+  height: 1px;
+  background: #ccc;
+  margin: 2px 5px;
+}
