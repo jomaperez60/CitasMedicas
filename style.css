@@ -174,7 +174,7 @@ body {
 .tab-content.active { display: block; }
 
 /* Time Column Pro (00, 15, 30, 45) */
-.classic-scheduler { display: flex; height: 100%; overflow: hidden; }
+.classic-scheduler { display: flex; height: 100%; overflow: auto; position: relative; }
 
 .classic-time-col {
   width: 90px;
@@ -182,10 +182,12 @@ body {
   border-right: 1px solid var(--grid-border);
   position: sticky;
   left: 0;
-  z-index: 120; /* High enough to be over appointments but scroll with grid */
+  z-index: 120;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  padding: 0;
+  margin: 0;
 }
 
 .classic-time-header {
@@ -205,14 +207,16 @@ body {
 
 .hour-slot-container {
   height: var(--slot-height);
-  border-bottom: 1px solid #ccc; /* Solid line for the hour */
+  border-bottom: 1px solid rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .grid-sub-slot {
   flex: 1;
-  border-bottom: 1px dotted #ddd; /* Dotted line for quarter hours */
+  border-bottom: 1px dotted rgba(0,0,0,0.05);
+  box-sizing: border-box;
 }
 
 .grid-sub-slot:last-child {
@@ -220,17 +224,18 @@ body {
 }
 
 .hour-label {
-  flex: 1;
+  height: 100%;
+  padding-left: 8px;
+  display: flex;
+  align-items: center;
   font-weight: bold;
-  font-size: 18px;
-  padding-left: 5px;
-  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  color: #1e3a5f;
+  box-sizing: border-box;
 }
 
 .quarter-scale {
-  flex: 3;
-  display: flex;
-  flex-direction: column;
+  display: none; /* We will use background lines for quarters to ensure sync */
 }
 
 .quarter-slot {
@@ -246,7 +251,7 @@ body {
 .classic-grid {
   flex: 1;
   display: flex;
-  overflow: auto;
+  overflow: visible;
   position: relative;
   background-color: #f1f4f9;
 }
@@ -258,8 +263,9 @@ body {
   display: flex;
   flex-direction: column;
   background-image: 
-    linear-gradient(rgba(200,210,230,.3) 1px, transparent 1px);
-  background-size: 100% var(--slot-height);
+    linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px);
+  background-size: 100% calc(var(--slot-height) / 4);
+  box-sizing: border-box;
 }
 
 .classic-provider-col .hour-slot-container {

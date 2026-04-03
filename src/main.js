@@ -180,11 +180,6 @@ function renderTimeSlotsPro() {
     slots.push(`
       <div class="hour-slot-container">
         <div class="hour-label">${timeLabel}</div>
-        <div class="quarter-scale">
-          <div class="quarter-slot">15</div>
-          <div class="quarter-slot">30</div>
-          <div class="quarter-slot">45</div>
-        </div>
       </div>
     `);
   }
