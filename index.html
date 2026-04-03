@@ -5,8 +5,8 @@
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CED - Calendario Médico Pro Exact v4.9</title>
-  <script type="module" crossorigin src="/CitasMedicas/assets/index-vCi0N2m9.js"></script>
-  <link rel="stylesheet" crossorigin href="/CitasMedicas/assets/index-D8hnKWEf.css">
+  <script type="module" crossorigin src="/CitasMedicas/assets/index-BYzOBYgu.js"></script>
+  <link rel="stylesheet" crossorigin href="/CitasMedicas/assets/index-Zi6oniSu.css">
 </head>
 <body class="classic-app">
 
@@ -24,27 +24,72 @@
     <div class="ribbon-group-container">
       <div class="ribbon-group">
         <div class="ribbon-buttons">
-          <button id="view-day" class="ribbon-btn active"><span class="icon">📅</span><br>Día</button>
-          <button id="view-week" class="ribbon-btn"><span class="icon">📅</span><br>Semana</button>
-          <button class="ribbon-btn"><span class="icon">📅</span><br>Mes</button>
+          <button class="ribbon-btn active" id="view-day">
+            <div class="ribbon-btn-inner">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </div>
+            <div class="ribbon-btn-text">Día</div>
+          </button>
+          <button id="view-week" class="ribbon-btn">
+            <div class="ribbon-btn-inner">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><line x1="8" y1="14" x2="8" y2="14"></line><line x1="12" y1="14" x2="12" y2="14"></line><line x1="16" y1="14" x2="16" y2="14"></line></svg>
+            </div>
+            <div class="ribbon-btn-text">Semana</div>
+          </button>
+          <button class="ribbon-btn">
+            <div class="ribbon-btn-inner">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </div>
+            <div class="ribbon-btn-text">Mes</div>
+          </button>
         </div>
         <div class="ribbon-group-label">Vistas</div>
       </div>
 
       <div class="ribbon-group">
         <div class="ribbon-buttons">
-          <button id="nav-agenda" class="ribbon-btn tab-btn active" data-tab="agenda"><span class="icon">🏠</span><br>Agenda</button>
-          <button id="nav-lista" class="ribbon-btn tab-btn" data-tab="lista"><span class="icon">📋</span><br>Eventos</button>
-          <button id="nav-pacientes" class="ribbon-btn tab-btn" data-tab="pacientes"><span class="icon">👥</span><br>Pacientes</button>
+          <button id="nav-agenda" class="ribbon-btn tab-btn active" data-tab="agenda">
+            <div class="ribbon-btn-inner">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            </div>
+            <div class="ribbon-btn-text">Agenda</div>
+          </button>
+          <button id="nav-lista" class="ribbon-btn tab-btn" data-tab="lista">
+            <div class="ribbon-btn-inner">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            </div>
+            <div class="ribbon-btn-text">Eventos</div>
+          </button>
+          <button id="nav-pacientes" class="ribbon-btn tab-btn" data-tab="pacientes">
+            <div class="ribbon-btn-inner">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+            <div class="ribbon-btn-text">Pacientes</div>
+          </button>
         </div>
         <div class="ribbon-group-label">Navegación</div>
       </div>
 
       <div class="ribbon-group">
         <div class="ribbon-buttons">
-          <button id="add-appointment-btn" class="ribbon-btn"><span class="icon">➕</span><br>Hacer Cita</button>
-          <button id="print-btn" class="ribbon-btn"><span class="icon">🖨️</span><br>Imprimir</button>
-          <button id="theme-toggle" class="ribbon-btn"><span class="icon">🌓</span><br>Tema</button>
+          <button id="add-appointment-btn" class="ribbon-btn">
+            <div class="ribbon-btn-inner">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </div>
+            <div class="ribbon-btn-text">Hacer Cita</div>
+          </button>
+          <button class="ribbon-btn" id="print-btn">
+            <div class="ribbon-btn-inner">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            </div>
+            <div class="ribbon-btn-text">Imprimir</div>
+          </button>
+          <button class="ribbon-btn" id="theme-toggle">
+            <div class="ribbon-btn-inner">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </div>
+            <div class="ribbon-btn-text">Tema</div>
+          </button>
         </div>
         <div class="ribbon-group-label">Acciones</div>
       </div>
@@ -69,9 +114,16 @@
       <!-- Left Collapsible Sidebar -->
       <aside id="left-sidebar" class="sidebar-resizable collapsed">
         <div class="sidebar-content">
-          <h3 class="classic-label">Salas:</h3>
+          <h3 class="classic-sidebar-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          Salas
+        </h3>
           <div id="rooms-filter" class="classic-filter-list"></div>
-          <h3 class="classic-label" style="margin-top: 20px;">Médicos:</h3>
+          
+          <h3 class="classic-sidebar-title" style="margin-top: 20px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Médicos
+          </h3>
           <div id="doctors-filter" class="classic-filter-list"></div>
         </div>
         <!-- Handle to drag and open the sidebar -->
