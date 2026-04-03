@@ -56,7 +56,7 @@ ${k}`}class I extends Error{constructor({message:e,code:r,cause:s,name:n}){var i
       <option value="${r.id}">${r.name}</option>
     `).join(""))}function Si(){const r=m.slotInterval||30;let s=[`
     <div class="classic-time-header" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0;">
-       <img src="./Logo CED.png" id="ced-logo-agenda" alt="CED Logo">
+       <img src="./logo-ced.png" id="ced-logo-agenda" alt="CED Logo">
     </div>
   `];for(let i=6;i<=20;i++){const a=i>12?i-12:i===0?12:i,o=i>=12?"pm":"am";let l="";for(let c=0;c<60;c+=r)c===0?l+=`
           <div class="time-sub-slot" style="flex: 1; display: flex; border-top: 1px solid rgba(0,0,0,0.15); position: relative; box-sizing: border-box; background: transparent;">

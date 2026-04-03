@@ -208,7 +208,7 @@ function renderTimeSlotsPro() {
 
   let slots = [`
     <div class="classic-time-header" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0;">
-       <img src="./Logo CED.png" id="ced-logo-agenda" alt="CED Logo">
+       <img src="./logo-ced.png" id="ced-logo-agenda" alt="CED Logo">
     </div>
   `];
   for (let h = startHour; h <= endHour; h++) {
