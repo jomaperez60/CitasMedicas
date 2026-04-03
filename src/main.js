@@ -320,6 +320,15 @@ function attachEventListeners() {
   });
 
   elements.cancelModal.onclick = elements.cancelModalX.onclick = () => elements.modal.style.display = 'none';
+  
+  elements.deleteBtn.onclick = () => {
+    if (state.selectedAppointment && confirm('¿Está seguro de que desea eliminar esta cita?')) {
+      state.deleteAppointment(state.selectedAppointment.id);
+      elements.modal.style.display = 'none';
+      refreshUI();
+    }
+  };
+
   elements.form.onsubmit = (e) => {
     e.preventDefault();
     const data = {
