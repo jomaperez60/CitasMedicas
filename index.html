@@ -398,30 +398,34 @@
   </div>
 
   <!-- User Management Modal (Admin Only) -->
-  <div id="users-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content" style="max-width: 600px;">
-      <div class="modal-header">
-        <h2>Gestión de Usuarios (Admin)</h2>
-        <button class="close-btn" onclick="document.getElementById('users-modal').style.display='none'">×</button>
+  <div id="users-modal" class="classic-modal-overlay" style="display: none;">
+    <div class="classic-modal" style="width: 500px;">
+      <div class="modal-title-bar">
+        Gestión de Usuarios - Admin 
+        <button class="title-bar-close" onclick="document.getElementById('users-modal').style.display='none'">X</button>
       </div>
-      <div class="modal-body">
-        <div style="background:var(--bg-light); padding:15px; border-radius:4px; margin-bottom:15px; border:1px solid var(--grid-border);">
-          <h3 style="margin-top:0; color:var(--text-dark); margin-bottom:10px;">Crear Nuevo Usuario</h3>
-          <div class="form-group">
-            <label>Email del Nuevo Médico/Asistente</label>
-            <input type="email" id="new-user-email" placeholder="medico@ced.clinica" />
+      
+      <div class="classic-modal-body">
+        <div class="modal-section-title">Crear Nuevo Usuario (Médico/Asistente)</div>
+        <div class="modal-field-grid" style="grid-template-columns: 1fr;">
+          <div class="modal-field-item">
+            <label>Email Institucional:</label>
+            <input type="email" id="new-user-email" class="classic-input" placeholder="ejemplo@ced.clinica" />
           </div>
-          <div class="form-group">
-            <label>Contraseña Provisional</label>
-            <input type="text" id="new-user-password" placeholder="Mínimo 6 caracteres" />
+          <div class="modal-field-item">
+            <label>Contraseña Provisional:</label>
+            <input type="text" id="new-user-password" class="classic-input" placeholder="Mínimo 6 caracteres" />
           </div>
-          <button id="btn-create-user" class="classic-btn">Crear Cuenta</button>
-          <div id="user-creation-status" style="margin-top: 5px; font-size:12px; color:#1a73e8;"></div>
         </div>
         
-        <h3 style="color:var(--text-dark);">Usuarios Registrados (Lectura Histórica)</h3>
-        <p style="font-size:12px; color:#555; margin-bottom:10px;">Nota: En Supabase Auth centralizado, el borrado de usuarios se realiza exclusivamente desde el panel en la nube de Supabase.com por seguridad de auditoría HIPAA.</p>
-        <div id="users-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--grid-border); padding: 10px; border-radius: 4px;">
+        <div style="margin-top: 15px; text-align: right;">
+           <button id="btn-create-user" class="classic-btn">Registrar Médico</button>
+        </div>
+        <div id="user-creation-status" style="margin-top: 5px; font-size:12px; color:#1a73e8; text-align: right; min-height: 15px;"></div>
+        
+        <div class="modal-section-title" style="margin-top: 20px;">Usuarios en el Sistema</div>
+        <p style="font-size:11px; color:#555; margin-bottom:10px;">Nota: El borrado de cuentas por auditoría HIPAA se realiza exclusivamente del portal en la nube Supabase.com.</p>
+        <div id="users-list" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--grid-border); padding: 5px; border-radius: 2px; background: white;">
           <!-- List will be populated mostly with auth placeholder -->
         </div>
       </div>
