@@ -499,12 +499,12 @@ function showContextMenu(x, y) {
   menu.style.top = `${y}px`;
 
   const items = [
-    { label: 'Nuevo Evento...', icon: '📅', action: () => openModal({ startTime: selectionInfo.startTime, providerId: selectionInfo.providerId, duration: selectionInfo.duration }) },
-    { label: 'Nuevo Evento Todo el Día', icon: '⏰', action: () => openModal({ startTime: '06:00', providerId: selectionInfo.providerId, duration: 840 }) },
-    { label: 'Nuevo Evento Recurrente...', icon: '🔁', action: () => openRecurrenceModal({ startTime: selectionInfo.startTime, duration: selectionInfo.duration }) },
+    { label: 'Nuevo Evento...', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>', action: () => openModal({ startTime: selectionInfo.startTime, providerId: selectionInfo.providerId, duration: selectionInfo.duration }) },
+    { label: 'Nuevo Evento Todo el Día', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>', action: () => openModal({ startTime: '06:00', providerId: selectionInfo.providerId, duration: 840 }) },
+    { label: 'Nuevo Evento Recurrente...', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>', action: () => openRecurrenceModal({ startTime: selectionInfo.startTime, duration: selectionInfo.duration }) },
     { type: 'separator' },
-    { label: 'Hoy', icon: '🏠', action: () => { state.currentDate = new Date(); state.save(); refreshUI(); updateStatusMessage(); } },
-    { label: 'Ir a Fecha...', icon: '🔍', action: () => alert('Use el calendario lateral para navegar') }
+    { label: 'Hoy', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>', action: () => { state.currentDate = new Date(); state.save(); refreshUI(); updateStatusMessage(); } },
+    { label: 'Ir a Fecha...', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>', action: () => alert('Use el calendario lateral para navegar') }
   ];
 
   items.forEach(item => {

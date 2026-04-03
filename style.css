@@ -497,13 +497,13 @@ body {
   position: fixed;
   z-index: 4000;
   background: #fff;
-  border: 1px solid #1e3a5f;
-  box-shadow: 3px 3px 10px rgba(0,0,0,0.3);
+  border: 1px solid #1e3a5f; /* Professional dark blue border as requested */
+  box-shadow: 4px 4px 15px rgba(0,0,0,0.25);
   min-width: 220px;
-  padding: 2px;
+  padding: 4px;
   font-family: var(--font-family);
-  font-size: 12px;
-  border-radius: 2px;
+  font-size: 13px;
+  border-radius: 4px;
 }
 
 .context-menu-item {
