@@ -215,7 +215,8 @@ body {
   min-height: 90px;
   max-height: 90px;
   background: var(--time-col-bg);
-  border-bottom: 2px solid #7192b7;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.2);
+  border-right: 1px solid var(--grid-border);
   position: sticky;
   top: 0;
   z-index: 130;
@@ -758,9 +759,6 @@ body {
   transition: background 0.1s;
 }
 
-.context-menu-item span {
-  flex: 1;
-}
 
 .context-menu-item:hover {
   background: #f0f7ff;
