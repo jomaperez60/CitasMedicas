@@ -69,7 +69,15 @@ const elements = {
   newUserPassword: document.getElementById('new-user-password'),
   userCreationStatus: document.getElementById('user-creation-status'),
   usersList: document.getElementById('users-list'),
-  btnSetupAdmin: document.getElementById('btn-setup-admin')
+  btnSetupAdmin: document.getElementById('btn-setup-admin'),
+  
+  // Resource UI
+  btnAddRoom: document.getElementById('btn-add-room'),
+  btnAddDoctor: document.getElementById('btn-add-doctor'),
+  resourceModal: document.getElementById('resource-modal'),
+  resourceType: document.getElementById('resource-type'),
+  resourceName: document.getElementById('resource-name'),
+  btnSaveResource: document.getElementById('btn-save-resource')
 };
 
 let selectionInfo = {
@@ -341,12 +349,35 @@ function renderPhysicianSidebar() {
       <div class="classic-physician-item" style="padding: 10px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 12px; transition: background 0.2s;">
         <input type="checkbox" data-id="${p.id}" ${p.visible ? 'checked' : ''} style="width: 16px; height: 16px; cursor: pointer;">
         <div class="sidebar-icon-wrap">${p.type === 'doctor' ? ICON_DOCTOR : ICON_ROOM}</div>
-        <span style="font-weight: 500; font-size: 0.85rem; color: #444;">${p.name}</span>
+        <span style="font-weight: 500; font-size: 0.85rem; color: #444; flex: 1;">${p.name}</span>
+        <button class="admin-only delete-resource-btn" data-id="${p.id}" data-type="${p.type}" style="color:#d32f2f; background:none; border:none; cursor:pointer; font-size:16px; padding:2px;" title="Eliminar ${p.type === 'doctor' ? 'Médico' : 'Sala'}">🗑</button>
       </div>
     `).join('');
   };
+  
   render(state.rooms, elements.roomsFilter);
   render(state.doctors, elements.doctorsFilter);
+  
+  // Condense RBAC check immediately dynamically
+  if (state.currentUser?.role !== 'admin') {
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+  }
+
+  // Attach delete events
+  document.querySelectorAll('.delete-resource-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      const id = e.target.getAttribute('data-id');
+      const type = e.target.getAttribute('data-type');
+      if (confirm(`¿Está seguro que desea eliminar este ${type === 'doctor' ? 'médico' : 'sala'}? Esta acción eliminará su columna.`)) {
+        const result = state.deleteResource(id, type);
+        if (result.success) {
+          refreshUI();
+        } else {
+          alert(result.message);
+        }
+      }
+    };
+  });
 }
 
 function renderDateNavigatorRight() {
@@ -917,6 +948,31 @@ async function initAuth() {
       renderUsersList();
     }
   });
+
+  // Resource Creation Bindings
+  elements.btnAddRoom.addEventListener('click', () => {
+    elements.resourceType.value = 'room';
+    elements.resourceName.value = '';
+    elements.resourceModal.style.display = 'flex';
+  });
+
+  elements.btnAddDoctor.addEventListener('click', () => {
+    elements.resourceType.value = 'doctor';
+    elements.resourceName.value = '';
+    elements.resourceModal.style.display = 'flex';
+  });
+
+  elements.btnSaveResource.addEventListener('click', () => {
+    const name = elements.resourceName.value.trim();
+    if (!name) {
+      alert("Por favor, introduzca un nombre.");
+      return;
+    }
+    const type = elements.resourceType.value;
+    state.addResource(type, name);
+    elements.resourceModal.style.display = 'none';
+    refreshUI();
+  });
 }
 
 function handleSession(session) {
@@ -925,7 +981,6 @@ function handleSession(session) {
     // For this deployment, we define the administrator via their email, e.g. "admin@ced.com"
     // However, if we invent any email, we can assume the FIRST user ever created is admin, or hardcode it.
     // We will assume "admin@ced" or anything starting with "admin" or just any specified string is admin.
-    // A better way is using user_metadata.
     let role = session.user.user_metadata?.role || 'standard';
     
     // Fallback: If no role is found in metadata, but it's the admin email:

@@ -139,6 +139,55 @@ class AppState {
     this.save();
   }
 
+  addResource(type, name) {
+    const isDoctor = type === 'doctor';
+    const list = isDoctor ? this.doctors : this.rooms;
+    const newId = `${type}-${Date.now()}`;
+    const color = isDoctor ? '#2563eb' : '#dc2626'; // Default colors
+    
+    list.push({
+      id: newId,
+      name: name,
+      color: color,
+      visible: true,
+      type: type
+    });
+    this.save();
+    return newId;
+  }
+
+  deleteResource(id, type) {
+    // Validation: Check for future/current appointments
+    const now = new Date();
+    // Reset to start of day for comparison
+    now.setHours(0, 0, 0, 0);
+
+    const hasFutureAppointments = this.appointments.some(app => {
+      const isMatch = app.providerId === id || app.doctorId === id;
+      if (!isMatch) return false;
+      const appDate = new Date(app.startTime);
+      appDate.setHours(0, 0, 0, 0);
+      return appDate.getTime() >= now.getTime();
+    });
+
+    if (hasFutureAppointments) {
+      return { success: false, message: "No puedes borrar este recurso porque aún tiene citas programadas hoy o en el futuro." };
+    }
+
+    // Proceso de Borrado en Cascada (Eliminar citas históricas para mantener BD limpia, opcional pero necesario para consistencia estricta en este modo de UI)
+    // Wait, the user didn't authorise deleting historical data, only to ABORT if there are future appointments.
+    // If it's safe to delete (only past appointments), we will just remove the resource.
+    
+    if (type === 'doctor') {
+      this.doctors = this.doctors.filter(d => d.id !== id);
+    } else {
+      this.rooms = this.rooms.filter(r => r.id !== id);
+    }
+    
+    this.save();
+    return { success: true };
+  }
+
   getAppointmentsForDate(date) {
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
