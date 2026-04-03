@@ -43,6 +43,9 @@ const elements = {
   cancelRecurrence: document.getElementById('cancel-recurrence'),
   cancelRecurrenceX: document.getElementById('cancel-recurrence-x'),
   saveRecurrence: document.getElementById('save-recurrence'),
+  recurrenceBanner: document.getElementById('recurrence-summary-banner'),
+  recurrenceText: document.getElementById('recurrence-summary-text'),
+  removeRecurrenceBtn: document.getElementById('remove-recurrence-btn'),
   contextMenu: null // Dynamic
 };
 
@@ -338,9 +341,40 @@ function attachEventListeners() {
     }
   });
 
-  elements.cancelModal.onclick = elements.cancelModalX.onclick = () => elements.modal.style.display = 'none';
+  elements.cancelModal.onclick = elements.cancelModalX.onclick = () => {
+    elements.modal.style.display = 'none';
+    state.currentRecurrence = null; // Clear recurrence on cancel
+  };
+  
+  elements.removeRecurrenceBtn.onclick = () => {
+    state.currentRecurrence = null;
+    elements.recurrenceBanner.style.display = 'none';
+  };
+
   elements.cancelRecurrence.onclick = elements.cancelRecurrenceX.onclick = () => elements.recurrenceModal.style.display = 'none';
-  elements.saveRecurrence.onclick = () => elements.recurrenceModal.style.display = 'none';
+  
+  elements.saveRecurrence.onclick = () => {
+    // Collect Recurrence Data
+    const pattern = document.querySelector('.recurrence-pattern-opt.active').textContent;
+    const interval = document.querySelector('#recurrence-weekly-options input[type="number"]').value;
+    const days = Array.from(document.querySelectorAll('.days-selector input:checked')).map(cb => cb.parentElement.textContent.trim());
+    
+    state.currentRecurrence = {
+      pattern,
+      interval,
+      days,
+      summary: `${pattern} cada ${interval} semana(s) el: ${days.join(', ')}`
+    };
+
+    elements.recurrenceModal.style.display = 'none';
+    
+    // Return to Appointment Modal
+    openModal({
+      startTime: selectionInfo.startTime,
+      duration: selectionInfo.duration,
+      providerId: selectionInfo.providerId
+    });
+  };
   
   elements.deleteBtn.onclick = () => {
     if (state.selectedAppointment && confirm('¿Está seguro de que desea eliminar esta cita?')) {
@@ -370,13 +404,14 @@ function attachEventListeners() {
       return;
     }
 
-    if (state.selectedAppointment) state.updateAppointment(state.selectedAppointment.id, data);
-    else state.addAppointment(data);
+  if (state.selectedAppointment) state.updateAppointment(state.selectedAppointment.id, data);
+  else state.addAppointment({ ...data, recurrence: state.currentRecurrence });
 
-    elements.modal.style.display = 'none';
-    clearSelection();
-    refreshUI();
-  };
+  elements.modal.style.display = 'none';
+  state.currentRecurrence = null; // Clear after save
+  clearSelection();
+  refreshUI();
+};
 }
 
 function openModal(defs = {}) {
@@ -400,6 +435,13 @@ function openModal(defs = {}) {
     }
   }
   
+  if (state.currentRecurrence) {
+    elements.recurrenceBanner.style.display = 'flex';
+    elements.recurrenceText.textContent = state.currentRecurrence.summary;
+  } else {
+    elements.recurrenceBanner.style.display = 'none';
+  }
+
   elements.modal.style.display = 'flex';
 }
 
