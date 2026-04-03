@@ -44,7 +44,7 @@ export function getISOStringFromDate(date, timeString) {
   return `${year}-${month}-${day}T${hh}:${mm}`;
 }
 
-export function calculatePosition(isoString, headerHeight = 90, slotHeight = 80) {
+export function calculatePosition(isoString, headerHeight = 90, slotHeight = 100) {
   const date = new Date(isoString);
   const hours = date.getHours();
   const minutes = date.getMinutes();
@@ -55,18 +55,18 @@ export function calculatePosition(isoString, headerHeight = 90, slotHeight = 80)
   return headerHeight + (relativeMinutes / 60) * slotHeight;
 }
 
-export function calculateHeight(durationMinutes, slotHeight = 80) {
+export function calculateHeight(durationMinutes, slotHeight = 100) {
   return (durationMinutes / 60) * slotHeight;
 }
 
-export function getTimeFromPosition(y, headerHeight = 90, slotHeight = 80) {
+export function getTimeFromPosition(y, headerHeight = 90, slotHeight = 100) {
   const startHour = 6;
   
   const relativeY = y - headerHeight;
   const totalMinutes = (relativeY / slotHeight) * 60;
   
-  // Round to nearest 15 minutes
-  const roundedMinutes = Math.round(totalMinutes / 15) * 15;
+  // Round to nearest 1 minute for better precision if needed, or 15 for snap
+  const roundedMinutes = Math.round(totalMinutes); 
   const hours = Math.floor(roundedMinutes / 60) + startHour;
   const mins = roundedMinutes % 60;
   

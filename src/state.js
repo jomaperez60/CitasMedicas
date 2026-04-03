@@ -45,6 +45,7 @@ class AppState {
     this.activeTab = 'agenda'; // 'agenda', 'lista', 'pacientes'
     this.timeFormat = localStorage.getItem('ced_time_format') || '24h';
     this.theme = localStorage.getItem('ced_theme') || 'light';
+    this.slotHeight = parseInt(localStorage.getItem('ced_slot_height')) || 100; // Pixels per hour (Zoom)
     this.selectedProviderId = null;
     this.doctors = JSON.parse(localStorage.getItem('ced_doctors')) || INITIAL_DOCTORS;
     this.rooms = JSON.parse(localStorage.getItem('ced_rooms')) || INITIAL_ROOMS;
@@ -61,6 +62,7 @@ class AppState {
     localStorage.setItem('ced_patients', JSON.stringify(this.patients));
     localStorage.setItem('ced_theme', this.theme);
     localStorage.setItem('ced_time_format', this.timeFormat);
+    localStorage.setItem('ced_slot_height', this.slotHeight);
   }
 
   // --- Patients Logic ---

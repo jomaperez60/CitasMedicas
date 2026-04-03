@@ -8,7 +8,7 @@
   --grid-border: #ccc;
   --time-col-bg: #f0f0f0;
   --bg-main: #fff;
-  --slot-height: 80px; /* Increased to accommodate 4 segments of 15m */
+  --slot-height: 100px; /* Dynamic: Updated via JS Scale menu */
   --font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
   
   --navigator-right-width: 220px;

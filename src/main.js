@@ -58,6 +58,8 @@ let selectionInfo = {
 };
 
 function init() {
+  // Apply persisted zoom
+  document.documentElement.style.setProperty('--slot-height', `${state.slotHeight}px`);
   populateDropdowns();
   renderTypesSelection();
   updateStatusMessage();
@@ -312,6 +314,11 @@ function attachEventListeners() {
     refreshUI();
   };
 
+  elements.timeColumn.oncontextmenu = (e) => {
+    e.preventDefault();
+    showScaleMenu(e.clientX, e.clientY);
+  };
+
   document.addEventListener('mousedown', (e) => {
     // Only close if clicking outside the menu
     if (elements.contextMenu && !elements.contextMenu.contains(e.target)) {
@@ -544,6 +551,41 @@ function closeContextMenu() {
     elements.contextMenu.remove();
     elements.contextMenu = null;
   }
+}
+
+function showScaleMenu(x, y) {
+  closeContextMenu();
+  const menu = document.createElement('div');
+  menu.className = 'classic-context-menu';
+  menu.style.left = `${x}px`;
+  menu.style.top = `${y}px`;
+
+  const scales = [
+    { label: '60 Minutos', value: 60 },
+    { label: '30 Minutos', value: 100 },
+    { label: '15 Minutos', value: 160 },
+    { label: '10 Minutos', value: 240 },
+    { label: '6 Minutos', value: 400 },
+    { label: '5 Minutos', value: 480 }
+  ];
+
+  scales.forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'context-menu-item';
+    const isActive = Math.abs(state.slotHeight - s.value) < 5;
+    el.innerHTML = `<span class="icon-placeholder">${isActive ? '✓' : ''}</span>${s.label}`;
+    el.onclick = () => {
+      state.slotHeight = s.value;
+      state.save();
+      document.documentElement.style.setProperty('--slot-height', `${s.value}px`);
+      refreshUI();
+      closeContextMenu();
+    };
+    menu.appendChild(el);
+  });
+
+  document.body.appendChild(menu);
+  elements.contextMenu = menu;
 }
 
 init();
