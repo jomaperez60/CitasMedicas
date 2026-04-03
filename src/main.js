@@ -592,6 +592,8 @@ function openRecurrenceModal(defs = {}) {
   
   elements.recurrenceModal.style.display = 'flex';
 }
+
+
 function editAppointment(app) {
   state.selectedAppointment = app;
   elements.deleteBtn.style.display = 'block';
