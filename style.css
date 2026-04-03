@@ -174,7 +174,7 @@ body {
 .tab-content.active { display: block; }
 
 /* Time Column Pro (00, 15, 30, 45) */
-.classic-scheduler { display: flex; height: 100%; overflow: auto; }
+.classic-scheduler { display: flex; height: 100%; overflow: hidden; }
 
 .classic-time-col {
   width: 90px;
@@ -182,7 +182,7 @@ body {
   border-right: 1px solid var(--grid-border);
   position: sticky;
   left: 0;
-  z-index: 150;
+  z-index: 120; /* High enough to be over appointments but scroll with grid */
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -192,10 +192,10 @@ body {
   height: 90px;
   min-height: 90px;
   background: var(--time-col-bg);
-  border-bottom: 2px solid #7192b7; /* Professional blue border */
+  border-bottom: 2px solid #7192b7;
   position: sticky;
   top: 0;
-  z-index: 101;
+  z-index: 130; /* Corner must be above both headers and time-col */
   flex-shrink: 0;
 }
 
@@ -246,8 +246,7 @@ body {
 .classic-grid {
   flex: 1;
   display: flex;
-  overflow-y: auto;
-  overflow-x: auto;
+  overflow: auto;
   position: relative;
   background-color: #f1f4f9;
 }
