@@ -5,8 +5,8 @@
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CED - Calendario Médico Pro Exact v4.9</title>
-  <script type="module" crossorigin src="/CitasMedicas/assets/index-B_DJuSwO.js"></script>
-  <link rel="stylesheet" crossorigin href="/CitasMedicas/assets/index-Cbb3_J3w.css">
+  <script type="module" crossorigin src="/CitasMedicas/assets/index-XahHnuKW.js"></script>
+  <link rel="stylesheet" crossorigin href="/CitasMedicas/assets/index-B5Cgy_zs.css">
 </head>
 <body class="classic-app">
 
@@ -230,10 +230,6 @@
             <label>Seguro Médico:</label>
             <select id="patient-insurance" class="classic-select"></select>
           </div>
-          <div class="modal-field-item">
-            <label>Fecha de Nacimiento:</label>
-            <input type="date" id="patient-dob" class="classic-input">
-          </div>
         </div>
 
         <!-- Seccion Cita -->
@@ -264,8 +260,12 @@
             </select>
           </div>
           <div class="modal-field-item">
-            <label>Recurso / Sala:</label>
+            <label id="resource-label">Médico / Recurso:</label>
             <select id="provider-id" required class="classic-select"></select>
+          </div>
+          <div id="doctor-assignment-area" class="modal-field-item" style="display: none;">
+            <label>Doctor que realizará el procedimiento:</label>
+            <select id="doctor-id" class="classic-select"></select>
           </div>
         </div>
 
@@ -277,13 +277,7 @@
         <!-- Seccion Notas -->
         <div class="modal-section-title" style="margin-top: 10px;">Notas y Observaciones</div>
         <div class="modal-field-item">
-          <label>Información Médica / Dirección:</label>
-          <textarea id="clinical-notes" rows="3" class="classic-textarea" placeholder="Detalles clínicos relevantes..."></textarea>
-        </div>
-
-        <div class="modal-field-item">
-          <label>Tratamiento / Recomendaciones:</label>
-          <textarea id="treatment-notes" rows="2" class="classic-textarea" style="background: #f1f8ff; border-color: #bbdefb;" placeholder="Instrucciones para el paciente..."></textarea>
+          <textarea id="clinical-notes" rows="3" class="classic-textarea" placeholder="Escriba aquí cualquier observación o detalle importante..."></textarea>
         </div>
 
         <div id="status-group" class="modal-status-area" style="display: none; margin-top: 10px;">
