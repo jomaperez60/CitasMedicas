@@ -26,8 +26,8 @@
           <input type="password" id="login-password" required placeholder="••••••••" />
         </div>
         <div id="login-error" class="login-error"></div>
-        <button type="submit" class="classic-btn login-btn">Iniciar Sesión</button>
-        <button type="button" id="btn-setup-admin" class="classic-btn login-btn" style="background:#555; display:none; margin-top:5px;">Registrar Admin (Sólo 1ra vez)</button>
+        <button type="submit" class="classic-btn-action primary" style="width: 100%;">Iniciar Sesión</button>
+        <button type="button" id="btn-setup-admin" class="classic-btn-action" style="width: 100%; display:none; margin-top:5px;">Registrar Admin (Sólo 1ra vez)</button>
       </form>
     </div>
   </div>
@@ -35,6 +35,7 @@
   <!-- Classic Ribbon Toolbar -->
 <header class="ribbon-bar">
   <div class="ribbon-tab-header">
+    <button id="mobile-hamburger" class="mobile-menu-btn">☰</button>
     <div class="tab-header-btn active" data-ribbon="ajustes">Ajustes</div>
     <div class="tab-header-btn" data-ribbon="seguridad" id="tab-header-seguridad">Seguridad</div>
     <div class="tab-header-logout" id="btn-logout" style="margin-left: auto; color: #dc2626; padding-right: 15px; cursor:pointer;" title="Cerrar Sesión">
@@ -425,7 +426,7 @@
         </div>
         
         <div style="margin-top: 15px; text-align: right;">
-           <button id="btn-create-user" class="classic-btn">Registrar Médico</button>
+           <button id="btn-create-user" class="classic-btn-action primary">Registrar Médico</button>
         </div>
         <div id="user-creation-status" style="margin-top: 5px; font-size:12px; color:#1a73e8; text-align: right; min-height: 15px;"></div>
         
@@ -456,7 +457,7 @@
         
         <div style="margin-top: 20px; text-align: right; display: flex; gap: 10px; justify-content: flex-end;">
            <button class="classic-btn-action" onclick="document.getElementById('resource-modal').style.display='none'">Cancelar</button>
-           <button id="btn-save-resource" class="classic-btn">Guardar Recurso</button>
+           <button id="btn-save-resource" class="classic-btn-action primary">Guardar Recurso</button>
         </div>
       </div>
     </div>

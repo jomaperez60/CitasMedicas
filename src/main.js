@@ -78,7 +78,8 @@ const elements = {
   resourceType: document.getElementById('resource-type'),
   resourceId: document.getElementById('resource-id'),
   resourceName: document.getElementById('resource-name'),
-  btnSaveResource: document.getElementById('btn-save-resource')
+  btnSaveResource: document.getElementById('btn-save-resource'),
+  mobileHamburger: document.getElementById('mobile-hamburger')
 };
 
 let selectionInfo = {
@@ -350,7 +351,7 @@ function renderPhysicianSidebar() {
       <div class="classic-physician-item" style="padding: 5px; border: 1px solid transparent; display: flex; align-items: center; gap: 8px; font-size: 11px;">
         <input type="checkbox" data-id="${p.id}" ${p.visible ? 'checked' : ''} style="width: 14px; height: 14px; cursor: pointer; margin:0;">
         <div class="sidebar-icon-wrap" style="transform: scale(0.85);">${p.type === 'doctor' ? ICON_DOCTOR : ICON_ROOM}</div>
-        <span style="font-weight: 500; font-size: 0.8rem; color: #444; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</span>
+        <span style="font-weight: 500; font-size: 0.8rem; color: #444; flex: 1;">${p.name}</span>
         <button class="admin-only edit-resource-btn" data-id="${p.id}" data-type="${p.type}" data-name="${p.name}" style="color:#2563eb; background:none; border:none; cursor:pointer; font-size:16px; padding:2px; display:flex; align-items:center;" title="Editar Nombre">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
@@ -1098,6 +1099,24 @@ elements.sidebarHandle.addEventListener('click', (e) => {
     elements.leftSidebar.style.width = '300px'; // Default open width
   }
   setTimeout(refreshUI, 350); // Wait for transition
+});
+
+// Mobile Hamburger Toggle
+elements.mobileHamburger.addEventListener('click', (e) => {
+  e.stopPropagation();
+  elements.leftSidebar.classList.toggle('mobile-open');
+  document.body.classList.toggle('mobile-overlay-active');
+});
+
+// Close mobile sidebar when clicking outside (on the overlay)
+document.addEventListener('click', (e) => {
+  if (window.innerWidth <= 768 && 
+      !elements.leftSidebar.contains(e.target) && 
+      elements.leftSidebar.classList.contains('mobile-open') &&
+      e.target !== elements.mobileHamburger) {
+    elements.leftSidebar.classList.remove('mobile-open');
+    document.body.classList.remove('mobile-overlay-active');
+  }
 });
 
 // Intercept Standard App Init
