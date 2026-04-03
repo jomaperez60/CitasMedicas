@@ -189,7 +189,7 @@ function renderTimeSlotsPro() {
     for (let m = 0; m < 60; m += interval) {
       if (m === 0) {
         subSlots += `
-          <div class="time-sub-slot" style="flex: 1; border-top: 1px solid rgba(0,0,0,0.15); position: relative; box-sizing: border-box; background: transparent;">
+          <div class="time-sub-slot" style="flex: 1; display: flex; border-top: 1px solid rgba(0,0,0,0.15); position: relative; box-sizing: border-box; background: transparent;">
             <div style="position: absolute; top: 0; right: 4px; padding-top: 2px; display: flex; flex-direction: column; align-items: flex-end; line-height: 1;">
               <div style="display: flex; align-items: flex-start; gap: 2px;">
                 <span style="font-size: 16px; font-weight: bold; color: #1e3a5f;">${hourVal}</span>
@@ -201,7 +201,7 @@ function renderTimeSlotsPro() {
         `;
       } else {
         subSlots += `
-          <div class="time-sub-slot" style="flex: 1; border-top: 1px solid rgba(0,0,0,0.05); position: relative; box-sizing: border-box; background: transparent;">
+          <div class="time-sub-slot" style="flex: 1; display: flex; border-top: 1px solid rgba(0,0,0,0.05); position: relative; box-sizing: border-box; background: transparent;">
             <div style="position: absolute; top: 0; right: 4px; padding-top: 2px; font-size: 10px; color: #1e3a5f; opacity: 0.7;">
               ${String(m).padStart(2, '0')}
             </div>
@@ -216,6 +216,8 @@ function renderTimeSlotsPro() {
       </div>
     `);
   }
+  const totalHeight = 90 + 15 * (state.slotHeight || 100);
+  elements.timeColumn.style.height = `${totalHeight}px`;
   elements.timeColumn.innerHTML = slots.join('');
 }
 
@@ -235,12 +237,13 @@ function renderGridPro() {
         ${Array.from({ length: 15 }).map(() => `
           <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box; border-bottom: none;">
             ${Array.from({ length: subCount }).map((_, i) => `
-              <div class="grid-sub-slot" style="flex: 1; box-sizing: border-box; border-top: ${i === 0 ? '1px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.05)'};"></div>
+              <div class="grid-sub-slot" style="flex: 1; display: flex; box-sizing: border-box; border-top: ${i === 0 ? '1px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.05)'};"></div>
             `).join('')}
           </div>
         `).join('')}
       </div>
     `).join('');
+    elements.calendarGrid.style.height = `${90 + 15 * (state.slotHeight || 100)}px`;
   } else {
     const provider = providers[0];
     const weekDates = getWeekDates(state.currentDate);
@@ -254,12 +257,13 @@ function renderGridPro() {
         ${Array.from({ length: 15 }).map(() => `
           <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box; border-bottom: none;">
             ${Array.from({ length: subCount }).map((_, i) => `
-              <div class="grid-sub-slot" style="flex: 1; box-sizing: border-box; border-top: ${i === 0 ? '1px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.05)'};"></div>
+              <div class="grid-sub-slot" style="flex: 1; display: flex; box-sizing: border-box; border-top: ${i === 0 ? '1px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.05)'};"></div>
             `).join('')}
           </div>
         `).join('')}
       </div>
     `).join('');
+    elements.calendarGrid.style.height = `${90 + 15 * (state.slotHeight || 100)}px`;
   }
   attachGridEventsPro();
 }
