@@ -306,11 +306,19 @@ function renderPhysicianSidebar() {
 }
 
 function renderDateNavigatorRight() {
-  const current = new Date(state.currentDate);
+  const current = new Date(state.navigatorBaseDate);
   const next = new Date(current);
   next.setMonth(current.getMonth() + 1);
   
-  elements.dateNavigatorContainer.innerHTML = [current, next].map(m => `
+  const navHeader = `
+    <div class="navigator-nav-bar">
+      <button id="nav-prev-month" class="nav-arrow-btn">◀</button>
+      <div class="nav-current-view">Navegador</div>
+      <button id="nav-next-month" class="nav-arrow-btn">▶</button>
+    </div>
+  `;
+
+  elements.dateNavigatorContainer.innerHTML = navHeader + [current, next].map(m => `
     <div class="mini-month-navigator">
       <div class="month-title">${new Intl.DateTimeFormat('es', { month: 'long', year: 'numeric' }).format(m)}</div>
       <div class="days-grid">
@@ -319,6 +327,16 @@ function renderDateNavigatorRight() {
       </div>
     </div>
   `).join('');
+
+  // Arrows Logic
+  document.getElementById('nav-prev-month').onclick = () => {
+    state.navigatorBaseDate.setMonth(state.navigatorBaseDate.getMonth() - 1);
+    refreshUI();
+  };
+  document.getElementById('nav-next-month').onclick = () => {
+    state.navigatorBaseDate.setMonth(state.navigatorBaseDate.getMonth() + 1);
+    refreshUI();
+  };
 
   document.querySelectorAll('.day-box').forEach(box => {
     box.onclick = () => {

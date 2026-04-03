@@ -661,3 +661,41 @@ body {
   gap: 4px;
   font-size: 11px;
 }
+
+/* Navigator Navigation Bar */
+.navigator-nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 5px;
+}
+
+.nav-arrow-btn {
+  background: #fff;
+  border: 1px solid #ccc;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  transition: background 0.2s;
+  color: #333;
+}
+
+.nav-arrow-btn:hover {
+  background: #e9ecef;
+}
+
+.nav-current-view {
+  font-size: 10px;
+  font-weight: bold;
+  color: #1e3a5f;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
