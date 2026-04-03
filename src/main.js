@@ -35,6 +35,9 @@ const elements = {
   patientDob: document.getElementById('patient-dob'),
   patientSuggestions: document.getElementById('patient-suggestions'),
   clinicalNotes: document.getElementById('clinical-notes'),
+  resourceLabel: document.getElementById('resource-label'),
+  doctorAssignmentArea: document.getElementById('doctor-assignment-area'),
+  doctorIdSelect: document.getElementById('doctor-id'),
   treatmentNotes: document.getElementById('treatment-notes'),
   appointmentsListBody: document.getElementById('appointments-list-body'),
   patientsListBody: document.getElementById('patients-list-body'),
@@ -91,6 +94,9 @@ function updateStatusMessage() {
 }
 
 function populateDropdowns() {
+  // Don't overwrite filtered dropdowns if modal is open
+  if (elements.modal.style.display === 'flex') return;
+  
   elements.insuranceSelect.innerHTML = HONDURAS_INSURANCES.map(i => `
     <option value="${i}">${i}</option>
   `).join('');
@@ -104,10 +110,62 @@ function populateDropdowns() {
 function renderTypesSelection() {
   elements.typesSelection.innerHTML = APPOINTMENT_TYPES.map(t => `
     <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 8px;">
-      <input type="checkbox" name="appointment-type" value="${t.id}">
+      <input type="checkbox" name="appointment-type" value="${t.id}" data-can-consult="${t.id === 'consulta'}">
       <span>${t.label}</span>
     </label>
   `).join('');
+
+  // Add event listeners for contextual logic
+  elements.typesSelection.querySelectorAll('input').forEach(input => {
+    input.onchange = () => updateContextualSelection(input);
+  });
+}
+
+function updateContextualSelection(changedInput) {
+  const allChecks = Array.from(elements.typesSelection.querySelectorAll('input'));
+  const isConsulta = changedInput.value === 'consulta';
+
+  if (changedInput.checked) {
+    if (isConsulta) {
+      // If Consulta checked, uncheck all others
+      allChecks.forEach(cb => { if (cb.value !== 'consulta') cb.checked = false; });
+    } else {
+      // If procedure checked, uncheck Consulta
+      const consultaCheck = allChecks.find(cb => cb.value === 'consulta');
+      if (consultaCheck) consultaCheck.checked = false;
+    }
+  }
+
+  const selectedConsulta = allChecks.find(cb => cb.value === 'consulta')?.checked;
+  const anyProcedure = allChecks.some(cb => cb.value !== 'consulta' && cb.checked);
+
+  if (selectedConsulta) {
+    elements.resourceLabel.textContent = 'Médico:';
+    populateDropdownsFiltered('doctor');
+    elements.doctorAssignmentArea.style.display = 'none';
+  } else if (anyProcedure) {
+    elements.resourceLabel.textContent = 'Sala:';
+    populateDropdownsFiltered('room');
+    elements.doctorAssignmentArea.style.display = 'block';
+  } else {
+    // Default or mixed (show all if nothing selected)
+    elements.resourceLabel.textContent = 'Médico / Recurso:';
+    populateDropdowns();
+    elements.doctorAssignmentArea.style.display = 'none';
+  }
+}
+
+function populateDropdownsFiltered(type) {
+  const list = type === 'doctor' ? state.doctors : state.rooms;
+  elements.providerSelect.innerHTML = list.filter(p => p.visible).map(p => `
+    <option value="${p.id}">${p.name}</option>
+  `).join('');
+  
+  if (type === 'room') {
+    elements.doctorIdSelect.innerHTML = state.doctors.filter(d => d.visible).map(d => `
+      <option value="${d.id}">${d.name}</option>
+    `).join('');
+  }
 }
 
 // --- Pro Exact Rendering ---
@@ -201,11 +259,16 @@ function renderAppointmentsPro() {
     div.style.top = `${calculatePosition(app.startTime, 90, state.slotHeight)}px`;
     div.style.height = `${calculateHeight(app.duration, state.slotHeight)}px`;
     
+    const doctorName = app.doctorId ? (state.doctors.find(d => d.id === app.doctorId)?.name || '') : '';
+    
     div.innerHTML = `
       <div class="app-time">${formatTime(app.startTime)} - ${formatTime(new Date(new Date(app.startTime).getTime() + app.duration * 60000))}</div>
       <div class="app-patient">${app.patientName.toUpperCase()}</div>
-      <div class="app-details">${primaryType.label} ${app.phone ? `| T: ${app.phone}` : ''}</div>
-      ${app.treatmentNotes ? `<div class="app-details" style="color:red; font-weight:bold;">Rx: ${app.treatmentNotes.substring(0, 30)}</div>` : ''}
+      <div style="font-size: 9px; line-height: 1;">
+        ${doctorName ? `<span style="color: #2171b5; font-weight: bold;">Dr: ${doctorName}</span><br>` : ''}
+        ${primaryType.label} ${app.phone ? `| T: ${app.phone}` : ''}
+      </div>
+      ${app.clinicalNotes ? `<div class="app-details" style="color:#2c3e50; font-weight:bold; margin-top: 2px;">Nota: ${app.clinicalNotes.substring(0, 100)}</div>` : ''}
     `;
     
     div.onclick = () => editAppointment(app);
@@ -392,10 +455,10 @@ function attachEventListeners() {
       insurance: elements.insuranceSelect.value,
       dob: elements.patientDob.value,
       providerId: elements.providerSelect.value,
+      doctorId: elements.doctorAssignmentArea.style.display !== 'none' ? elements.doctorIdSelect.value : null,
       duration: parseInt(document.getElementById('duration').value),
       startTime: getISOStringFromDate(state.currentDate, document.getElementById('start-time').value),
       clinicalNotes: elements.clinicalNotes.value,
-      treatmentNotes: elements.treatmentNotes.value,
       types: Array.from(document.querySelectorAll('input[name="appointment-type"]:checked')).map(cb => cb.value)
     };
 
@@ -442,6 +505,16 @@ function openModal(defs = {}) {
     elements.recurrenceBanner.style.display = 'none';
   }
 
+  // Trigger contextual logic based on selection
+  const provider = [...state.rooms, ...state.doctors].find(p => p.id === defs.providerId);
+  const typeCheck = elements.typesSelection.querySelector(provider?.type === 'doctor' ? 'input[value="consulta"]' : 'input[value="endoscopia_alta"]');
+  if (typeCheck) {
+    typeCheck.checked = true;
+    updateContextualSelection(typeCheck);
+  }
+  
+  if (defs.providerId) elements.providerSelect.value = defs.providerId;
+
   elements.modal.style.display = 'flex';
 }
 
@@ -468,10 +541,19 @@ function editAppointment(app) {
   elements.patientName.value = app.patientName;
   elements.patientPhone.value = app.phone || '';
   elements.insuranceSelect.value = app.insurance;
-  elements.providerSelect.value = app.providerId;
   document.getElementById('start-time').value = new Date(app.startTime).toTimeString().substring(0, 5);
   elements.clinicalNotes.value = app.clinicalNotes || '';
-  elements.treatmentNotes.value = app.treatmentNotes || '';
+  
+  // Set checkboxes
+  elements.typesSelection.querySelectorAll('input').forEach(cb => cb.checked = (app.types || []).includes(cb.value));
+  
+  // Trigger logic
+  const firstChecked = elements.typesSelection.querySelector('input:checked') || elements.typesSelection.querySelector('input');
+  updateContextualSelection(firstChecked);
+  
+  elements.providerSelect.value = app.providerId;
+  if (app.doctorId) elements.doctorIdSelect.value = app.doctorId;
+  
   elements.modal.style.display = 'flex';
 }
 

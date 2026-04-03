@@ -332,12 +332,16 @@ body {
   left: 2px;
   right: 2px;
   background: #fff;
-  border: 1px solid #777;
-  padding: 5px;
-  font-size: 11px;
-  line-height: 1.2;
+  border: 1px solid #7192b7;
+  padding: 4px;
+  font-size: 10px;
+  line-height: 1.1;
   overflow: hidden;
-  box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 1px 1px 4px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 2px;
 }
 
 .appointment .app-time { font-weight: bold; color: #2563eb; }
