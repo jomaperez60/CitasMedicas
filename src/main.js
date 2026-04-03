@@ -443,10 +443,24 @@ function attachEventListeners() {
     const interval = document.querySelector('#recurrence-weekly-options input[type="number"]').value;
     const days = Array.from(document.querySelectorAll('.days-selector input:checked')).map(cb => cb.parentElement.textContent.trim());
     
+    const radios = document.getElementsByName('rec-end');
+    let endType = 'never';
+    let endValue = null;
+
+    if (radios[1].checked) {
+      endType = 'after';
+      endValue = parseInt(document.getElementById('rec-end-occurrences').value);
+    } else if (radios[2].checked) {
+      endType = 'on';
+      endValue = document.getElementById('rec-end-date').value;
+    }
+
     state.currentRecurrence = {
       pattern,
       interval,
       days,
+      endType,
+      endValue,
       summary: `${pattern} cada ${interval} semana(s) el: ${days.join(', ')}`
     };
 

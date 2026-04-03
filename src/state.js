@@ -139,8 +139,6 @@ class AppState {
   getAppointmentsForDate(date) {
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
-    const targetTime = d.getTime();
-    
     return this.appointments.filter(app => this.isAppointmentActiveOnDate(app, d));
   }
 
@@ -150,15 +148,84 @@ class AppState {
     const target = new Date(targetDate);
     target.setHours(0, 0, 0, 0);
 
-    // Initial check: is it before the start?
     if (target < appStart) return false;
 
-    // Simple match for non-recurring
     if (!app.recurrence) {
       return target.getTime() === appStart.getTime();
     }
 
-    // Recurrence logic
+    const { pattern, interval, days, endType, endValue } = app.recurrence;
+
+    // Check End Conditions (Date-based)
+    if (endType === 'on' && endValue) {
+      const endD = new Date(endValue);
+      endD.setHours(0, 0, 0, 0);
+      if (target > endD) return false;
+    }
+
+    // Check Pattern Match
+    const diffDays = Math.floor((target.getTime() - appStart.getTime()) / (1000 * 60 * 60 * 24));
+    let isActive = false;
+
+    if (pattern === 'Diario') {
+      isActive = diffDays % (parseInt(interval) || 1) === 0;
+    } else if (pattern === 'Semanal') {
+      const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const targetDayName = dayNames[target.getDay()];
+      if (!(days || []).includes(targetDayName)) return false;
+
+      const appStartCopy = new Date(appStart);
+      appStartCopy.setDate(appStartCopy.getDate() - appStartCopy.getDay());
+      const targetCopy = new Date(target);
+      targetCopy.setDate(targetCopy.getDate() - targetCopy.getDay());
+      
+      const weekDiff = Math.round((targetCopy.getTime() - appStartCopy.getTime()) / (1000 * 60 * 60 * 24 * 7));
+      isActive = weekDiff % (parseInt(interval) || 1) === 0;
+    } else if (pattern === 'Mensual') {
+      if (target.getDate() !== appStart.getDate()) return false;
+      const monthDiff = (target.getFullYear() - appStart.getFullYear()) * 12 + (target.getMonth() - appStart.getMonth());
+      isActive = monthDiff % (parseInt(interval) || 1) === 0;
+    }
+
+    if (!isActive) return false;
+
+    // Check Occurrence Limit (if applicable)
+    if (endType === 'after' && endValue) {
+      const totalOccurrences = this.countOccurrencesUpTo(app, target);
+      if (totalOccurrences > parseInt(endValue)) return false;
+    }
+
+    return true;
+  }
+
+  countOccurrencesUpTo(app, targetDate) {
+    const appStart = new Date(app.startTime);
+    appStart.setHours(0, 0, 0, 0);
+    const target = new Date(targetDate);
+    target.setHours(0, 0, 0, 0);
+    
+    const { pattern, interval, days } = app.recurrence;
+    let count = 0;
+
+    // We only need to iterate over the dates for now.
+    // For large ranges, this can be mathematically optimized.
+    // Given the context of medical scheduling (weeks/months), this is fine.
+    let current = new Date(appStart);
+    while (current <= target) {
+      if (this.isMatchingPatternSimple(app, current)) {
+        count++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    return count;
+  }
+
+  isMatchingPatternSimple(app, date) {
+    const appStart = new Date(app.startTime);
+    appStart.setHours(0, 0, 0, 0);
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+    
     const { pattern, interval, days } = app.recurrence;
     const diffDays = Math.floor((target.getTime() - appStart.getTime()) / (1000 * 60 * 60 * 24));
 
@@ -168,27 +235,21 @@ class AppState {
 
     if (pattern === 'Semanal') {
       const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-      const targetDayName = dayNames[target.getDay()];
-      if (!(days || []).includes(targetDayName)) return false;
-
-      // Calculate week difference
+      if (!(days || []).includes(dayNames[target.getDay()])) return false;
       const appStartCopy = new Date(appStart);
-      appStartCopy.setDate(appStartCopy.getDate() - appStartCopy.getDay()); // Sunday of start week
+      appStartCopy.setDate(appStartCopy.getDate() - appStartCopy.getDay());
       const targetCopy = new Date(target);
-      targetCopy.setDate(targetCopy.getDate() - targetCopy.getDay()); // Sunday of target week
-      
+      targetCopy.setDate(targetCopy.getDate() - targetCopy.getDay());
       const weekDiff = Math.round((targetCopy.getTime() - appStartCopy.getTime()) / (1000 * 60 * 60 * 24 * 7));
       return weekDiff % (parseInt(interval) || 1) === 0;
     }
 
     if (pattern === 'Mensual') {
-      // Simplification: Matches the same day of the month
       if (target.getDate() !== appStart.getDate()) return false;
       const monthDiff = (target.getFullYear() - appStart.getFullYear()) * 12 + (target.getMonth() - appStart.getMonth());
       return monthDiff % (parseInt(interval) || 1) === 0;
     }
-
-    return target.getTime() === appStart.getTime();
+    return false;
   }
 
   toggleVisibility(id) {
