@@ -194,9 +194,9 @@ function renderAppointmentsPro() {
     const primaryType = APPOINTMENT_TYPES.find(t => (app.types || []).includes(t.id)) || APPOINTMENT_TYPES[0];
     div.style.borderLeft = `4px solid ${primaryType.color}`;
     
-    // Position calc (Header is 90px, Slot is 80px)
-    div.style.top = `${calculatePosition(app.startTime, 90, 80)}px`;
-    div.style.height = `${calculateHeight(app.duration, 80)}px`;
+    // Position calc (Header is 90px, Slot is dynamic)
+    div.style.top = `${calculatePosition(app.startTime, 90, state.slotHeight)}px`;
+    div.style.height = `${calculateHeight(app.duration, state.slotHeight)}px`;
     
     div.innerHTML = `
       <div class="app-time">${formatTime(app.startTime)} - ${formatTime(new Date(new Date(app.startTime).getTime() + app.duration * 60000))}</div>
@@ -447,8 +447,9 @@ function attachGridEventsPro() {
       selectionInfo.active = true;
       selectionInfo.providerId = col.dataset.providerId;
       
-      // Snap start position (Step 20px = 15m)
-      selectionInfo.startY = Math.floor((y - 90) / 20) * 20 + 90;
+      // Snap start position (Step = 15m)
+      const snapStep = state.slotHeight / 4;
+      selectionInfo.startY = Math.floor((y - 90) / snapStep) * snapStep + 90;
       
       if (selectionInfo.selectionEl) selectionInfo.selectionEl.remove();
       selectionInfo.selectionEl = document.createElement('div');
@@ -464,7 +465,8 @@ function attachGridEventsPro() {
       const currentRawY = e.clientY - rect.top;
       
       // Snap current position
-      const snappedCurrentY = Math.ceil((currentRawY - 90) / 20) * 20 + 90;
+      const snapStep = state.slotHeight / 4;
+      const snappedCurrentY = Math.ceil((currentRawY - 90) / snapStep) * snapStep + 90;
       
       const top = Math.min(selectionInfo.startY, snappedCurrentY);
       const bottom = Math.max(selectionInfo.startY, snappedCurrentY);
@@ -479,14 +481,15 @@ function attachGridEventsPro() {
       selectionInfo.isDragging = false;
       const rect = col.getBoundingClientRect();
       const endRawY = e.clientY - rect.top;
-      const snappedEndY = Math.ceil((endRawY - 90) / 20) * 20 + 90;
+      const snapStep = state.slotHeight / 4;
+      const snappedEndY = Math.ceil((endRawY - 90) / snapStep) * snapStep + 90;
 
       const top = Math.min(selectionInfo.startY, snappedEndY);
       const bottom = Math.max(selectionInfo.startY, snappedEndY);
       const height = bottom - top;
 
-      selectionInfo.startTime = getTimeFromPosition(top, 90, 80);
-      const durationHours = height / 80;
+      selectionInfo.startTime = getTimeFromPosition(top, 90, state.slotHeight);
+      const durationHours = height / state.slotHeight;
       selectionInfo.duration = Math.max(15, Math.round(durationHours * 60));
       
       if (height < 15) { // Small click - open default slot
