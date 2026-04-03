@@ -780,3 +780,58 @@ body {
   background: #eee;
   margin: 5px 0;
 }
+
+/* --- Login Overlay Styles --- */
+.login-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #f1f4f9;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-card {
+  background: white;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 400px;
+  border-top: 4px solid #1a73e8;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.login-header h2 {
+  margin: 0 0 5px 0;
+  color: #1e3a5f;
+}
+
+.login-header p {
+  margin: 0;
+  color: #5f6368;
+  font-size: 14px;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  font-size: 16px;
+}
+
+.login-error {
+  color: #dc2626;
+  font-size: 13px;
+  min-height: 18px;
+  margin-top: 5px;
+  text-align: center;
+}

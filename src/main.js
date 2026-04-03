@@ -1,5 +1,6 @@
 import { state, APPOINTMENT_TYPES, HONDURAS_INSURANCES } from './state.js';
 import { formatDate, formatDateShort, formatTime, getISOStringFromDate, calculatePosition, calculateHeight, getTimeFromPosition, getWeekDates } from './utils.js';
+import { supabase } from './supabaseClient.js';
 
 const ICON_DOCTOR = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #1a73e8;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>`;
 const ICON_ROOM = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ea4335;"><path d="M3 21h18"></path><path d="M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3"></path><path d="M19 21V11"></path><path d="M5 21V11"></path></svg>`;
@@ -52,7 +53,23 @@ const elements = {
   recurrenceBanner: document.getElementById('recurrence-summary-banner'),
   recurrenceText: document.getElementById('recurrence-summary-text'),
   removeRecurrenceBtn: document.getElementById('remove-recurrence-btn'),
-  contextMenu: null // Dynamic
+  contextMenu: null, // Dynamic
+  loginOverlay: document.getElementById('login-overlay'),
+  loginForm: document.getElementById('login-form'),
+  loginEmail: document.getElementById('login-email'),
+  loginPassword: document.getElementById('login-password'),
+  loginError: document.getElementById('login-error'),
+  btnLogout: document.getElementById('btn-logout'),
+  tabHeaderSeguridad: document.getElementById('tab-header-seguridad'),
+  ribbonSeguridad: document.getElementById('ribbon-seguridad'),
+  btnManageUsers: document.getElementById('btn-manage-users'),
+  usersModal: document.getElementById('users-modal'),
+  btnCreateUser: document.getElementById('btn-create-user'),
+  newUserEmail: document.getElementById('new-user-email'),
+  newUserPassword: document.getElementById('new-user-password'),
+  userCreationStatus: document.getElementById('user-creation-status'),
+  usersList: document.getElementById('users-list'),
+  btnSetupAdmin: document.getElementById('btn-setup-admin')
 };
 
 let selectionInfo = {
@@ -796,4 +813,176 @@ function showZoomMenu(x, y) {
   elements.contextMenu = menu;
 }
 
-init();
+async function initAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+  handleSession(session);
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    handleSession(session);
+  });
+
+  // Login Form Submission
+  elements.loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    elements.loginError.textContent = 'Autenticando...';
+    elements.loginError.style.color = '#1a73e8';
+    
+    const email = elements.loginEmail.value.trim();
+    const password = elements.loginPassword.value.trim();
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if (error) {
+      elements.loginError.textContent = error.message.includes('Invalid login') 
+        ? 'Credenciales incorrectas o el usuario no existe.' : error.message;
+      elements.loginError.style.color = '#dc2626';
+      
+      // If no admin exists yet conceptually, expose the setup button if they typed admin
+      if (email.startsWith('admin')) {
+        elements.btnSetupAdmin.style.display = 'block';
+      }
+    } else {
+      elements.loginError.textContent = '';
+      elements.btnSetupAdmin.style.display = 'none';
+      elements.loginForm.reset();
+    }
+  });
+
+  elements.btnSetupAdmin.addEventListener('click', async () => {
+    const email = elements.loginEmail.value.trim();
+    const password = elements.loginPassword.value.trim();
+    if (!email || !password) return;
+    
+    elements.loginError.textContent = 'Creando Administrador... (Nota: Desactiva "Confirm Email" en Supabase si falla)';
+    elements.loginError.style.color = '#059669';
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: { role: 'admin' }
+      }
+    });
+
+    if (error) {
+      elements.loginError.textContent = error.message;
+      elements.loginError.style.color = '#dc2626';
+    } else {
+      elements.loginError.textContent = 'Administrador Creado. Ahora puedes iniciar sesión.';
+      elements.btnSetupAdmin.style.display = 'none';
+    }
+  });
+
+  // Logout Button
+  elements.btnLogout.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+  });
+
+  // User Management Admin Setup (Front-End Only / Simulado si no es superadmin)
+  elements.tabHeaderSeguridad.addEventListener('click', () => {
+    if (state.currentUser?.role === 'admin') {
+      elements.usersModal.style.display = 'flex';
+      renderUsersList();
+    } else {
+      alert('Se requieren privilegios de Administrador.');
+    }
+  });
+
+  elements.btnCreateUser.addEventListener('click', async () => {
+    const el = elements.newUserEmail.value.trim();
+    const pw = elements.newUserPassword.value.trim();
+    if (!el || !pw) return;
+    elements.userCreationStatus.textContent = 'Creando usuario...';
+    
+    // Create Standard User
+    const { data, error } = await supabase.auth.signUp({
+      email: el,
+      password: pw,
+      options: {
+        data: { role: 'standard' }
+      }
+    });
+    
+    if (error) {
+      elements.userCreationStatus.textContent = `Error: ${error.message}`;
+      elements.userCreationStatus.style.color = '#dc2626';
+    } else {
+      elements.userCreationStatus.textContent = 'Usuario creado y registrado exitosamente.';
+      elements.userCreationStatus.style.color = '#059669';
+      elements.newUserEmail.value = '';
+      elements.newUserPassword.value = '';
+      renderUsersList();
+    }
+  });
+}
+
+function handleSession(session) {
+  if (session) {
+    // Determine admin status by checking custom metadata or hardcoded user emails.
+    // For this deployment, we define the administrator via their email, e.g. "admin@ced.com"
+    // However, if we invent any email, we can assume the FIRST user ever created is admin, or hardcode it.
+    // We will assume "admin@ced" or anything starting with "admin" or just any specified string is admin.
+    // A better way is using user_metadata.
+    let role = session.user.user_metadata?.role || 'standard';
+    
+    // Fallback: If no role is found in metadata, but it's the admin email:
+    if (session.user.email.includes('admin')) {
+      role = 'admin';
+    }
+
+    state.currentUser = { id: session.user.id, email: session.user.email, role: role };
+    elements.loginOverlay.style.display = 'none';
+    
+    // Configure Interface restrictions
+    const tabAjustes = document.querySelector('[data-ribbon="ajustes"]');
+    const ribbonAjustes = document.getElementById('ribbon-ajustes');
+    
+    if (role === 'admin') {
+      elements.tabHeaderSeguridad.style.display = 'block';
+      if (tabAjustes) tabAjustes.style.display = 'block';
+    } else {
+      elements.tabHeaderSeguridad.style.display = 'none';
+      if (tabAjustes) {
+        tabAjustes.style.display = 'none';
+        ribbonAjustes.style.display = 'none';
+      }
+      // Ocultar creación/edición de médicos y salas en el sidebar
+      document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+    }
+
+    // Ribbon Tab Nav Logic
+    document.querySelectorAll('.tab-header-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.tab-header-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.ribbon-group-container').forEach(c => c.style.display = 'none');
+        e.target.classList.add('active');
+        const targetId = 'ribbon-' + e.target.getAttribute('data-ribbon');
+        const targetContainer = document.getElementById(targetId);
+        if (targetContainer) targetContainer.style.display = 'flex';
+      });
+    });
+    
+    init(); // Run the rest of the application
+  } else {
+    state.currentUser = null;
+    elements.loginOverlay.style.display = 'flex';
+  }
+}
+
+function renderUsersList() {
+  // Con la llave ANON de Supabase no hay forma directa de listar *todos* los usuarios (requiere backend service_role).
+  // Por lo tanto, el panel mostrará los datos de sesión activa y guía al administrador.
+  elements.usersList.innerHTML = `
+    <div style="padding:10px; background:#f0f5ff; border:1px solid #cce0ff; border-radius:4px; font-size:13px; color:#1e3a5f;">
+      <strong>Usuario Actual Sesionado:</strong> ${state.currentUser.email} <br>
+      <strong>Rol del Sistema:</strong> ${state.currentUser.role.toUpperCase()} <br><br>
+      <em>Nota:</em> Por las regulaciones de seguridad HIPAA, su sistema no permite listar masivamente los perfiles de todos los médicos desde el portal frontal. Para auditoría, debe consultar su consola maestra de Supabase.
+    </div>
+  `;
+}
+
+// Intercept Standard App Init
+initAuth();

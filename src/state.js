@@ -53,6 +53,7 @@ class AppState {
     this.appointments = JSON.parse(localStorage.getItem('ced_appointments')) || [];
     this.patients = JSON.parse(localStorage.getItem('ced_patients')) || [];
     this.selectedAppointment = null;
+    this.currentUser = null;
     this.searchTerm = '';
     this.navigatorBaseDate = new Date(this.currentDate);
   }
