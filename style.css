@@ -885,13 +885,123 @@ body.is-admin button.admin-only {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Improvement for Sidebar Resource Names (Horizontal fluidity) */
+.classic-physician-item span {
+  white-space: normal !important; /* Allow wrapping */
+  line-height: 1.2 !important;
+  word-break: break-word !important;
+  display: block;
+}
+
+.classic-physician-item {
+  height: auto !important; /* Allow growing vertically if name wraps */
+  min-height: 40px;
+}
+
+/* Visibility Helpers */
+.mobile-only { display: none !important; }
+.desktop-only { display: block !important; }
+
+/* ==========================================================================
+   MOBILE OVERHAUL (BREAKPOINT: 768px)
+   ========================================================================== */
+
 @media (max-width: 768px) {
-  /* 1. Sidebar as Overlay */
+  .mobile-only { display: flex !important; }
+  .desktop-only { display: none !important; }
+
+  /* 1. Header/Ribbon Compaction */
+  .ribbon-bar {
+    background: #fff;
+    border-bottom: 2px solid #1e3a5f;
+  }
+
+  .ribbon-tab-header {
+    background: #1e3a5f;
+    color: #fff;
+    padding: 2px 0;
+  }
+  
+  .tab-header-btn {
+    padding: 8px 15px !important;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7) !important;
+    border-right: none !important;
+  }
+  
+  .tab-header-btn.active-tab {
+    color: #fff !important;
+    border-bottom: 3px solid #ffd54f !important;
+    background: rgba(255,255,255,0.1);
+  }
+
+  .ribbon-group-container {
+    height: 70px;
+    display: flex !important;
+    overflow-x: auto;
+    padding: 5px;
+    gap: 15px;
+    background: #f8fbff;
+  }
+
+  .ribbon-group {
+    flex-shrink: 0;
+    border-right: 1px solid #eee;
+    padding: 0 5px;
+  }
+
+  .ribbon-group-label {
+    display: none; /* Hide group names on mobile */
+  }
+
+  .ribbon-btn {
+    padding: 0;
+    min-width: 50px;
+  }
+  
+  .ribbon-btn-text {
+    font-size: 9px;
+    margin-top: 2px;
+  }
+
+  .ribbon-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* 2. Status Bar Adjustment */
+  .status-bar-yellow {
+    font-size: 11px;
+    padding: 8px;
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  /* 3. Hide Right Sidebar */
+  .sidebar-navigator-right {
+    display: none !important;
+  }
+
+  /* 4. Agenda Sizing */
+  .classic-time-header {
+    width: 60px !important; /* Narrower corner */
+    height: 70px !important;
+  }
+  
+  .classic-time-col {
+    width: 60px !important;
+  }
+
+  .classic-col-header {
+    height: 70px !important;
+  }
+
+  /* 5. Mobile Sidebar Overlay */
   #left-sidebar {
     position: fixed !important;
     top: 0;
     left: -100% !important; /* Force outside by default on mobile */
-    width: 280px !important;
+    width: 300px !important;
     height: 100vh;
     z-index: 5000;
     background: #fff;
@@ -932,18 +1042,6 @@ body.is-admin button.admin-only {
     font-size: 10px;
   }
 
-  .ribbon-group-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 5px;
-    display: flex !important; /* Ensure it doesn't get hidden */
-  }
-
-  .ribbon-group {
-    flex-shrink: 0;
-    border-right: 1px solid rgba(0,0,0,0.05);
-  }
-
   /* 4. Agenda Grid - Allow horizontal scrolling */
   .classic-scheduler {
     overflow-x: auto;
@@ -971,6 +1069,14 @@ body.is-admin button.admin-only {
     align-items: center;
     justify-content: center;
   }
+}
+
+/* Institutional Logo Styling */
+#ced-logo-agenda {
+  max-width: 90%;
+  max-height: 80%;
+  object-fit: contain;
+  margin: auto;
 }
 
 /* Fix for button style in modals (Ensuring primary blue is solid) */

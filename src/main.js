@@ -79,7 +79,8 @@ const elements = {
   resourceId: document.getElementById('resource-id'),
   resourceName: document.getElementById('resource-name'),
   btnSaveResource: document.getElementById('btn-save-resource'),
-  mobileHamburger: document.getElementById('mobile-hamburger')
+  mobileHamburger: document.getElementById('mobile-hamburger'),
+  dateNavigatorMobile: document.getElementById('date-navigator-mobile')
 };
 
 let selectionInfo = {
@@ -206,7 +207,9 @@ function renderTimeSlotsPro() {
   const interval = state.slotInterval || 30;
 
   let slots = [`
-    <div class="classic-time-header"></div>
+    <div class="classic-time-header" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0;">
+       <img src="./Logo CED.png" id="ced-logo-agenda" alt="CED Logo">
+    </div>
   `];
   for (let h = startHour; h <= endHour; h++) {
     const hourVal = h > 12 ? h - 12 : (h === 0 ? 12 : h);
@@ -397,6 +400,10 @@ function renderPhysicianSidebar() {
 }
 
 function renderDateNavigatorRight() {
+  const container = elements.dateNavigatorContainer;
+  const containerMobile = elements.dateNavigatorMobile;
+  if (!container && !containerMobile) return;
+
   const current = new Date(state.navigatorBaseDate);
   const next = new Date(current);
   next.setMonth(current.getMonth() + 1);
@@ -404,12 +411,12 @@ function renderDateNavigatorRight() {
   const navHeader = `
     <div class="navigator-nav-bar">
       <button id="nav-prev-month" class="nav-arrow-btn">◀</button>
-      <div class="nav-current-view">Navegador</div>
+      <div class="nav-current-view">Calendario</div>
       <button id="nav-next-month" class="nav-arrow-btn">▶</button>
     </div>
   `;
 
-  elements.dateNavigatorContainer.innerHTML = navHeader + [current, next].map(m => `
+  const monthsHtml = [current, next].map(m => `
     <div class="mini-month-navigator">
       <div class="month-title">${new Intl.DateTimeFormat('es', { month: 'long', year: 'numeric' }).format(m)}</div>
       <div class="days-grid">
@@ -419,24 +426,36 @@ function renderDateNavigatorRight() {
     </div>
   `).join('');
 
-  // Arrows Logic
-  document.getElementById('nav-prev-month').onclick = () => {
-    state.navigatorBaseDate.setMonth(state.navigatorBaseDate.getMonth() - 1);
-    refreshUI();
-  };
-  document.getElementById('nav-next-month').onclick = () => {
-    state.navigatorBaseDate.setMonth(state.navigatorBaseDate.getMonth() + 1);
-    refreshUI();
+  const fullHtml = navHeader + monthsHtml;
+
+  if (container) container.innerHTML = fullHtml;
+  if (containerMobile) containerMobile.innerHTML = fullHtml;
+
+  // Listeners (Desktop & Mobile share IDs, but usually only one is visible/active)
+  const bindEvents = (doc) => {
+    const prev = doc.getElementById('nav-prev-month');
+    const next = doc.getElementById('nav-next-month');
+    if (prev) prev.onclick = (e) => {
+       e.stopPropagation();
+       state.navigatorBaseDate.setMonth(state.navigatorBaseDate.getMonth() - 1);
+       refreshUI();
+    };
+    if (next) next.onclick = (e) => {
+       e.stopPropagation();
+       state.navigatorBaseDate.setMonth(state.navigatorBaseDate.getMonth() + 1);
+       refreshUI();
+    };
+    doc.querySelectorAll('.day-box').forEach(box => {
+      box.onclick = () => {
+        state.currentDate = new Date(box.dataset.date);
+        state.save();
+        updateStatusMessage();
+        refreshUI();
+      };
+    });
   };
 
-  document.querySelectorAll('.day-box').forEach(box => {
-    box.onclick = () => {
-      state.currentDate = new Date(box.dataset.date);
-      state.save();
-      updateStatusMessage();
-      refreshUI();
-    };
-  });
+  bindEvents(document);
 }
 
 function renderMiniMonthDays(date) {
@@ -459,11 +478,19 @@ function renderMiniMonthDays(date) {
 function attachEventListeners() {
   elements.tabButtons.forEach(btn => {
     btn.onclick = () => {
-      state.activeTab = btn.dataset.tab;
+      const tabId = btn.dataset.tab;
+      state.activeTab = tabId;
       elements.tabButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       elements.tabContents.forEach(tc => tc.classList.remove('active'));
-      document.getElementById(`tab-${state.activeTab}`).classList.add('active');
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.classList.add('active');
+      if (tabId === 'calendario') renderDateNavigatorRight();
+      
+      // Handle mobile menu closing
+      const mobileMenu = document.querySelector('.mobile-nav-menu');
+      if (mobileMenu) mobileMenu.classList.remove('active');
+      
       refreshUI();
     };
   });
