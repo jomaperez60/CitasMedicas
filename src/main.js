@@ -174,8 +174,14 @@ function populateDropdownsFiltered(type) {
 // --- Pro Exact Rendering ---
 
 function renderTimeSlotsPro() {
-  const slots = [];
-  for (let h = 6; h <= 20; h++) {
+  const startHour = 6;
+  const endHour = 22;
+
+  let slots = [`
+    <div class="classic-time-header"></div>
+    <div class="time-col-spacer"></div>
+  `];
+  for (let h = startHour; h <= endHour; h++) {
     const timeLabel = state.timeFormat === '24h' ? `${h}:00` : (h > 12 ? `${h-12} PM` : (h === 12 ? '12 PM' : `${h} AM`));
     slots.push(`
       <div class="hour-slot-container">
@@ -183,17 +189,12 @@ function renderTimeSlotsPro() {
       </div>
     `);
   }
-  elements.timeColumn.innerHTML = `<div class="classic-time-header"></div>` + slots.join('');
+  elements.timeColumn.innerHTML = slots.join('');
 }
 
 function renderGridPro() {
-  const allProviders = [...state.rooms, ...state.doctors];
-  const visibleProviders = allProviders.filter(p => p.visible);
-
-  const providers = state.viewMode === 'day' 
-    ? visibleProviders
-    : [visibleProviders.find(p => p.id === state.selectedProviderId) || visibleProviders[0] || allProviders[0]];
-
+  const providers = [...state.rooms, ...state.doctors].filter(p => p.visible);
+  
   if (state.viewMode === 'day') {
     elements.calendarGrid.innerHTML = providers.map(p => `
       <div class="classic-provider-col" data-provider-id="${p.id}">
@@ -202,7 +203,8 @@ function renderGridPro() {
            <div class="header-name">${p.name}</div>
            <div class="header-sub">${formatDateShort(state.currentDate)}</div>
         </div>
-        ${Array.from({ length: 15 }).map(() => `
+        <div class="grid-col-spacer"></div>
+        ${Array.from({ length: 17 }).map(() => `
           <div class="hour-slot-container">
             <div class="grid-sub-slot"></div>
             <div class="grid-sub-slot"></div>
@@ -222,7 +224,8 @@ function renderGridPro() {
            <div class="header-name">${new Intl.DateTimeFormat('es', { weekday: 'long' }).format(d).toUpperCase()}</div>
            <div class="header-sub">${formatDateShort(d)}</div>
         </div>
-        ${Array.from({ length: 15 }).map(() => `
+        <div class="grid-col-spacer"></div>
+        ${Array.from({ length: 17 }).map(() => `
           <div class="hour-slot-container">
             <div class="grid-sub-slot"></div>
             <div class="grid-sub-slot"></div>

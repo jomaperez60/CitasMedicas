@@ -184,7 +184,7 @@ body {
 
 .classic-time-col {
   width: 100px;
-  background: var(--time-col-bg);
+  background-color: #f1f4f9; /* Essential for infinite background */
   border-right: 1px solid var(--grid-border);
   position: sticky;
   left: 0;
@@ -194,6 +194,9 @@ body {
   flex-shrink: 0;
   padding: 0;
   margin: 0;
+  /* Sync lines with the agenda grid */
+  background-image: linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
+  background-size: 100% calc(var(--slot-height) / 4);
 }
 
 .classic-time-header {
@@ -271,6 +274,7 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
+  background-color: #f1f4f9; /* Restore infinite grey background */
   background-image: 
     linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
   background-size: 100% calc(var(--slot-height) / 4);
