@@ -835,3 +835,34 @@ body {
   margin-top: 5px;
   text-align: center;
 }
+
+/* --- Admin Only Restrictions --- */
+.admin-only {
+  display: none !important;
+}
+
+body.is-admin .admin-only {
+  display: inline-block !important;
+}
+
+body.is-admin button.admin-only {
+  display: inline-flex !important;
+}
+
+/* --- Grid Filters for Sidebar --- */
+.classic-filter-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 5px;
+  padding-bottom: 5px;
+}
+
+.classic-physician-item {
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.classic-physician-item:hover {
+  border-color: #cce0ff;
+  background: #f0f5ff !important;
+}

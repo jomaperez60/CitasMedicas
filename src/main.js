@@ -76,6 +76,7 @@ const elements = {
   btnAddDoctor: document.getElementById('btn-add-doctor'),
   resourceModal: document.getElementById('resource-modal'),
   resourceType: document.getElementById('resource-type'),
+  resourceId: document.getElementById('resource-id'),
   resourceName: document.getElementById('resource-name'),
   btnSaveResource: document.getElementById('btn-save-resource')
 };
@@ -346,28 +347,28 @@ function renderAppointmentsPro() {
 function renderPhysicianSidebar() {
   const render = (data, container) => {
     container.innerHTML = data.map(p => `
-      <div class="classic-physician-item" style="padding: 10px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 12px; transition: background 0.2s;">
-        <input type="checkbox" data-id="${p.id}" ${p.visible ? 'checked' : ''} style="width: 16px; height: 16px; cursor: pointer;">
-        <div class="sidebar-icon-wrap">${p.type === 'doctor' ? ICON_DOCTOR : ICON_ROOM}</div>
-        <span style="font-weight: 500; font-size: 0.85rem; color: #444; flex: 1;">${p.name}</span>
-        <button class="admin-only delete-resource-btn" data-id="${p.id}" data-type="${p.type}" style="color:#d32f2f; background:none; border:none; cursor:pointer; font-size:16px; padding:2px;" title="Eliminar ${p.type === 'doctor' ? 'Médico' : 'Sala'}">🗑</button>
+      <div class="classic-physician-item" style="padding: 5px; border: 1px solid transparent; display: flex; align-items: center; gap: 8px; font-size: 11px;">
+        <input type="checkbox" data-id="${p.id}" ${p.visible ? 'checked' : ''} style="width: 14px; height: 14px; cursor: pointer; margin:0;">
+        <div class="sidebar-icon-wrap" style="transform: scale(0.85);">${p.type === 'doctor' ? ICON_DOCTOR : ICON_ROOM}</div>
+        <span style="font-weight: 500; font-size: 0.8rem; color: #444; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</span>
+        <button class="admin-only edit-resource-btn" data-id="${p.id}" data-type="${p.type}" data-name="${p.name}" style="color:#2563eb; background:none; border:none; cursor:pointer; font-size:16px; padding:2px; display:flex; align-items:center;" title="Editar Nombre">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        </button>
+        <button class="admin-only delete-resource-btn" data-id="${p.id}" data-type="${p.type}" style="color:#666; background:none; border:none; cursor:pointer; font-size:16px; padding:2px; display:flex; align-items:center;" title="Eliminar ${p.type === 'doctor' ? 'Médico' : 'Sala'}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        </button>
       </div>
     `).join('');
   };
   
   render(state.rooms, elements.roomsFilter);
   render(state.doctors, elements.doctorsFilter);
-  
-  // Condense RBAC check immediately dynamically
-  if (state.currentUser?.role !== 'admin') {
-    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-  }
 
   // Attach delete events
   document.querySelectorAll('.delete-resource-btn').forEach(btn => {
     btn.onclick = (e) => {
-      const id = e.target.getAttribute('data-id');
-      const type = e.target.getAttribute('data-type');
+      const id = e.currentTarget.getAttribute('data-id');
+      const type = e.currentTarget.getAttribute('data-type');
       if (confirm(`¿Está seguro que desea eliminar este ${type === 'doctor' ? 'médico' : 'sala'}? Esta acción eliminará su columna.`)) {
         const result = state.deleteResource(id, type);
         if (result.success) {
@@ -376,6 +377,20 @@ function renderPhysicianSidebar() {
           alert(result.message);
         }
       }
+    };
+  });
+
+  // Attach edit events
+  document.querySelectorAll('.edit-resource-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      const id = e.currentTarget.getAttribute('data-id');
+      const type = e.currentTarget.getAttribute('data-type');
+      const name = e.currentTarget.getAttribute('data-name');
+      elements.resourceType.value = type;
+      elements.resourceId.value = id;
+      elements.resourceName.value = name;
+      elements.resourceModal.style.display = 'flex';
+      elements.resourceName.focus();
     };
   });
 }
@@ -441,11 +456,6 @@ function renderMiniMonthDays(date) {
 // --- Interaction Logic ---
 
 function attachEventListeners() {
-  // Collapsible Sidebar
-  elements.sidebarHandle.onclick = () => {
-    elements.leftSidebar.classList.toggle('collapsed');
-  };
-
   elements.tabButtons.forEach(btn => {
     btn.onclick = () => {
       state.activeTab = btn.dataset.tab;
@@ -952,14 +962,18 @@ async function initAuth() {
   // Resource Creation Bindings
   elements.btnAddRoom.addEventListener('click', () => {
     elements.resourceType.value = 'room';
+    elements.resourceId.value = '';
     elements.resourceName.value = '';
     elements.resourceModal.style.display = 'flex';
+    elements.resourceName.focus();
   });
 
   elements.btnAddDoctor.addEventListener('click', () => {
     elements.resourceType.value = 'doctor';
+    elements.resourceId.value = '';
     elements.resourceName.value = '';
     elements.resourceModal.style.display = 'flex';
+    elements.resourceName.focus();
   });
 
   elements.btnSaveResource.addEventListener('click', () => {
@@ -969,7 +983,16 @@ async function initAuth() {
       return;
     }
     const type = elements.resourceType.value;
-    state.addResource(type, name);
+    const id = elements.resourceId.value;
+    
+    if (id) {
+       // Edit Mode
+       state.editResource(id, type, name);
+    } else {
+       // Create Mode
+       state.addResource(type, name);
+    }
+    
     elements.resourceModal.style.display = 'none';
     refreshUI();
   });
@@ -996,16 +1019,16 @@ function handleSession(session) {
     const ribbonAjustes = document.getElementById('ribbon-ajustes');
     
     if (role === 'admin') {
+      document.body.classList.add('is-admin');
       elements.tabHeaderSeguridad.style.display = 'block';
       if (tabAjustes) tabAjustes.style.display = 'block';
     } else {
+      document.body.classList.remove('is-admin');
       elements.tabHeaderSeguridad.style.display = 'none';
       if (tabAjustes) {
         tabAjustes.style.display = 'none';
         ribbonAjustes.style.display = 'none';
       }
-      // Ocultar creación/edición de médicos y salas en el sidebar
-      document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
     }
 
     // Ribbon Tab Nav Logic
@@ -1038,6 +1061,44 @@ function renderUsersList() {
     </div>
   `;
 }
+
+// Sidebar Resizing Logic
+let isResizing = false;
+
+elements.sidebarHandle.addEventListener('mousedown', (e) => {
+  isResizing = true;
+  document.body.style.cursor = 'col-resize';
+  elements.leftSidebar.style.transition = 'none'; // Prevent lag while dragging
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isResizing) return;
+  const newWidth = Math.max(200, Math.min(e.clientX, 800)); // Min 200px, Max 800px width limit
+  elements.leftSidebar.style.width = `${newWidth}px`;
+  elements.leftSidebar.classList.remove('collapsed');
+});
+
+document.addEventListener('mouseup', () => {
+  if (isResizing) {
+    isResizing = false;
+    document.body.style.cursor = 'default';
+    elements.leftSidebar.style.transition = 'width 0.3s ease'; // Restore smooth transition for the handle toggle
+    refreshUI(); // Re-render grid lines
+  }
+});
+
+// Sidebar Handle Click (Toggle Collapse)
+elements.sidebarHandle.addEventListener('click', (e) => {
+  // Only toggle if we didn't just resize
+  if (isResizing) return;
+  elements.leftSidebar.classList.toggle('collapsed');
+  if(elements.leftSidebar.classList.contains('collapsed')) {
+    elements.leftSidebar.style.width = ''; // Let CSS take over
+  } else {
+    elements.leftSidebar.style.width = '300px'; // Default open width
+  }
+  setTimeout(refreshUI, 350); // Wait for transition
+});
 
 // Intercept Standard App Init
 initAuth();

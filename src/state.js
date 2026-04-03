@@ -156,6 +156,17 @@ class AppState {
     return newId;
   }
 
+  editResource(id, type, name) {
+    const list = type === 'doctor' ? this.doctors : this.rooms;
+    const target = list.find(r => r.id === id);
+    if (target) {
+      target.name = name;
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
   deleteResource(id, type) {
     // Validation: Check for future/current appointments
     const now = new Date();
