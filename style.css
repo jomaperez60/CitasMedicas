@@ -197,6 +197,7 @@ body {
   /* Sync lines with the agenda grid */
   background-image: linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
   background-size: 100% calc(var(--slot-height) / 4);
+  background-position: 0 90px;
 }
 
 .classic-time-header {
@@ -211,10 +212,11 @@ body {
 }
 
 .classic-time-col .hour-slot-container {
-  background: var(--time-col-bg);
+  background-color: transparent;
 }
 
 .hour-slot-container {
+  position: relative;
   height: var(--slot-height);
   border-bottom: 1px solid rgba(0,0,0,0.1);
   display: flex;
@@ -234,16 +236,14 @@ body {
 }
 
 .hour-label {
-  height: 0;
-  padding-left: 8px;
-  display: flex;
-  align-items: center;
+  position: absolute;
+  top: -8px; /* Offset exactly onto the line */
+  left: 8px;
   font-weight: 700;
   font-size: 13px;
   color: #1e3a5f;
-  box-sizing: border-box;
-  transform: translateY(-50%); /* Centered exactly on the line */
-  white-space: nowrap;
+  background-color: #f1f4f9; /* Minor background to cut the line for text legibility */
+  padding: 0 4px;
 }
 
 .quarter-scale {
@@ -278,6 +278,7 @@ body {
   background-image: 
     linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
   background-size: 100% calc(var(--slot-height) / 4);
+  background-position: 0 90px;
   box-sizing: border-box;
 }
 
@@ -747,7 +748,12 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 15px;
   transition: background 0.1s;
+}
+
+.context-menu-item span {
+  flex: 1;
 }
 
 .context-menu-item:hover {

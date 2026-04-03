@@ -174,12 +174,11 @@ function populateDropdownsFiltered(type) {
 // --- Pro Exact Rendering ---
 
 function renderTimeSlotsPro() {
-  const startHour = 6;
+  const startHour = 5;
   const endHour = 22;
 
   let slots = [`
     <div class="classic-time-header"></div>
-    <div class="time-col-spacer"></div>
   `];
   for (let h = startHour; h <= endHour; h++) {
     const timeLabel = state.timeFormat === '24h' ? `${h}:00` : (h > 12 ? `${h-12} PM` : (h === 12 ? '12 PM' : `${h} AM`));
@@ -203,8 +202,7 @@ function renderGridPro() {
            <div class="header-name">${p.name}</div>
            <div class="header-sub">${formatDateShort(state.currentDate)}</div>
         </div>
-        <div class="grid-col-spacer"></div>
-        ${Array.from({ length: 17 }).map(() => `
+        ${Array.from({ length: 18 }).map(() => `
           <div class="hour-slot-container">
             <div class="grid-sub-slot"></div>
             <div class="grid-sub-slot"></div>
@@ -224,8 +222,7 @@ function renderGridPro() {
            <div class="header-name">${new Intl.DateTimeFormat('es', { weekday: 'long' }).format(d).toUpperCase()}</div>
            <div class="header-sub">${formatDateShort(d)}</div>
         </div>
-        <div class="grid-col-spacer"></div>
-        ${Array.from({ length: 17 }).map(() => `
+        ${Array.from({ length: 18 }).map(() => `
           <div class="hour-slot-container">
             <div class="grid-sub-slot"></div>
             <div class="grid-sub-slot"></div>
