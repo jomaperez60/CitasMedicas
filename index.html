@@ -5,8 +5,8 @@
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CED - Calendario Médico Pro Exact v4.9</title>
-  <script type="module" crossorigin src="/CitasMedicas/assets/index-BPJI8Kfz.js"></script>
-  <link rel="stylesheet" crossorigin href="/CitasMedicas/assets/index-DNaDwdQ1.css">
+  <script type="module" crossorigin src="/CitasMedicas/assets/index-6FhQbG58.js"></script>
+  <link rel="stylesheet" crossorigin href="/CitasMedicas/assets/index-B4DlaQ16.css">
 </head>
 <body class="classic-app">
 
@@ -239,6 +239,69 @@
           <button type="submit" class="classic-btn-action primary">Guardar Cambios</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal de Recurrencia (CED Pro Exact) -->
+  <div id="recurrence-modal" class="classic-modal-overlay">
+    <div class="classic-modal" style="width: 580px;">
+      <div class="modal-title-bar">
+        <span>Recurrencia de evento</span>
+        <div class="title-bar-close" id="cancel-recurrence-x">x</div>
+      </div>
+      <div class="classic-modal-body">
+        <!-- Event Time Info -->
+        <div class="modal-section-title">Hora del evento</div>
+        <div style="display: flex; gap: 20px; font-size: 11px; margin-bottom: 10px;">
+          <div>Inicio: <span id="rec-start-display">10:15 AM</span></div>
+          <div>Fin: <span id="rec-end-display">10:45 AM</span></div>
+          <div>Duración: <span id="rec-duration-display">30 minutos</span></div>
+        </div>
+
+        <!-- Recurrence Pattern -->
+        <div class="modal-section-title">Patrón de recurrencia</div>
+        <div class="recurrence-grid">
+          <div class="recurrence-sidebar">
+            <button type="button" class="recurrence-pattern-opt">Diario</button>
+            <button type="button" class="recurrence-pattern-opt active">Semanal</button>
+            <button type="button" class="recurrence-pattern-opt">Mensual</button>
+            <button type="button" class="recurrence-pattern-opt">Anual</button>
+          </div>
+          <div class="recurrence-main">
+            <div id="recurrence-weekly-options">
+              <div>Recurrir cada <input type="number" value="1" style="width: 40px;" class="classic-input"> semana(s) el:</div>
+              <div class="days-selector">
+                <label class="day-check"><input type="checkbox"> Domingo</label>
+                <label class="day-check"><input type="checkbox" checked> Lunes</label>
+                <label class="day-check"><input type="checkbox"> Martes</label>
+                <label class="day-check"><input type="checkbox"> Miércoles</label>
+                <label class="day-check"><input type="checkbox"> Jueves</label>
+                <label class="day-check"><input type="checkbox"> Viernes</label>
+                <label class="day-check"><input type="checkbox"> Sábado</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Range of Recurrence -->
+        <div class="modal-section-title" style="margin-top: 15px;">Rango de recurrencia</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 11px;">
+          <div class="modal-field-item">
+            <label>Comienzo:</label>
+            <input type="date" id="rec-range-start" class="classic-input">
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <label class="day-check"><input type="radio" name="rec-end" checked> Sin fecha de finalización</label>
+            <label class="day-check"><input type="radio" name="rec-end"> Finalizar después de: <input type="number" value="10" style="width: 40px;" class="classic-input"> ocurrencias</label>
+            <label class="day-check"><input type="radio" name="rec-end"> Finalizar el: <input type="date" class="classic-input"></label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-action-bar">
+        <button type="button" class="classic-btn-action" id="cancel-recurrence">Cancelar</button>
+        <button type="button" class="classic-btn-action" style="margin-right: 10px;">Eliminar recurrencia</button>
+        <button type="button" class="classic-btn-action primary" id="save-recurrence">Aceptar</button>
+      </div>
     </div>
   </div>
 
