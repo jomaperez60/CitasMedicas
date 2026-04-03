@@ -194,6 +194,7 @@ body {
   flex-shrink: 0;
   padding: 0;
   margin: 0;
+  min-height: max-content;
 }
 
 .classic-time-header {
@@ -258,6 +259,7 @@ body {
   overflow: visible;
   position: relative;
   background-color: #f1f4f9;
+  min-height: max-content;
 }
 
 .classic-provider-col {
@@ -268,6 +270,7 @@ body {
   flex-direction: column;
   background-color: #f1f4f9; /* Restore infinite grey background */
   box-sizing: border-box;
+  min-height: max-content;
 }
 
 .classic-provider-col .hour-slot-container {

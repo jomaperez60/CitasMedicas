@@ -189,8 +189,8 @@ function renderTimeSlotsPro() {
     for (let m = 0; m < 60; m += interval) {
       if (m === 0) {
         subSlots += `
-          <div class="time-sub-slot" style="flex: 1; border-top: 1px solid rgba(0,0,0,0.15); display: flex; box-sizing: border-box; background: transparent;">
-            <div style="flex: 1; padding: 2px 4px 0 0; text-align: right; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start; line-height: 1;">
+          <div class="time-sub-slot" style="flex: 1; border-top: 1px solid rgba(0,0,0,0.15); position: relative; box-sizing: border-box; background: transparent;">
+            <div style="position: absolute; top: 0; right: 4px; padding-top: 2px; display: flex; flex-direction: column; align-items: flex-end; line-height: 1;">
               <div style="display: flex; align-items: flex-start; gap: 2px;">
                 <span style="font-size: 16px; font-weight: bold; color: #1e3a5f;">${hourVal}</span>
                 <span style="font-size: 10px; font-weight: bold; padding-top: 2px; color: #1e3a5f;">00</span>
@@ -201,8 +201,8 @@ function renderTimeSlotsPro() {
         `;
       } else {
         subSlots += `
-          <div class="time-sub-slot" style="flex: 1; border-top: 1px solid rgba(0,0,0,0.05); display: flex; box-sizing: border-box; background: transparent;">
-            <div style="flex: 1; text-align: right; font-size: 10px; color: #1e3a5f; padding-right: 4px; padding-top: 2px; opacity: 0.7;">
+          <div class="time-sub-slot" style="flex: 1; border-top: 1px solid rgba(0,0,0,0.05); position: relative; box-sizing: border-box; background: transparent;">
+            <div style="position: absolute; top: 0; right: 4px; padding-top: 2px; font-size: 10px; color: #1e3a5f; opacity: 0.7;">
               ${String(m).padStart(2, '0')}
             </div>
           </div>
@@ -731,9 +731,9 @@ function showContextMenu(x, y) {
       const el = document.createElement('div');
       el.className = 'context-menu-item';
       el.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px;">
-           <span class="icon-placeholder" style="display: flex;">${item.icon}</span>
-           <span>${item.label}</span>
+        <div style="display: flex; align-items: flex-start; gap: 8px;">
+           <span style="display: flex; flex-shrink: 0; width: 14px; margin-top: 2px;">${item.icon}</span>
+           <span style="flex: 1; white-space: nowrap;">${item.label}</span>
         </div>
       `;
       el.onclick = (e) => { e.stopPropagation(); item.action(); closeContextMenu(); };
