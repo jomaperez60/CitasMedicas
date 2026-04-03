@@ -176,15 +176,43 @@ function populateDropdownsFiltered(type) {
 function renderTimeSlotsPro() {
   const startHour = 5;
   const endHour = 22;
+  const interval = state.slotInterval || 30;
 
   let slots = [`
     <div class="classic-time-header"></div>
   `];
   for (let h = startHour; h <= endHour; h++) {
-    const timeLabel = state.timeFormat === '24h' ? `${h}:00` : (h > 12 ? `${h-12} PM` : (h === 12 ? '12 PM' : `${h} AM`));
+    const hourVal = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+    const ampm = h >= 12 ? 'pm' : 'am';
+    
+    let subSlots = '';
+    for (let m = 0; m < 60; m += interval) {
+      if (m === 0) {
+        subSlots += `
+          <div class="time-sub-slot" style="flex: 1; border-top: 1px solid rgba(0,0,0,0.15); display: flex; box-sizing: border-box; background: transparent;">
+            <div style="flex: 1; padding: 2px 4px 0 0; text-align: right; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start; line-height: 1;">
+              <div style="display: flex; align-items: flex-start; gap: 2px;">
+                <span style="font-size: 16px; font-weight: bold; color: #1e3a5f;">${hourVal}</span>
+                <span style="font-size: 10px; font-weight: bold; padding-top: 2px; color: #1e3a5f;">00</span>
+              </div>
+              <span style="font-size: 9px; opacity: 0.6; color: #1e3a5f; margin-top: 1px;">${ampm}</span>
+            </div>
+          </div>
+        `;
+      } else {
+        subSlots += `
+          <div class="time-sub-slot" style="flex: 1; border-top: 1px solid rgba(0,0,0,0.05); display: flex; box-sizing: border-box; background: transparent;">
+            <div style="flex: 1; text-align: right; font-size: 10px; color: #1e3a5f; padding-right: 4px; padding-top: 2px; opacity: 0.7;">
+              ${String(m).padStart(2, '0')}
+            </div>
+          </div>
+        `;
+      }
+    }
+
     slots.push(`
-      <div class="hour-slot-container">
-        <div class="hour-label">${timeLabel}</div>
+      <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box;">
+        ${subSlots}
       </div>
     `);
   }
@@ -193,6 +221,8 @@ function renderTimeSlotsPro() {
 
 function renderGridPro() {
   const providers = [...state.rooms, ...state.doctors].filter(p => p.visible);
+  const interval = state.slotInterval || 30;
+  const subCount = 60 / interval;
   
   if (state.viewMode === 'day') {
     elements.calendarGrid.innerHTML = providers.map(p => `
@@ -203,11 +233,10 @@ function renderGridPro() {
            <div class="header-sub">${formatDateShort(state.currentDate)}</div>
         </div>
         ${Array.from({ length: 18 }).map(() => `
-          <div class="hour-slot-container">
-            <div class="grid-sub-slot"></div>
-            <div class="grid-sub-slot"></div>
-            <div class="grid-sub-slot"></div>
-            <div class="grid-sub-slot"></div>
+          <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box; border-bottom: none;">
+            ${Array.from({ length: subCount }).map((_, i) => `
+              <div class="grid-sub-slot" style="flex: 1; box-sizing: border-box; border-top: ${i === 0 ? '1px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.05)'};"></div>
+            `).join('')}
           </div>
         `).join('')}
       </div>
@@ -223,11 +252,10 @@ function renderGridPro() {
            <div class="header-sub">${formatDateShort(d)}</div>
         </div>
         ${Array.from({ length: 18 }).map(() => `
-          <div class="hour-slot-container">
-            <div class="grid-sub-slot"></div>
-            <div class="grid-sub-slot"></div>
-            <div class="grid-sub-slot"></div>
-            <div class="grid-sub-slot"></div>
+          <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box; border-bottom: none;">
+            ${Array.from({ length: subCount }).map((_, i) => `
+              <div class="grid-sub-slot" style="flex: 1; box-sizing: border-box; border-top: ${i === 0 ? '1px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.05)'};"></div>
+            `).join('')}
           </div>
         `).join('')}
       </div>
@@ -717,12 +745,12 @@ function showZoomMenu(x, y) {
   menu.style.top = `${y}px`;
 
   const options = [
-    { label: '60 Minutos (Normal)', value: 60 },
-    { label: '30 Minutos (Estándar)', value: 100 },
-    { label: '15 Minutos (Detallado)', value: 160 },
-    { label: '10 Minutos', value: 240 },
-    { label: '6 Minutos', value: 400 },
-    { label: '5 Minutos (Máximo)', value: 480 }
+    { label: '60 Minutos (Normal)', value: 60, interval: 60 },
+    { label: '30 Minutos (Estándar)', value: 100, interval: 30 },
+    { label: '15 Minutos (Detallado)', value: 160, interval: 15 },
+    { label: '10 Minutos', value: 240, interval: 10 },
+    { label: '6 Minutos', value: 400, interval: 6 },
+    { label: '5 Minutos (Máximo)', value: 480, interval: 5 }
   ];
 
   options.forEach(opt => {
@@ -734,6 +762,7 @@ function showZoomMenu(x, y) {
     item.innerHTML = `<span>${opt.label}</span>`;
     item.onclick = () => {
       state.slotHeight = opt.value;
+      state.slotInterval = opt.interval;
       state.save();
       document.documentElement.style.setProperty('--slot-height', `${opt.value}px`);
       refreshUI();

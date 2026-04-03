@@ -194,10 +194,6 @@ body {
   flex-shrink: 0;
   padding: 0;
   margin: 0;
-  /* Sync lines with the agenda grid */
-  background-image: linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
-  background-size: 100% calc(var(--slot-height) / 4);
-  background-position: 0 90px;
 }
 
 .classic-time-header {
@@ -218,7 +214,6 @@ body {
 .hour-slot-container {
   position: relative;
   height: var(--slot-height);
-  border-bottom: 1px solid rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -227,12 +222,7 @@ body {
 
 .grid-sub-slot {
   flex: 1;
-  border-bottom: 1px dotted rgba(0,0,0,0.05);
   box-sizing: border-box;
-}
-
-.grid-sub-slot:last-child {
-  border-bottom: none;
 }
 
 .hour-label {
@@ -275,10 +265,6 @@ body {
   display: flex;
   flex-direction: column;
   background-color: #f1f4f9; /* Restore infinite grey background */
-  background-image: 
-    linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
-  background-size: 100% calc(var(--slot-height) / 4);
-  background-position: 0 90px;
   box-sizing: border-box;
 }
 
