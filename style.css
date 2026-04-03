@@ -183,7 +183,7 @@ body {
 .classic-scheduler { display: flex; height: 100%; overflow: auto; position: relative; }
 
 .classic-time-col {
-  width: 90px;
+  width: 100px;
   background: var(--time-col-bg);
   border-right: 1px solid var(--grid-border);
   position: sticky;
@@ -217,6 +217,7 @@ body {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  flex-shrink: 0; /* CRITICAL: Prevent browser from squashing hours */
 }
 
 .grid-sub-slot {
