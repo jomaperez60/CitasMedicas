@@ -136,12 +136,58 @@ class AppState {
   }
 
   getAppointmentsForDate(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const localDatePrefix = `${year}-${month}-${day}`;
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const targetTime = d.getTime();
     
-    return this.appointments.filter(a => a.startTime.startsWith(localDatePrefix));
+    return this.appointments.filter(app => this.isAppointmentActiveOnDate(app, d));
+  }
+
+  isAppointmentActiveOnDate(app, targetDate) {
+    const appStart = new Date(app.startTime);
+    appStart.setHours(0, 0, 0, 0);
+    const target = new Date(targetDate);
+    target.setHours(0, 0, 0, 0);
+
+    // Initial check: is it before the start?
+    if (target < appStart) return false;
+
+    // Simple match for non-recurring
+    if (!app.recurrence) {
+      return target.getTime() === appStart.getTime();
+    }
+
+    // Recurrence logic
+    const { pattern, interval, days } = app.recurrence;
+    const diffDays = Math.floor((target.getTime() - appStart.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (pattern === 'Diario') {
+      return diffDays % (parseInt(interval) || 1) === 0;
+    }
+
+    if (pattern === 'Semanal') {
+      const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const targetDayName = dayNames[target.getDay()];
+      if (!(days || []).includes(targetDayName)) return false;
+
+      // Calculate week difference
+      const appStartCopy = new Date(appStart);
+      appStartCopy.setDate(appStartCopy.getDate() - appStartCopy.getDay()); // Sunday of start week
+      const targetCopy = new Date(target);
+      targetCopy.setDate(targetCopy.getDate() - targetCopy.getDay()); // Sunday of target week
+      
+      const weekDiff = Math.round((targetCopy.getTime() - appStartCopy.getTime()) / (1000 * 60 * 60 * 24 * 7));
+      return weekDiff % (parseInt(interval) || 1) === 0;
+    }
+
+    if (pattern === 'Mensual') {
+      // Simplification: Matches the same day of the month
+      if (target.getDate() !== appStart.getDate()) return false;
+      const monthDiff = (target.getFullYear() - appStart.getFullYear()) * 12 + (target.getMonth() - appStart.getMonth());
+      return monthDiff % (parseInt(interval) || 1) === 0;
+    }
+
+    return target.getTime() === appStart.getTime();
   }
 
   toggleVisibility(id) {

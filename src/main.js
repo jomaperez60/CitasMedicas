@@ -263,7 +263,7 @@ function renderAppointmentsPro() {
     
     div.innerHTML = `
       <div class="app-time">${formatTime(app.startTime)} - ${formatTime(new Date(new Date(app.startTime).getTime() + app.duration * 60000))}</div>
-      <div class="app-patient">${app.patientName.toUpperCase()}</div>
+      <div class="app-patient">${app.patientName.toUpperCase()} ${app.recurrence ? '🔁' : ''}</div>
       <div style="font-size: 9px; line-height: 1;">
         ${doctorName ? `<span style="color: #2171b5; font-weight: bold;">Dr: ${doctorName}</span><br>` : ''}
         ${primaryType.label} ${app.phone ? `| T: ${app.phone}` : ''}
@@ -453,7 +453,6 @@ function attachEventListeners() {
       patientName: elements.patientName.value,
       phone: elements.patientPhone.value,
       insurance: elements.insuranceSelect.value,
-      dob: elements.patientDob.value,
       providerId: elements.providerSelect.value,
       doctorId: elements.doctorAssignmentArea.style.display !== 'none' ? elements.doctorIdSelect.value : null,
       duration: parseInt(document.getElementById('duration').value),
