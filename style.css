@@ -199,12 +199,14 @@ body {
 .classic-time-header {
   height: 90px;
   min-height: 90px;
+  max-height: 90px;
   background: var(--time-col-bg);
   border-bottom: 2px solid #7192b7;
   position: sticky;
   top: 0;
-  z-index: 130; /* Corner must be above both headers and time-col */
+  z-index: 130;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .classic-time-col .hour-slot-container {
@@ -274,6 +276,7 @@ body {
 
 .classic-col-header {
   height: 90px;
+  max-height: 90px;
   background: linear-gradient(180deg, #1e3a5f 0%, #2c5282 100%);
   color: #fff;
   display: flex;
@@ -287,6 +290,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
+  box-sizing: border-box;
 }
 
 .classic-col-header .header-icon {

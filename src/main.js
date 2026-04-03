@@ -174,8 +174,8 @@ function populateDropdownsFiltered(type) {
 // --- Pro Exact Rendering ---
 
 function renderTimeSlotsPro() {
-  const startHour = 5;
-  const endHour = 22;
+  const startHour = 6;
+  const endHour = 20;
   const interval = state.slotInterval || 30;
 
   let slots = [`
@@ -232,7 +232,7 @@ function renderGridPro() {
            <div class="header-name">${p.name}</div>
            <div class="header-sub">${formatDateShort(state.currentDate)}</div>
         </div>
-        ${Array.from({ length: 18 }).map(() => `
+        ${Array.from({ length: 15 }).map(() => `
           <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box; border-bottom: none;">
             ${Array.from({ length: subCount }).map((_, i) => `
               <div class="grid-sub-slot" style="flex: 1; box-sizing: border-box; border-top: ${i === 0 ? '1px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.05)'};"></div>
@@ -251,7 +251,7 @@ function renderGridPro() {
            <div class="header-name">${new Intl.DateTimeFormat('es', { weekday: 'long' }).format(d).toUpperCase()}</div>
            <div class="header-sub">${formatDateShort(d)}</div>
         </div>
-        ${Array.from({ length: 18 }).map(() => `
+        ${Array.from({ length: 15 }).map(() => `
           <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box; border-bottom: none;">
             ${Array.from({ length: subCount }).map((_, i) => `
               <div class="grid-sub-slot" style="flex: 1; box-sizing: border-box; border-top: ${i === 0 ? '1px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.05)'};"></div>
@@ -604,6 +604,16 @@ function editAppointment(app) {
   // Set checkboxes
   elements.typesSelection.querySelectorAll('input').forEach(cb => cb.checked = (app.types || []).includes(cb.value));
   
+  // Sync recurrence display logic
+  if (app.recurrence) {
+    state.currentRecurrence = app.recurrence;
+    elements.recurrenceBanner.style.display = 'flex';
+    elements.recurrenceText.textContent = app.recurrence.summary || 'Evento Recurrente';
+  } else {
+    state.currentRecurrence = null;
+    elements.recurrenceBanner.style.display = 'none';
+  }
+  
   // Trigger logic
   const firstChecked = elements.typesSelection.querySelector('input:checked') || elements.typesSelection.querySelector('input');
   updateContextualSelection(firstChecked);
@@ -720,7 +730,12 @@ function showContextMenu(x, y) {
     } else {
       const el = document.createElement('div');
       el.className = 'context-menu-item';
-      el.innerHTML = `<span class="icon-placeholder">${item.icon}</span>${item.label}`;
+      el.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+           <span class="icon-placeholder" style="display: flex;">${item.icon}</span>
+           <span>${item.label}</span>
+        </div>
+      `;
       el.onclick = (e) => { e.stopPropagation(); item.action(); closeContextMenu(); };
       menu.appendChild(el);
     }
@@ -745,12 +760,12 @@ function showZoomMenu(x, y) {
   menu.style.top = `${y}px`;
 
   const options = [
-    { label: '60 Minutos (Normal)', value: 60, interval: 60 },
-    { label: '30 Minutos (Estándar)', value: 100, interval: 30 },
-    { label: '15 Minutos (Detallado)', value: 160, interval: 15 },
-    { label: '10 Minutos', value: 240, interval: 10 },
-    { label: '6 Minutos', value: 400, interval: 6 },
-    { label: '5 Minutos (Máximo)', value: 480, interval: 5 }
+    { label: '60', value: 60, interval: 60 },
+    { label: '30', value: 100, interval: 30 },
+    { label: '15', value: 160, interval: 15 },
+    { label: '10', value: 240, interval: 10 },
+    { label: '6', value: 400, interval: 6 },
+    { label: '5', value: 480, interval: 5 }
   ];
 
   options.forEach(opt => {
@@ -759,7 +774,7 @@ function showZoomMenu(x, y) {
     const isActive = Math.abs(state.slotHeight - opt.value) < 5;
     if (isActive) item.classList.add('active');
     
-    item.innerHTML = `<span>${opt.label}</span>`;
+    item.innerHTML = `<span style="flex: 1;">${opt.label} Minutos</span>`;
     item.onclick = () => {
       state.slotHeight = opt.value;
       state.slotInterval = opt.interval;

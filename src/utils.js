@@ -58,8 +58,7 @@ export function calculatePosition(isoString, headerHeight = 90, slotHeight = 100
   const hours = date.getHours();
   const minutes = date.getMinutes();
   
-  // Start calendar at 5 AM (5 AM is hidden, 6 AM renders perfectly)
-  const startHour = 5;
+  const startHour = 6;
   const relativeMinutes = (hours - startHour) * 60 + minutes;
   return headerHeight + (relativeMinutes / 60) * slotHeight;
 }
@@ -69,7 +68,7 @@ export function calculateHeight(durationMinutes, slotHeight = 100) {
 }
 
 export function getTimeFromPosition(y, headerHeight = 90, slotHeight = 100) {
-  const startHour = 5;
+  const startHour = 6;
   
   const relativeY = y - headerHeight;
   const totalMinutes = (relativeY / slotHeight) * 60;
