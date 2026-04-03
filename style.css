@@ -482,51 +482,108 @@ body {
 
 .classic-hr { border: 0; border-top: 1px solid #ddd; margin: 5px 0; }
 
-/* Drag Selection & Context Menu */
+/* Drag Selection & Context Menu (CED Pro Exact) */
 .drag-selection {
   position: absolute;
   left: 0;
   width: 100%;
-  background: rgba(37, 99, 235, 0.35);
-  border: 1px solid #2563eb;
+  background: rgba(37, 99, 235, 0.3);
+  border: 1px solid #1e3a5f;
   z-index: 50;
   pointer-events: none;
 }
 
 .classic-context-menu {
   position: fixed;
-  z-index: 4000; /* Higher than modal */
+  z-index: 4000;
   background: #fff;
-  border: 1px solid #7192B7;
-  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-  min-width: 180px;
+  border: 1px solid #1e3a5f;
+  box-shadow: 3px 3px 10px rgba(0,0,0,0.3);
+  min-width: 220px;
   padding: 2px;
   font-family: var(--font-family);
-  font-size: 11px;
+  font-size: 12px;
+  border-radius: 2px;
 }
 
 .context-menu-item {
-  padding: 6px 10px 6px 28px;
+  padding: 6px 12px 6px 32px;
   cursor: pointer;
   display: flex;
   align-items: center;
   position: relative;
-  transition: background 0.1s;
+  transition: all 0.1s;
+  color: #333;
 }
 
 .context-menu-item:hover {
-  background: #e1f5fe;
+  background: linear-gradient(to bottom, #4a90e2, #2171b5);
+  color: #fff;
 }
 
 .context-menu-item .icon-placeholder {
   position: absolute;
-  left: 6px;
+  left: 8px;
   width: 16px;
   text-align: center;
+  font-size: 14px;
 }
 
 .context-menu-separator {
   height: 1px;
-  background: #ccc;
-  margin: 2px 5px;
+  background: #ddd;
+  margin: 4px 5px;
+}
+
+/* Recurrence Modal Special Styles */
+.recurrence-grid {
+  display: flex;
+  gap: 15px;
+  background: #f9f9f9;
+  padding: 15px;
+  border: 1px solid #ccc;
+}
+
+.recurrence-sidebar {
+  width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recurrence-pattern-opt {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  text-align: left;
+}
+
+.recurrence-pattern-opt.active {
+  background: #2171b5;
+  color: #fff;
+  border-color: #1e3a5f;
+}
+
+.recurrence-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.days-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.day-check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
 }

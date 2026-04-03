@@ -38,6 +38,11 @@ const elements = {
   treatmentNotes: document.getElementById('treatment-notes'),
   appointmentsListBody: document.getElementById('appointments-list-body'),
   patientsListBody: document.getElementById('patients-list-body'),
+  // Recurrence
+  recurrenceModal: document.getElementById('recurrence-modal'),
+  cancelRecurrence: document.getElementById('cancel-recurrence'),
+  cancelRecurrenceX: document.getElementById('cancel-recurrence-x'),
+  saveRecurrence: document.getElementById('save-recurrence'),
   contextMenu: null // Dynamic
 };
 
@@ -320,6 +325,8 @@ function attachEventListeners() {
   });
 
   elements.cancelModal.onclick = elements.cancelModalX.onclick = () => elements.modal.style.display = 'none';
+  elements.cancelRecurrence.onclick = elements.cancelRecurrenceX.onclick = () => elements.recurrenceModal.style.display = 'none';
+  elements.saveRecurrence.onclick = () => elements.recurrenceModal.style.display = 'none';
   
   elements.deleteBtn.onclick = () => {
     if (state.selectedAppointment && confirm('¿Está seguro de que desea eliminar esta cita?')) {
@@ -382,6 +389,16 @@ function openModal(defs = {}) {
   elements.modal.style.display = 'flex';
 }
 
+function openRecurrenceModal(defs = {}) {
+  const startStr = defs.startTime || '10:15 AM';
+  const duration = defs.duration || 30;
+  
+  document.getElementById('rec-start-display').textContent = formatTime(startStr, '12h');
+  document.getElementById('rec-duration-display').textContent = `${duration} minutos`;
+  document.getElementById('rec-range-start').value = state.currentDate.toISOString().split('T')[0];
+  
+  elements.recurrenceModal.style.display = 'flex';
+}
 function editAppointment(app) {
   state.selectedAppointment = app;
   elements.deleteBtn.style.display = 'block';
@@ -484,7 +501,7 @@ function showContextMenu(x, y) {
   const items = [
     { label: 'Nuevo Evento...', icon: '📅', action: () => openModal({ startTime: selectionInfo.startTime, providerId: selectionInfo.providerId, duration: selectionInfo.duration }) },
     { label: 'Nuevo Evento Todo el Día', icon: '⏰', action: () => openModal({ startTime: '06:00', providerId: selectionInfo.providerId, duration: 840 }) },
-    { label: 'Nuevo Evento Recurrente...', icon: '🔁', action: () => openModal({ startTime: selectionInfo.startTime, providerId: selectionInfo.providerId, duration: selectionInfo.duration }) },
+    { label: 'Nuevo Evento Recurrente...', icon: '🔁', action: () => openRecurrenceModal({ startTime: selectionInfo.startTime, duration: selectionInfo.duration }) },
     { type: 'separator' },
     { label: 'Hoy', icon: '🏠', action: () => { state.currentDate = new Date(); state.save(); refreshUI(); updateStatusMessage(); } },
     { label: 'Ir a Fecha...', icon: '🔍', action: () => alert('Use el calendario lateral para navegar') }
