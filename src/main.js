@@ -717,11 +717,10 @@ function showZoomMenu(x, y) {
   menu.style.top = `${y}px`;
 
   const options = [
-    { label: 'Escala: 60 Minutos', value: 80 },
-    { label: 'Escala: 30 Minutos (Estándar)', value: 160 },
-    { label: 'Escala: 15 Minutos', value: 320 },
-    { label: 'Escala: 10 Minutos', value: 480 },
-    { label: 'Escala: 5 Minutos (Máximo)', value: 960 }
+    { label: 'Ver: Normal', value: 80 },
+    { label: 'Ver: Intermedio', value: 120 },
+    { label: 'Ver: Detallado', value: 180 },
+    { label: 'Ver: Máximo Detalle', value: 300 }
   ];
 
   options.forEach(opt => {
