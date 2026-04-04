@@ -40,48 +40,6 @@ export const APPOINTMENT_TYPES = [
   { id: 'fibroscan', label: 'Fibroscan', color: '#4f46e5' }
 ];
 
-// ─── DB Column Mappers ────────────────────────────────────────────────────────
-// CRITICAL: Supabase/PostgreSQL lowercases all column names.
-// The DB schema has: patientname, providerid, doctorid, starttime, clinicalnotes
-// The JS side uses: patientName, providerId, doctorId, startTime, clinicalNotes
-
-/** Converts a JS camelCase appointment object → lowercase DB row for writing */
-function mapAppToDB(app) {
-  return {
-    id: app.id,
-    patientname: app.patientName || null,
-    phone: app.phone || null,
-    insurance: app.insurance || null,
-    providerid: app.providerId || null,
-    doctorid: app.doctorId || null,
-    starttime: app.startTime || null,
-    duration: app.duration || 0,
-    status: app.status || 'scheduled',
-    clinicalnotes: app.clinicalNotes || null,
-    types: app.types || [],
-    recurrence: app.recurrence || null
-  };
-}
-
-/** Converts a lowercase DB row → JS camelCase appointment object for reading */
-function mapAppFromDB(row) {
-  return {
-    id: row.id,
-    patientName: row.patientname,
-    phone: row.phone,
-    insurance: row.insurance,
-    providerId: row.providerid,
-    doctorId: row.doctorid,
-    startTime: row.starttime,
-    duration: row.duration,
-    status: row.status,
-    clinicalNotes: row.clinicalnotes,
-    types: row.types || [],
-    recurrence: row.recurrence || null
-  };
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
 class AppState {
   constructor() {
     this.currentDate = new Date();
@@ -89,7 +47,7 @@ class AppState {
     this.activeTab = 'agenda'; // 'agenda', 'lista', 'pacientes'
     this.timeFormat = localStorage.getItem('ced_time_format') || '24h';
     this.theme = localStorage.getItem('ced_theme') || 'light';
-    this.slotHeight = parseInt(localStorage.getItem('ced_slot_height')) || 100;
+    this.slotHeight = parseInt(localStorage.getItem('ced_slot_height')) || 100; // Pixels per hour (Zoom)
     this.slotInterval = parseInt(localStorage.getItem('ced_slot_interval')) || 30;
     this.selectedProviderId = null;
     this.doctors = JSON.parse(localStorage.getItem('ced_doctors')) || INITIAL_DOCTORS;
@@ -101,54 +59,54 @@ class AppState {
     this.searchTerm = '';
     this.navigatorBaseDate = new Date(this.currentDate);
   }
-
-  async load() {
+    // Load from Cloud (Supabase)
     try {
-      // 1. Resources (doctors + rooms)
       const { data: resData, error: resError } = await supabase.from('ced_resources').select('*');
       if (!resError && resData && resData.length > 0) {
         this.doctors = resData.filter(r => r.type === 'doctor');
         this.rooms = resData.filter(r => r.type === 'room');
       } else if (!resError) {
+        // Auto-migrate resources if Cloud is empty
         await supabase.from('ced_resources').upsert([...this.doctors, ...this.rooms]);
       }
 
-      // 2. Patients FIRST (appointments reference them via FK on 'name')
+      // Load patients FIRST (appointments reference them via FK on 'name')
       const { data: patData, error: patError } = await supabase.from('ced_patients').select('*');
       if (!patError && patData && patData.length > 0) {
         this.patients = patData;
       } else if (!patError && this.patients.length > 0) {
+        // Auto-migrate patients — only send columns that exist in DB schema
         for (const p of this.patients) {
           const dbRow = { name: p.name, phone: p.phone || '', insurance: p.insurance || '' };
-          await supabase.from('ced_patients').upsert([dbRow])
-            .catch(e => console.warn('Patient migration error:', e.message));
+          await supabase.from('ced_patients').upsert([dbRow]).catch(e => console.warn('Patient migration error:', e.message));
         }
       }
 
-      // 3. Appointments (using column-name mapper to handle lowercase DB columns)
       const { data: appData, error: appError } = await supabase.from('ced_appointments').select('*');
       if (!appError && appData && appData.length > 0) {
-        // DB returns lowercase columns → convert to camelCase for JS
+        // DB returns lowercase column names — map them to camelCase for JS
         this.appointments = appData.map(mapAppFromDB);
       } else if (!appError && this.appointments.length > 0) {
-        // Migrate local appointments → cloud
+        // Auto-migrate local appointments to cloud
         for (const app of this.appointments) {
           // Ensure patient exists first (FK constraint)
           if (app.patientName) {
             const dbPat = { name: app.patientName, phone: app.phone || '', insurance: app.insurance || '' };
             await supabase.from('ced_patients').upsert([dbPat]).catch(() => {});
           }
-          // Use mapAppToDB to send EXACT lowercase column names
+          // Send with EXACT lowercase column names matching the DB schema
           await supabase.from('ced_appointments').upsert([mapAppToDB(app)])
             .catch(e => console.warn('Appointment migration error:', app.id, e.message));
         }
       }
     } catch (e) {
-      console.error('Error loading/migrating to Supabase:', e);
+      console.error("Error loading/migrating to Supabase:", e);
     }
   }
 
   async save() {
+    // We will save individual items in their respective methods for real-time sync.
+    // LocalStorage remains as a local cache for offline/snappy start.
     localStorage.setItem('ced_doctors', JSON.stringify(this.doctors));
     localStorage.setItem('ced_rooms', JSON.stringify(this.rooms));
     localStorage.setItem('ced_appointments', JSON.stringify(this.appointments));
@@ -174,13 +132,11 @@ class AppState {
     };
     if (index >= 0) {
       const updated = { ...this.patients[index], ...patientData };
-      await supabase.from('ced_patients').upsert([dbPatient])
-        .catch(e => console.warn('Patient update error:', e.message));
+      await supabase.from('ced_patients').upsert([dbPatient]).catch(e => console.warn('Patient update error:', e));
       this.patients[index] = updated;
     } else {
       const newPat = { name: patientData.name, phone: patientData.phone || '', insurance: patientData.insurance || '' };
-      await supabase.from('ced_patients').upsert([dbPatient])
-        .catch(e => console.warn('Patient insert error:', e.message));
+      await supabase.from('ced_patients').upsert([dbPatient]).catch(e => console.warn('Patient insert error:', e));
       this.patients.push(newPat);
     }
     this.save();
@@ -203,14 +159,14 @@ class AppState {
   }
 
   async addAppointment(data) {
-    const app = {
-      id: Date.now().toString(),
-      ...data,
+    const app = { 
+      id: Date.now().toString(), 
+      ...data, 
       status: 'scheduled',
       types: data.types || []
     };
-
-    // CRITICAL: mapAppToDB converts camelCase → lowercase to match Supabase column names
+    
+    // CRITICAL: Use exact lowercase column names as defined in Supabase schema
     const { error } = await supabase.from('ced_appointments').upsert([mapAppToDB(app)]);
     if (error) throw error;
 
@@ -228,9 +184,9 @@ class AppState {
     const index = this.appointments.findIndex(app => app.id === id);
     if (index >= 0) {
       const updated = { ...this.appointments[index], ...data };
-      // Build the DB row, then remove 'id' since it's used in the .eq() filter
+      // CRITICAL: Use exact lowercase column names as defined in Supabase schema
       const dbUpdate = mapAppToDB({ ...updated, id });
-      delete dbUpdate.id;
+      delete dbUpdate.id; // Don't include id in the update payload (it's in the .eq() filter)
       const { error } = await supabase.from('ced_appointments').update(dbUpdate).eq('id', id);
       if (error) throw error;
 
@@ -268,9 +224,16 @@ class AppState {
     const isDoctor = type === 'doctor';
     const list = isDoctor ? this.doctors : this.rooms;
     const newId = `${type}-${Date.now()}`;
-    const color = isDoctor ? '#2563eb' : '#dc2626';
+    const color = isDoctor ? '#2563eb' : '#dc2626'; // Default colors
+    
+    const resource = {
+      id: newId,
+      name: name,
+      color: color,
+      visible: true,
+      type: type
+    };
 
-    const resource = { id: newId, name, color, visible: true, type };
     const { error } = await supabase.from('ced_resources').insert([resource]);
     if (error) throw error;
 
@@ -293,6 +256,7 @@ class AppState {
   }
 
   async deleteResource(id, type) {
+    // Validation: Check for future/current appointments
     const now = new Date();
     now.setHours(0, 0, 0, 0);
 
@@ -305,18 +269,18 @@ class AppState {
     });
 
     if (hasFutureAppointments) {
-      return { success: false, message: 'No puedes borrar este recurso porque aún tiene citas programadas hoy o en el futuro.' };
+      return { success: false, message: "No puedes borrar este recurso porque aún tiene citas programadas hoy o en el futuro." };
     }
 
     const { error } = await supabase.from('ced_resources').delete().eq('id', id);
     if (error) throw error;
-
+    
     if (type === 'doctor') {
       this.doctors = this.doctors.filter(d => d.id !== id);
     } else {
       this.rooms = this.rooms.filter(r => r.id !== id);
     }
-
+    
     this.save();
     return { success: true };
   }
@@ -341,12 +305,14 @@ class AppState {
 
     const { pattern, interval, days, endType, endValue } = app.recurrence;
 
+    // Check End Conditions (Date-based)
     if (endType === 'on' && endValue) {
       const endD = new Date(endValue);
       endD.setHours(0, 0, 0, 0);
       if (target > endD) return false;
     }
 
+    // Check Pattern Match
     const diffDays = Math.floor((target.getTime() - appStart.getTime()) / (1000 * 60 * 60 * 24));
     let isActive = false;
 
@@ -361,7 +327,7 @@ class AppState {
       appStartCopy.setDate(appStartCopy.getDate() - appStartCopy.getDay());
       const targetCopy = new Date(target);
       targetCopy.setDate(targetCopy.getDate() - targetCopy.getDay());
-
+      
       const weekDiff = Math.round((targetCopy.getTime() - appStartCopy.getTime()) / (1000 * 60 * 60 * 24 * 7));
       isActive = weekDiff % (parseInt(interval) || 1) === 0;
     } else if (pattern === 'Mensual') {
@@ -372,6 +338,7 @@ class AppState {
 
     if (!isActive) return false;
 
+    // Check Occurrence Limit (if applicable)
     if (endType === 'after' && endValue) {
       const totalOccurrences = this.countOccurrencesUpTo(app, target);
       if (totalOccurrences > parseInt(endValue)) return false;
@@ -385,11 +352,18 @@ class AppState {
     appStart.setHours(0, 0, 0, 0);
     const target = new Date(targetDate);
     target.setHours(0, 0, 0, 0);
-
+    
+    const { pattern, interval, days } = app.recurrence;
     let count = 0;
+
+    // We only need to iterate over the dates for now.
+    // For large ranges, this can be mathematically optimized.
+    // Given the context of medical scheduling (weeks/months), this is fine.
     let current = new Date(appStart);
     while (current <= target) {
-      if (this.isMatchingPatternSimple(app, current)) count++;
+      if (this.isMatchingPatternSimple(app, current)) {
+        count++;
+      }
       current.setDate(current.getDate() + 1);
     }
     return count;
@@ -400,11 +374,13 @@ class AppState {
     appStart.setHours(0, 0, 0, 0);
     const target = new Date(date);
     target.setHours(0, 0, 0, 0);
-
+    
     const { pattern, interval, days } = app.recurrence;
     const diffDays = Math.floor((target.getTime() - appStart.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (pattern === 'Diario') return diffDays % (parseInt(interval) || 1) === 0;
+    if (pattern === 'Diario') {
+      return diffDays % (parseInt(interval) || 1) === 0;
+    }
 
     if (pattern === 'Semanal') {
       const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -431,10 +407,13 @@ class AppState {
       doctor.visible = !doctor.visible;
     } else {
       const room = this.rooms.find(r => r.id === id);
-      if (room) room.visible = !room.visible;
+      if (room) {
+        room.visible = !room.visible;
+      }
     }
     this.save();
   }
 }
 
 export const state = new AppState();
+
