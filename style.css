@@ -1022,9 +1022,12 @@ body.is-admin button.admin-only {
     display: none !important;
   }
 
-  /* 4. Agenda Sizing - Corner Logo */
   .classic-time-header {
     width: 65px !important;
+    height: var(--header-height) !important;
+  }
+  
+  .classic-col-header {
     height: var(--header-height) !important;
   }
   

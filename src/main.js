@@ -85,7 +85,9 @@ const elements = {
   dateNavigatorMobile: document.getElementById('date-navigator-mobile'),
   rightSidebar: document.getElementById('right-sidebar'),
   rightSidebarHandle: document.getElementById('right-sidebar-handle'),
-  appointmentDate: document.getElementById('appointment-date')
+  appointmentDate: document.getElementById('appointment-date'),
+  appointmentTime: document.getElementById('appointment-time'),
+  appointmentDuration: document.getElementById('appointment-duration')
 };
 
 let selectionInfo = {
@@ -737,9 +739,12 @@ function attachGridEventsPro() {
       if (e.button !== 0) return; // Only left click for selection
       if (e.target.closest('.appointment')) return;
 
+      const firstColHeader = elements.calendarGrid.querySelector('.classic-col-header');
+      const headerHeight = firstColHeader ? firstColHeader.clientHeight : 95;
+
       const rect = col.getBoundingClientRect();
       const y = e.clientY - rect.top;
-      if (y < 90) return; // Ignore click on header
+      if (y < headerHeight) return; // Ignore click on header
 
       selectionInfo.isDragging = true;
       selectionInfo.active = true;
@@ -747,7 +752,7 @@ function attachGridEventsPro() {
       
       // Snap start position (Step = 15m)
       const snapStep = state.slotHeight / 4;
-      selectionInfo.startY = Math.floor((y - 90) / snapStep) * snapStep + 90;
+      selectionInfo.startY = Math.floor((y - headerHeight) / snapStep) * snapStep + headerHeight;
       
       if (selectionInfo.selectionEl) selectionInfo.selectionEl.remove();
       selectionInfo.selectionEl = document.createElement('div');
@@ -759,12 +764,16 @@ function attachGridEventsPro() {
 
     col.onmousemove = (e) => {
       if (!selectionInfo.isDragging) return;
+
+      const firstColHeader = elements.calendarGrid.querySelector('.classic-col-header');
+      const headerHeight = firstColHeader ? firstColHeader.clientHeight : 95;
+
       const rect = col.getBoundingClientRect();
       const currentRawY = e.clientY - rect.top;
       
       // Snap current position
       const snapStep = state.slotHeight / 4;
-      const snappedCurrentY = Math.ceil((currentRawY - 90) / snapStep) * snapStep + 90;
+      const snappedCurrentY = Math.ceil((currentRawY - headerHeight) / snapStep) * snapStep + headerHeight;
       
       const top = Math.min(selectionInfo.startY, snappedCurrentY);
       const bottom = Math.max(selectionInfo.startY, snappedCurrentY);
@@ -780,13 +789,17 @@ function attachGridEventsPro() {
       const rect = col.getBoundingClientRect();
       const endRawY = e.clientY - rect.top;
       const snapStep = state.slotHeight / 4;
-      const snappedEndY = Math.ceil((endRawY - 90) / snapStep) * snapStep + 90;
+
+      const firstColHeader = elements.calendarGrid.querySelector('.classic-col-header');
+      const headerHeight = firstColHeader ? firstColHeader.clientHeight : 95;
+
+      const snappedEndY = Math.ceil((endRawY - headerHeight) / snapStep) * snapStep + headerHeight;
 
       const top = Math.min(selectionInfo.startY, snappedEndY);
       const bottom = Math.max(selectionInfo.startY, snappedEndY);
       const height = bottom - top;
 
-      selectionInfo.startTime = getTimeFromPosition(top, 90, state.slotHeight);
+      selectionInfo.startTime = getTimeFromPosition(top, headerHeight, state.slotHeight);
       const durationHours = height / state.slotHeight;
       selectionInfo.duration = Math.max(15, Math.round(durationHours * 60));
       

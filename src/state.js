@@ -72,20 +72,20 @@ class AppState {
         await supabase.from('ced_resources').insert([...this.doctors, ...this.rooms]);
       }
 
-      const { data: appData, error: appError } = await supabase.from('ced_appointments').select('*');
-      if (!appError && appData && appData.length > 0) {
-        this.appointments = appData;
-      } else if (!appError && this.appointments.length > 0) {
-        // Auto-migrate appointments if Cloud is empty
-        await supabase.from('ced_appointments').insert(this.appointments);
-      }
-
       const { data: patData, error: patError } = await supabase.from('ced_patients').select('*');
       if (!patError && patData && patData.length > 0) {
         this.patients = patData;
       } else if (!patError && this.patients.length > 0) {
         // Auto-migrate patients if Cloud is empty
         await supabase.from('ced_patients').insert(this.patients);
+      }
+
+      const { data: appData, error: appError } = await supabase.from('ced_appointments').select('*');
+      if (!appError && appData && appData.length > 0) {
+        this.appointments = appData;
+      } else if (!appError && this.appointments.length > 0) {
+        // Auto-migrate appointments if Cloud is empty
+        await supabase.from('ced_appointments').insert(this.appointments);
       }
     } catch (e) {
       console.error("Error loading/migrating to Supabase:", e);
@@ -189,6 +189,19 @@ class AppState {
     if (error) throw error;
     this.appointments = this.appointments.filter(a => a.id !== id);
     this.save();
+  }
+
+  async updateResource(id, data) {
+    const isDoctor = data.type === 'doctor';
+    const list = isDoctor ? this.doctors : this.rooms;
+    const index = list.findIndex(p => p.id === id);
+    if (index >= 0) {
+      const updated = { ...list[index], ...data };
+      const { error } = await supabase.from('ced_resources').update(data).eq('id', id);
+      if (error) throw error;
+      list[index] = updated;
+      this.save();
+    }
   }
 
   async addResource(type, name) {

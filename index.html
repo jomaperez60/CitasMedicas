@@ -306,6 +306,17 @@
           </div>
           <div class="modal-field-item">
             <label>Hora Inicio:</label>
+            <input type="time" id="appointment-time" required class="classic-input">
+          </div>
+          <div class="modal-field-item">
+            <label>Duración:</label>
+            <select id="appointment-duration" class="classic-select">
+              <input type="hidden" id="appointment-duration-hidden">
+              <option value="15">15 min</option>
+              <option value="20">20 min</option>
+              <option value="30" selected>30 min</option>
+              <option value="45">45 min</option>
+              <option value="60">1 hora</option>
               <option value="90">1.5 horas</option>
               <option value="120">2 horas</option>
             </select>
