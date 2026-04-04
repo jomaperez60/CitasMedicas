@@ -41,11 +41,11 @@ export const APPOINTMENT_TYPES = [
 ];
 
 // ─── DB Column Mappers ────────────────────────────────────────────────────────
-// CRITICAL: Supabase/PostgreSQL lowercases all column names.
-// The DB schema has: patientname, providerid, doctorid, starttime, clinicalnotes
-// The JS side uses: patientName, providerId, doctorId, startTime, clinicalNotes
+// IMPORTANT: Supabase/PostgreSQL stores all column names in lowercase.
+// DB columns: patientname, providerid, doctorid, starttime, clinicalnotes
+// JS uses:    patientName, providerId, doctorId, startTime, clinicalNotes
 
-/** Converts a JS camelCase appointment object → lowercase DB row for writing */
+/** JS camelCase → DB lowercase (for writing to Supabase) */
 function mapAppToDB(app) {
   return {
     id: app.id,
@@ -63,7 +63,7 @@ function mapAppToDB(app) {
   };
 }
 
-/** Converts a lowercase DB row → JS camelCase appointment object for reading */
+/** DB lowercase → JS camelCase (for reading from Supabase) */
 function mapAppFromDB(row) {
   return {
     id: row.id,
@@ -82,11 +82,22 @@ function mapAppFromDB(row) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Safe helper: upsert a patient row without throwing.
+ *  The Supabase JS client returns a PostgrestBuilder, NOT a native Promise,
+ *  so .catch() does NOT work on it. Always use: const { error } = await ... */
+async function safeUpsertPatient(name, phone, insurance) {
+  const { error } = await supabase
+    .from('ced_patients')
+    .upsert([{ name, phone: phone || '', insurance: insurance || '' }]);
+  if (error) console.error('[DB] Patient upsert failed:', name, error.message, error.code);
+  return !error;
+}
+
 class AppState {
   constructor() {
     this.currentDate = new Date();
-    this.viewMode = 'day'; // 'day' or 'week'
-    this.activeTab = 'agenda'; // 'agenda', 'lista', 'pacientes'
+    this.viewMode = 'day';
+    this.activeTab = 'agenda';
     this.timeFormat = localStorage.getItem('ced_time_format') || '24h';
     this.theme = localStorage.getItem('ced_theme') || 'light';
     this.slotHeight = parseInt(localStorage.getItem('ced_slot_height')) || 100;
@@ -104,76 +115,64 @@ class AppState {
 
   async load() {
     try {
-      // 1. Resources (doctors + rooms)
+      // 1. Resources
       const { data: resData, error: resError } = await supabase.from('ced_resources').select('*');
-      console.log('[Supabase] ced_resources:', resData?.length ?? 'null', resError ? '❌ '+resError.message : '✅');
+      console.log('[DB] ced_resources:', resData?.length ?? 0, resError ? '❌ ' + resError.message : '✅');
       if (!resError && resData && resData.length > 0) {
         this.doctors = resData.filter(r => r.type === 'doctor');
         this.rooms = resData.filter(r => r.type === 'room');
       } else if (!resError) {
         const { error: upErr } = await supabase.from('ced_resources').upsert([...this.doctors, ...this.rooms]);
-        console.log('[Supabase] resources migration:', upErr ? '❌ '+upErr.message : '✅');
+        if (upErr) console.error('[DB] Resources migration failed:', upErr.message);
       }
 
-      // 2. Patients FIRST (appointments reference them via FK on 'name')
+      // 2. Patients FIRST (FK constraint: appointments → patients)
       const { data: patData, error: patError } = await supabase.from('ced_patients').select('*');
-      console.log('[Supabase] ced_patients:', patData?.length ?? 'null', patError ? '❌ '+patError.message : '✅');
+      console.log('[DB] ced_patients:', patData?.length ?? 0, patError ? '❌ ' + patError.message : '✅');
       if (!patError && patData && patData.length > 0) {
         this.patients = patData;
       } else if (!patError && this.patients.length > 0) {
-        console.log('[Supabase] Migrating', this.patients.length, 'patients...');
+        console.log('[DB] Migrating', this.patients.length, 'patients...');
         for (const p of this.patients) {
-          const dbRow = { name: p.name, phone: p.phone || '', insurance: p.insurance || '' };
-          const { error: pErr } = await supabase.from('ced_patients').upsert([dbRow]);
-          if (pErr) console.error('[Supabase] Patient migration FAILED:', p.name, pErr.message, pErr.code);
+          await safeUpsertPatient(p.name, p.phone, p.insurance);
         }
       }
 
       // 3. Appointments
       const { data: appData, error: appError } = await supabase.from('ced_appointments').select('*');
-      console.log('[Supabase] ced_appointments:', appData?.length ?? 'null', appError ? '❌ '+appError.message : '✅');
+      console.log('[DB] ced_appointments:', appData?.length ?? 0, appError ? '❌ ' + appError.message : '✅');
       if (!appError && appData && appData.length > 0) {
         this.appointments = appData.map(mapAppFromDB);
-        console.log('[Supabase] Loaded', this.appointments.length, 'appointments from cloud ✅');
-      } else if (!appError) {
-        // Cloud has 0 appointments but we have local ones — migrate all
-        if (this.appointments.length > 0) {
-          console.log('[Supabase] Migrating', this.appointments.length, 'local appointments to cloud...');
-          for (const app of this.appointments) {
-            if (app.patientName) {
-              const dbPat = { name: app.patientName, phone: app.phone || '', insurance: app.insurance || '' };
-              const { error: pErr } = await supabase.from('ced_patients').upsert([dbPat]);
-              if (pErr) console.error('[Supabase] Pre-migration patient FAILED:', app.patientName, pErr.message);
-            }
-            const dbRow = mapAppToDB(app);
-            const { error: aErr } = await supabase.from('ced_appointments').upsert([dbRow]);
-            if (aErr) console.error('[Supabase] Appointment migration FAILED:', app.id, aErr.message, aErr.code, JSON.stringify(dbRow));
-            else console.log('[Supabase] Appointment migrated OK:', app.id);
+        console.log('[DB] Loaded', this.appointments.length, 'appointments from cloud ✅');
+      } else if (!appError && this.appointments.length > 0) {
+        console.log('[DB] Migrating', this.appointments.length, 'local appointments...');
+        for (const app of this.appointments) {
+          if (app.patientName) {
+            await safeUpsertPatient(app.patientName, app.phone, app.insurance);
           }
+          const { error: aErr } = await supabase.from('ced_appointments').upsert([mapAppToDB(app)]);
+          if (aErr) console.error('[DB] Appt migration FAILED:', app.id, aErr.message, aErr.code);
+          else console.log('[DB] Appt migrated OK:', app.id, app.patientName);
         }
       }
     } catch (e) {
-      console.error('[Supabase] CRITICAL load error:', e);
+      console.error('[DB] Critical load error:', e);
     }
   }
 
-  /** Force-pushes ALL local appointments to Supabase (call from browser console: state.forceSyncAll()) */
+  /** Call from browser console to force-push all local appointments: state.forceSyncAll() */
   async forceSyncAll() {
-    console.log('[ForceSync] Starting forced sync of', this.appointments.length, 'appointments...');
+    console.log('[ForceSync] Pushing', this.appointments.length, 'appointments...');
     let ok = 0, fail = 0;
     for (const app of this.appointments) {
       if (app.patientName) {
-        const dbPat = { name: app.patientName, phone: app.phone || '', insurance: app.insurance || '' };
-        await supabase.from('ced_patients').upsert([dbPat])
-          .then(({ error }) => { if (error) console.error('[ForceSync] Patient FAILED:', app.patientName, error.message); });
+        await safeUpsertPatient(app.patientName, app.phone, app.insurance);
       }
-      const dbRow = mapAppToDB(app);
-      const { error } = await supabase.from('ced_appointments').upsert([dbRow]);
-      if (error) { fail++; console.error('[ForceSync] App FAILED:', app.id, error.message, error.code); }
-      else { ok++; console.log('[ForceSync] App OK:', app.id, app.patientName); }
+      const { error } = await supabase.from('ced_appointments').upsert([mapAppToDB(app)]);
+      if (error) { fail++; console.error('[ForceSync] FAILED:', app.id, error.message, error.code); }
+      else { ok++; console.log('[ForceSync] OK:', app.id, app.patientName); }
     }
-    console.log(`[ForceSync] Done: ${ok} ok, ${fail} failed`);
-    alert(`Sincronización forzada completada: ${ok} citas enviadas, ${fail} fallidas. Revisa la consola para detalles.`);
+    alert(`Sincronización: ${ok} citas enviadas ✅, ${fail} fallidas ❌`);
   }
 
   async save() {
@@ -187,45 +186,32 @@ class AppState {
     localStorage.setItem('ced_slot_interval', this.slotInterval);
   }
 
-  // --- Patients Logic ---
+  // --- Patients ---
   getPatient(name) {
     return this.patients.find(p => p.name.toLowerCase() === name.toLowerCase());
   }
 
   async addOrUpdatePatient(patientData) {
     const index = this.patients.findIndex(p => p.name.toLowerCase() === patientData.name.toLowerCase());
-    // Only send valid columns to Supabase (name, phone, insurance — no id, no dob)
-    const dbPatient = {
-      name: patientData.name,
-      phone: patientData.phone || '',
-      insurance: patientData.insurance || ''
-    };
+    // Use safeUpsertPatient — it uses const { error } = await, NOT .catch()
+    await safeUpsertPatient(patientData.name, patientData.phone, patientData.insurance);
     if (index >= 0) {
-      const updated = { ...this.patients[index], ...patientData };
-      await supabase.from('ced_patients').upsert([dbPatient])
-        .catch(e => console.warn('Patient update error:', e.message));
-      this.patients[index] = updated;
+      this.patients[index] = { ...this.patients[index], ...patientData };
     } else {
-      const newPat = { name: patientData.name, phone: patientData.phone || '', insurance: patientData.insurance || '' };
-      await supabase.from('ced_patients').upsert([dbPatient])
-        .catch(e => console.warn('Patient insert error:', e.message));
-      this.patients.push(newPat);
+      this.patients.push({ name: patientData.name, phone: patientData.phone || '', insurance: patientData.insurance || '' });
     }
     this.save();
   }
 
-  // --- Appointment Logic ---
+  // --- Appointments ---
   hasConflict(newApp, excludeId = null) {
     const start = new Date(newApp.startTime).getTime();
     const end = start + newApp.duration * 60000;
-
     return this.appointments.some(app => {
       if (app.id === excludeId) return false;
       if (app.providerId !== newApp.providerId) return false;
-
       const appStart = new Date(app.startTime).getTime();
       const appEnd = appStart + app.duration * 60000;
-
       return start < appEnd && end > appStart;
     });
   }
@@ -238,16 +224,12 @@ class AppState {
       types: data.types || []
     };
 
-    // STEP 1: Save patient FIRST (FK constraint: appointment.patientname → patients.name)
-    await this.addOrUpdatePatient({
-      name: data.patientName,
-      phone: data.phone,
-      insurance: data.insurance
-    });
+    // STEP 1: patient first (FK constraint)
+    await safeUpsertPatient(data.patientName, data.phone, data.insurance);
 
-    // STEP 2: Save appointment with exact lowercase column names matching Supabase schema
+    // STEP 2: appointment with lowercase DB columns
     const { error } = await supabase.from('ced_appointments').upsert([mapAppToDB(app)]);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
 
     this.appointments.push(app);
     this.save();
@@ -258,25 +240,24 @@ class AppState {
     const index = this.appointments.findIndex(app => app.id === id);
     if (index >= 0) {
       const updated = { ...this.appointments[index], ...data };
-      // Build the DB row, then remove 'id' since it's used in the .eq() filter
-      const dbUpdate = mapAppToDB({ ...updated, id });
+
+      // Update patient first (FK)
+      await safeUpsertPatient(data.patientName, data.phone, data.insurance);
+
+      // Update appointment with lowercase columns (exclude id from update payload)
+      const dbUpdate = mapAppToDB({ ...updated });
       delete dbUpdate.id;
       const { error } = await supabase.from('ced_appointments').update(dbUpdate).eq('id', id);
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       this.appointments[index] = updated;
-      await this.addOrUpdatePatient({
-        name: data.patientName,
-        phone: data.phone,
-        insurance: data.insurance
-      });
       this.save();
     }
   }
 
   async deleteAppointment(id) {
     const { error } = await supabase.from('ced_appointments').delete().eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     this.appointments = this.appointments.filter(a => a.id !== id);
     this.save();
   }
@@ -286,24 +267,20 @@ class AppState {
     const list = isDoctor ? this.doctors : this.rooms;
     const index = list.findIndex(p => p.id === id);
     if (index >= 0) {
-      const updated = { ...list[index], ...data };
       const { error } = await supabase.from('ced_resources').update(data).eq('id', id);
-      if (error) throw error;
-      list[index] = updated;
+      if (error) throw new Error(error.message);
+      list[index] = { ...list[index], ...data };
       this.save();
     }
   }
 
   async addResource(type, name) {
-    const isDoctor = type === 'doctor';
-    const list = isDoctor ? this.doctors : this.rooms;
+    const list = type === 'doctor' ? this.doctors : this.rooms;
     const newId = `${type}-${Date.now()}`;
-    const color = isDoctor ? '#2563eb' : '#dc2626';
-
+    const color = type === 'doctor' ? '#2563eb' : '#dc2626';
     const resource = { id: newId, name, color, visible: true, type };
     const { error } = await supabase.from('ced_resources').insert([resource]);
-    if (error) throw error;
-
+    if (error) throw new Error(error.message);
     list.push(resource);
     this.save();
     return newId;
@@ -314,7 +291,7 @@ class AppState {
     const target = list.find(r => r.id === id);
     if (target) {
       const { error } = await supabase.from('ced_resources').update({ name }).eq('id', id);
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       target.name = name;
       this.save();
       return true;
@@ -325,28 +302,17 @@ class AppState {
   async deleteResource(id, type) {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-
-    const hasFutureAppointments = this.appointments.some(app => {
-      const isMatch = app.providerId === id || app.doctorId === id;
-      if (!isMatch) return false;
-      const appDate = new Date(app.startTime);
-      appDate.setHours(0, 0, 0, 0);
-      return appDate.getTime() >= now.getTime();
+    const hasFuture = this.appointments.some(app => {
+      if (app.providerId !== id && app.doctorId !== id) return false;
+      const d = new Date(app.startTime);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime() >= now.getTime();
     });
-
-    if (hasFutureAppointments) {
-      return { success: false, message: 'No puedes borrar este recurso porque aún tiene citas programadas hoy o en el futuro.' };
-    }
-
+    if (hasFuture) return { success: false, message: 'No puedes borrar este recurso porque tiene citas programadas.' };
     const { error } = await supabase.from('ced_resources').delete().eq('id', id);
-    if (error) throw error;
-
-    if (type === 'doctor') {
-      this.doctors = this.doctors.filter(d => d.id !== id);
-    } else {
-      this.rooms = this.rooms.filter(r => r.id !== id);
-    }
-
+    if (error) return { success: false, message: error.message };
+    if (type === 'doctor') this.doctors = this.doctors.filter(d => d.id !== id);
+    else this.rooms = this.rooms.filter(r => r.id !== id);
     this.save();
     return { success: true };
   }
@@ -362,37 +328,26 @@ class AppState {
     appStart.setHours(0, 0, 0, 0);
     const target = new Date(targetDate);
     target.setHours(0, 0, 0, 0);
-
     if (target < appStart) return false;
-
-    if (!app.recurrence) {
-      return target.getTime() === appStart.getTime();
-    }
+    if (!app.recurrence) return target.getTime() === appStart.getTime();
 
     const { pattern, interval, days, endType, endValue } = app.recurrence;
-
     if (endType === 'on' && endValue) {
       const endD = new Date(endValue);
       endD.setHours(0, 0, 0, 0);
       if (target > endD) return false;
     }
 
-    const diffDays = Math.floor((target.getTime() - appStart.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor((target.getTime() - appStart.getTime()) / 86400000);
     let isActive = false;
-
     if (pattern === 'Diario') {
       isActive = diffDays % (parseInt(interval) || 1) === 0;
     } else if (pattern === 'Semanal') {
       const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-      const targetDayName = dayNames[target.getDay()];
-      if (!(days || []).includes(targetDayName)) return false;
-
-      const appStartCopy = new Date(appStart);
-      appStartCopy.setDate(appStartCopy.getDate() - appStartCopy.getDay());
-      const targetCopy = new Date(target);
-      targetCopy.setDate(targetCopy.getDate() - targetCopy.getDay());
-
-      const weekDiff = Math.round((targetCopy.getTime() - appStartCopy.getTime()) / (1000 * 60 * 60 * 24 * 7));
+      if (!(days || []).includes(dayNames[target.getDay()])) return false;
+      const a = new Date(appStart); a.setDate(a.getDate() - a.getDay());
+      const b = new Date(target);   b.setDate(b.getDate() - b.getDay());
+      const weekDiff = Math.round((b - a) / 604800000);
       isActive = weekDiff % (parseInt(interval) || 1) === 0;
     } else if (pattern === 'Mensual') {
       if (target.getDate() !== appStart.getDate()) return false;
@@ -401,68 +356,49 @@ class AppState {
     }
 
     if (!isActive) return false;
-
     if (endType === 'after' && endValue) {
-      const totalOccurrences = this.countOccurrencesUpTo(app, target);
-      if (totalOccurrences > parseInt(endValue)) return false;
+      if (this.countOccurrencesUpTo(app, target) > parseInt(endValue)) return false;
     }
-
     return true;
   }
 
   countOccurrencesUpTo(app, targetDate) {
-    const appStart = new Date(app.startTime);
-    appStart.setHours(0, 0, 0, 0);
-    const target = new Date(targetDate);
-    target.setHours(0, 0, 0, 0);
-
+    const start = new Date(app.startTime); start.setHours(0, 0, 0, 0);
+    const target = new Date(targetDate);   target.setHours(0, 0, 0, 0);
     let count = 0;
-    let current = new Date(appStart);
-    while (current <= target) {
-      if (this.isMatchingPatternSimple(app, current)) count++;
-      current.setDate(current.getDate() + 1);
+    let cur = new Date(start);
+    while (cur <= target) {
+      if (this.isMatchingPatternSimple(app, cur)) count++;
+      cur.setDate(cur.getDate() + 1);
     }
     return count;
   }
 
   isMatchingPatternSimple(app, date) {
-    const appStart = new Date(app.startTime);
-    appStart.setHours(0, 0, 0, 0);
-    const target = new Date(date);
-    target.setHours(0, 0, 0, 0);
-
+    const appStart = new Date(app.startTime); appStart.setHours(0, 0, 0, 0);
+    const target = new Date(date);            target.setHours(0, 0, 0, 0);
     const { pattern, interval, days } = app.recurrence;
-    const diffDays = Math.floor((target.getTime() - appStart.getTime()) / (1000 * 60 * 60 * 24));
-
+    const diffDays = Math.floor((target - appStart) / 86400000);
     if (pattern === 'Diario') return diffDays % (parseInt(interval) || 1) === 0;
-
     if (pattern === 'Semanal') {
       const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
       if (!(days || []).includes(dayNames[target.getDay()])) return false;
-      const appStartCopy = new Date(appStart);
-      appStartCopy.setDate(appStartCopy.getDate() - appStartCopy.getDay());
-      const targetCopy = new Date(target);
-      targetCopy.setDate(targetCopy.getDate() - targetCopy.getDay());
-      const weekDiff = Math.round((targetCopy.getTime() - appStartCopy.getTime()) / (1000 * 60 * 60 * 24 * 7));
-      return weekDiff % (parseInt(interval) || 1) === 0;
+      const a = new Date(appStart); a.setDate(a.getDate() - a.getDay());
+      const b = new Date(target);   b.setDate(b.getDate() - b.getDay());
+      return Math.round((b - a) / 604800000) % (parseInt(interval) || 1) === 0;
     }
-
     if (pattern === 'Mensual') {
       if (target.getDate() !== appStart.getDate()) return false;
-      const monthDiff = (target.getFullYear() - appStart.getFullYear()) * 12 + (target.getMonth() - appStart.getMonth());
-      return monthDiff % (parseInt(interval) || 1) === 0;
+      const m = (target.getFullYear() - appStart.getFullYear()) * 12 + (target.getMonth() - appStart.getMonth());
+      return m % (parseInt(interval) || 1) === 0;
     }
     return false;
   }
 
   toggleVisibility(id) {
-    const doctor = this.doctors.find(d => d.id === id);
-    if (doctor) {
-      doctor.visible = !doctor.visible;
-    } else {
-      const room = this.rooms.find(r => r.id === id);
-      if (room) room.visible = !room.visible;
-    }
+    const d = this.doctors.find(x => x.id === id);
+    if (d) { d.visible = !d.visible; }
+    else { const r = this.rooms.find(x => x.id === id); if (r) r.visible = !r.visible; }
     this.save();
   }
 }
