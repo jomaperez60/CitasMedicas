@@ -9,7 +9,7 @@
   --ribbon-text: #1e293b;
   --active-btn-bg: #1e3a5f;
   --time-col-bg: #f8fbff;
-  --header-height: 95px; /* Sincronización global de altura de cabecera */
+  --header-height: 90px; /* Sincronización global de altura de cabecera - debe coincidir con el valor en main.js */
   --slot-height: 100px;
   --navigator-right-width: 260px;
   --font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
@@ -39,6 +39,8 @@ body {
   background: var(--ribbon-bg);
   border-bottom: 1px solid var(--ribbon-border);
   flex-shrink: 0;
+  /* Safe area para iPad/iPhone: evita que el ribbon quede debajo del navegador */
+  padding-top: env(safe-area-inset-top);
 }
 
 .ribbon-tab-header {

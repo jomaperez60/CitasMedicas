@@ -257,11 +257,7 @@ function renderTimeSlotsPro() {
     `);
   }
   
-  // Sincronización milimétrica con el CSS (Evita desplazamiento de líneas)
-  const headerEl = elements.timeColumn ? elements.timeColumn.querySelector('.classic-time-header') : null;
-  const headerHeight = headerEl ? headerEl.clientHeight : 95;
-  const totalHeight = headerHeight + 15 * (state.slotHeight || 100);
-  
+  const totalHeight = 90 + 15 * (state.slotHeight || 100);
   elements.timeColumn.style.height = `${totalHeight}px`;
   elements.timeColumn.innerHTML = slots.join('');
 }
@@ -288,9 +284,7 @@ function renderGridPro() {
         `).join('')}
       </div>
     `).join('');
-    const firstColHeader = elements.calendarGrid.querySelector('.classic-col-header');
-    const headerHeight = firstColHeader ? firstColHeader.clientHeight : 90;
-    elements.calendarGrid.style.height = `${headerHeight + 15 * (state.slotHeight || 100)}px`;
+    elements.calendarGrid.style.height = `${90 + 15 * (state.slotHeight || 100)}px`;
   } else {
     const provider = providers[0];
     const weekDates = getWeekDates(state.currentDate);
@@ -310,9 +304,7 @@ function renderGridPro() {
         `).join('')}
       </div>
     `).join('');
-    const firstColHeader = elements.calendarGrid.querySelector('.classic-col-header');
-    const headerHeight = firstColHeader ? firstColHeader.clientHeight : 90;
-    elements.calendarGrid.style.height = `${headerHeight + 15 * (state.slotHeight || 100)}px`;
+    elements.calendarGrid.style.height = `${90 + 15 * (state.slotHeight || 100)}px`;
   }
   attachGridEventsPro();
 }
@@ -334,8 +326,9 @@ function renderAppointmentsPro() {
     const primaryType = APPOINTMENT_TYPES.find(t => (app.types || []).includes(t.id)) || APPOINTMENT_TYPES[0];
     div.style.borderLeft = `4px solid ${primaryType.color}`;
     
-    // Position calc (Header is 90px, Slot is dynamic)
-    div.style.top = `${calculatePosition(app.startTime, 90, state.slotHeight)}px`;
+    // Position calc - header is always 90px (matches --header-height CSS variable)
+    const HEADER_H = 90;
+    div.style.top = `${calculatePosition(app.startTime, HEADER_H, state.slotHeight)}px`;
     div.style.height = `${calculateHeight(app.duration, state.slotHeight)}px`;
     
     const doctorName = app.doctorId ? (state.doctors.find(d => d.id === app.doctorId)?.name || '') : '';
@@ -739,12 +732,10 @@ function attachGridEventsPro() {
       if (e.button !== 0) return; // Only left click for selection
       if (e.target.closest('.appointment')) return;
 
-      const firstColHeader = elements.calendarGrid.querySelector('.classic-col-header');
-      const headerHeight = firstColHeader ? firstColHeader.clientHeight : 95;
-
+      const HEADER_H = 90;
       const rect = col.getBoundingClientRect();
       const y = e.clientY - rect.top;
-      if (y < headerHeight) return; // Ignore click on header
+      if (y < HEADER_H) return; // Ignore click on header
 
       selectionInfo.isDragging = true;
       selectionInfo.active = true;
@@ -752,7 +743,7 @@ function attachGridEventsPro() {
       
       // Snap start position (Step = 15m)
       const snapStep = state.slotHeight / 4;
-      selectionInfo.startY = Math.floor((y - headerHeight) / snapStep) * snapStep + headerHeight;
+      selectionInfo.startY = Math.floor((y - HEADER_H) / snapStep) * snapStep + HEADER_H;
       
       if (selectionInfo.selectionEl) selectionInfo.selectionEl.remove();
       selectionInfo.selectionEl = document.createElement('div');
@@ -765,15 +756,13 @@ function attachGridEventsPro() {
     col.onmousemove = (e) => {
       if (!selectionInfo.isDragging) return;
 
-      const firstColHeader = elements.calendarGrid.querySelector('.classic-col-header');
-      const headerHeight = firstColHeader ? firstColHeader.clientHeight : 95;
-
+      const HEADER_H = 90;
       const rect = col.getBoundingClientRect();
       const currentRawY = e.clientY - rect.top;
       
       // Snap current position
       const snapStep = state.slotHeight / 4;
-      const snappedCurrentY = Math.ceil((currentRawY - headerHeight) / snapStep) * snapStep + headerHeight;
+      const snappedCurrentY = Math.ceil((currentRawY - HEADER_H) / snapStep) * snapStep + HEADER_H;
       
       const top = Math.min(selectionInfo.startY, snappedCurrentY);
       const bottom = Math.max(selectionInfo.startY, snappedCurrentY);
@@ -790,16 +779,14 @@ function attachGridEventsPro() {
       const endRawY = e.clientY - rect.top;
       const snapStep = state.slotHeight / 4;
 
-      const firstColHeader = elements.calendarGrid.querySelector('.classic-col-header');
-      const headerHeight = firstColHeader ? firstColHeader.clientHeight : 95;
-
-      const snappedEndY = Math.ceil((endRawY - headerHeight) / snapStep) * snapStep + headerHeight;
+      const HEADER_H = 90;
+      const snappedEndY = Math.ceil((endRawY - HEADER_H) / snapStep) * snapStep + HEADER_H;
 
       const top = Math.min(selectionInfo.startY, snappedEndY);
       const bottom = Math.max(selectionInfo.startY, snappedEndY);
       const height = bottom - top;
 
-      selectionInfo.startTime = getTimeFromPosition(top, headerHeight, state.slotHeight);
+      selectionInfo.startTime = getTimeFromPosition(top, HEADER_H, state.slotHeight);
       const durationHours = height / state.slotHeight;
       selectionInfo.duration = Math.max(15, Math.round(durationHours * 60));
       

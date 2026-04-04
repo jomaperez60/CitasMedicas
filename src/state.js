@@ -69,23 +69,36 @@ class AppState {
         this.rooms = resData.filter(r => r.type === 'room');
       } else if (!resError) {
         // Auto-migrate resources if Cloud is empty
-        await supabase.from('ced_resources').insert([...this.doctors, ...this.rooms]);
+        await supabase.from('ced_resources').upsert([...this.doctors, ...this.rooms]);
       }
 
+      // Load patients FIRST (appointments may reference them via FK)
       const { data: patData, error: patError } = await supabase.from('ced_patients').select('*');
       if (!patError && patData && patData.length > 0) {
         this.patients = patData;
       } else if (!patError && this.patients.length > 0) {
-        // Auto-migrate patients if Cloud is empty
-        await supabase.from('ced_patients').insert(this.patients);
+        // Auto-migrate patients
+        for (const p of this.patients) {
+          await supabase.from('ced_patients').upsert([p]).catch(e => console.warn('Patient upsert:', e));
+        }
       }
 
       const { data: appData, error: appError } = await supabase.from('ced_appointments').select('*');
       if (!appError && appData && appData.length > 0) {
         this.appointments = appData;
       } else if (!appError && this.appointments.length > 0) {
-        // Auto-migrate appointments if Cloud is empty
-        await supabase.from('ced_appointments').insert(this.appointments);
+        // Auto-migrate appointments one by one to avoid batch failures from FK issues
+        for (const app of this.appointments) {
+          // Ensure patient exists before inserting appointment
+          if (app.patientName) {
+            await supabase.from('ced_patients').upsert([{
+              name: app.patientName,
+              phone: app.phone || '',
+              insurance: app.insurance || 'Privado / Sin Seguro'
+            }]).catch(() => {});
+          }
+          await supabase.from('ced_appointments').upsert([app]).catch(e => console.warn('Appointment upsert:', app.id, e));
+        }
       }
     } catch (e) {
       console.error("Error loading/migrating to Supabase:", e);
