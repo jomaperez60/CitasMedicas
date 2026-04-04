@@ -28,6 +28,8 @@ const elements = {
   deleteBtn: document.getElementById('delete-appointment-btn'),
   viewDay: document.getElementById('view-day'),
   viewWeek: document.getElementById('view-week'),
+  viewMonth: document.getElementById('view-month'),
+  navAgenda: document.getElementById('nav-agenda'),
   themeToggle: document.getElementById('theme-toggle'),
   printBtn: document.getElementById('print-btn'),
   patientSearch: document.getElementById('patient-search'),
@@ -253,8 +255,9 @@ function renderTimeSlotsPro() {
     `);
   }
   
-  // Sincronización con CSS variable --header-height
-  const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 95;
+  // Sincronización milimétrica con el CSS (Evita desplazamiento de líneas)
+  const headerEl = elements.timeColumn ? elements.timeColumn.querySelector('.classic-time-header') : null;
+  const headerHeight = headerEl ? headerEl.clientHeight : 95;
   const totalHeight = headerHeight + 15 * (state.slotHeight || 100);
   
   elements.timeColumn.style.height = `${totalHeight}px`;
@@ -283,7 +286,9 @@ function renderGridPro() {
         `).join('')}
       </div>
     `).join('');
-    elements.calendarGrid.style.height = `${90 + 15 * (state.slotHeight || 100)}px`;
+    const firstColHeader = elements.calendarGrid.querySelector('.classic-col-header');
+    const headerHeight = firstColHeader ? firstColHeader.clientHeight : 90;
+    elements.calendarGrid.style.height = `${headerHeight + 15 * (state.slotHeight || 100)}px`;
   } else {
     const provider = providers[0];
     const weekDates = getWeekDates(state.currentDate);
@@ -303,7 +308,9 @@ function renderGridPro() {
         `).join('')}
       </div>
     `).join('');
-    elements.calendarGrid.style.height = `${90 + 15 * (state.slotHeight || 100)}px`;
+    const firstColHeader = elements.calendarGrid.querySelector('.classic-col-header');
+    const headerHeight = firstColHeader ? firstColHeader.clientHeight : 90;
+    elements.calendarGrid.style.height = `${headerHeight + 15 * (state.slotHeight || 100)}px`;
   }
   attachGridEventsPro();
 }
@@ -514,6 +521,7 @@ function attachEventListeners() {
 
   elements.viewDay.onclick = () => { state.viewMode = 'day'; refreshUI(); };
   elements.viewWeek.onclick = () => { state.viewMode = 'week'; refreshUI(); };
+  elements.viewMonth.onclick = () => { state.viewMode = 'month'; refreshUI(); };
   elements.addBtn.onclick = () => openModal();
   elements.printBtn.onclick = () => window.print();
 
