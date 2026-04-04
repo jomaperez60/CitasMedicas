@@ -82,7 +82,8 @@ const elements = {
   mobileHamburger: document.getElementById('mobile-hamburger'),
   dateNavigatorMobile: document.getElementById('date-navigator-mobile'),
   rightSidebar: document.getElementById('right-sidebar'),
-  rightSidebarHandle: document.getElementById('right-sidebar-handle')
+  rightSidebarHandle: document.getElementById('right-sidebar-handle'),
+  appointmentDate: document.getElementById('appointment-date')
 };
 
 let selectionInfo = {
@@ -96,7 +97,10 @@ let selectionInfo = {
   selectionEl: null
 };
 
-function init() {
+async function init() {
+  // Wait for Cloud Sync - Essential for multi-device consistency
+  await state.load();
+  
   // Apply persisted zoom
   document.documentElement.style.setProperty('--slot-height', `${state.slotHeight}px`);
   populateDropdowns();
@@ -609,8 +613,8 @@ function attachEventListeners() {
       insurance: elements.insuranceSelect.value,
       providerId: elements.providerSelect.value,
       doctorId: elements.doctorAssignmentArea.style.display !== 'none' ? elements.doctorIdSelect.value : null,
-      duration: parseInt(document.getElementById('duration').value),
-      startTime: getISOStringFromDate(state.currentDate, document.getElementById('start-time').value),
+      duration: parseInt(elements.appointmentDuration.value),
+      startTime: `${elements.appointmentDate.value}T${elements.appointmentTime.value}:00`,
       clinicalNotes: elements.clinicalNotes.value,
       types: Array.from(document.querySelectorAll('input[name="appointment-type"]:checked')).map(cb => cb.value)
     };
@@ -636,19 +640,12 @@ function openModal(defs = {}) {
   elements.deleteBtn.style.display = 'none';
   elements.conflictWarning.style.display = 'none';
   
-  if (defs.startTime) document.getElementById('start-time').value = defs.startTime;
+  elements.appointmentDate.value = state.currentDate.toISOString().split('T')[0];
+  if (defs.startTime) elements.appointmentTime.value = defs.startTime;
   if (defs.providerId) elements.providerSelect.value = defs.providerId;
   
   if (defs.duration) {
-    const durationSelect = document.getElementById('duration');
-    const existingOption = Array.from(durationSelect.options).find(o => parseInt(o.value) === defs.duration);
-    if (!existingOption) {
-      const newOpt = new Option(`${defs.duration} min (seleccionado)`, defs.duration);
-      durationSelect.add(newOpt);
-      durationSelect.value = defs.duration;
-    } else {
-      durationSelect.value = defs.duration;
-    }
+    elements.appointmentDuration.value = defs.duration;
   }
   
   if (state.currentRecurrence) {
@@ -696,7 +693,11 @@ function editAppointment(app) {
   elements.patientName.value = app.patientName;
   elements.patientPhone.value = app.phone || '';
   elements.insuranceSelect.value = app.insurance;
-  document.getElementById('start-time').value = new Date(app.startTime).toTimeString().substring(0, 5);
+  
+  const d = new Date(app.startTime);
+  elements.appointmentDate.value = d.toISOString().split('T')[0];
+  elements.appointmentTime.value = d.toTimeString().substring(0, 5);
+  elements.appointmentDuration.value = app.duration;
   elements.clinicalNotes.value = app.clinicalNotes || '';
   
   // Set checkboxes
@@ -890,6 +891,7 @@ function showZoomMenu(x, y) {
 
 async function initAuth() {
   const { data: { session } } = await supabase.auth.getSession();
+  await state.load();
   handleSession(session);
 
   supabase.auth.onAuthStateChange((event, session) => {

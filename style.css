@@ -5,6 +5,9 @@
   --grid-border: #e2e8f0;
   --accent-color: #2563eb;
   --ribbon-bg: #ffffff;
+  --ribbon-border: #cbd5e1;
+  --ribbon-text: #1e293b;
+  --active-btn-bg: #1e3a5f;
   --time-col-bg: #f8fbff;
   --header-height: 95px; /* Sincronización global de altura de cabecera */
   --slot-height: 100px;
@@ -933,10 +936,14 @@ body.is-admin button.admin-only {
 @media (max-width: 768px) {
   :root {
     --header-height: 70px;
+    --active-btn-bg: #e3f2fd;
+    --ribbon-border: #dee2e6;
+    --ribbon-text: #495057;
   }
   
   .mobile-only { display: flex !important; }
   .desktop-only { display: none !important; }
+  .mobile-hide { display: none !important; }
 
   /* 1. Header/Ribbon Compaction */
   .ribbon-bar {
@@ -1023,6 +1030,10 @@ body.is-admin button.admin-only {
   
   .classic-time-col {
     width: 65px !important;
+  }
+
+  #ced-logo-agenda {
+    width: 45px !important;
   }
 
   /* 5. Mobile Sidebar Overlay */

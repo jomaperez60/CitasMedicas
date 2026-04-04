@@ -1,3 +1,5 @@
+import { supabase } from './supabaseClient.js';
+
 export const INITIAL_ROOMS = [
   { id: 'sala-a', name: 'Sala Endoscopía A', color: '#dc2626', visible: true, type: 'room' },
   { id: 'sala-b', name: 'Sala Endoscopía B', color: '#dc2626', visible: true, type: 'room' },
@@ -58,7 +60,41 @@ class AppState {
     this.navigatorBaseDate = new Date(this.currentDate);
   }
 
-  save() {
+  async load() {
+    // Load from Cloud (Supabase)
+    try {
+      const { data: resData, error: resError } = await supabase.from('ced_resources').select('*');
+      if (!resError && resData && resData.length > 0) {
+        this.doctors = resData.filter(r => r.type === 'doctor');
+        this.rooms = resData.filter(r => r.type === 'room');
+      } else if (!resError) {
+        // Auto-migrate resources if Cloud is empty
+        await supabase.from('ced_resources').insert([...this.doctors, ...this.rooms]);
+      }
+
+      const { data: appData, error: appError } = await supabase.from('ced_appointments').select('*');
+      if (!appError && appData && appData.length > 0) {
+        this.appointments = appData;
+      } else if (!appError && this.appointments.length > 0) {
+        // Auto-migrate appointments if Cloud is empty
+        await supabase.from('ced_appointments').insert(this.appointments);
+      }
+
+      const { data: patData, error: patError } = await supabase.from('ced_patients').select('*');
+      if (!patError && patData && patData.length > 0) {
+        this.patients = patData;
+      } else if (!patError && this.patients.length > 0) {
+        // Auto-migrate patients if Cloud is empty
+        await supabase.from('ced_patients').insert(this.patients);
+      }
+    } catch (e) {
+      console.error("Error loading/migrating to Supabase:", e);
+    }
+  }
+
+  async save() {
+    // We will save individual items in their respective methods for real-time sync.
+    // LocalStorage remains as a local cache for offline/snappy start.
     localStorage.setItem('ced_doctors', JSON.stringify(this.doctors));
     localStorage.setItem('ced_rooms', JSON.stringify(this.rooms));
     localStorage.setItem('ced_appointments', JSON.stringify(this.appointments));
@@ -74,12 +110,18 @@ class AppState {
     return this.patients.find(p => p.name.toLowerCase() === name.toLowerCase());
   }
 
-  addOrUpdatePatient(patientData) {
+  async addOrUpdatePatient(patientData) {
     const index = this.patients.findIndex(p => p.name.toLowerCase() === patientData.name.toLowerCase());
     if (index >= 0) {
-      this.patients[index] = { ...this.patients[index], ...patientData };
+      const updated = { ...this.patients[index], ...patientData };
+      const { error } = await supabase.from('ced_patients').update(patientData).eq('name', patientData.name);
+      if (error) throw error;
+      this.patients[index] = updated;
     } else {
-      this.patients.push({ id: Date.now().toString(), ...patientData });
+      const newPat = { id: Date.now().toString(), ...patientData };
+      const { error } = await supabase.from('ced_patients').insert([newPat]);
+      if (error) throw error;
+      this.patients.push(newPat);
     }
     this.save();
   }
@@ -100,16 +142,20 @@ class AppState {
     });
   }
 
-  addAppointment(data) {
+  async addAppointment(data) {
     const app = { 
       id: Date.now().toString(), 
       ...data, 
       status: 'scheduled',
       types: data.types || []
     };
+    
+    const { error } = await supabase.from('ced_appointments').insert([app]);
+    if (error) throw error;
+
     this.appointments.push(app);
     // Auto-guardar paciente
-    this.addOrUpdatePatient({
+    await this.addOrUpdatePatient({
       name: data.patientName,
       phone: data.phone,
       insurance: data.insurance,
@@ -119,12 +165,16 @@ class AppState {
     return app;
   }
 
-  updateAppointment(id, data) {
+  async updateAppointment(id, data) {
     const index = this.appointments.findIndex(app => app.id === id);
     if (index >= 0) {
-      this.appointments[index] = { ...this.appointments[index], ...data };
+      const updated = { ...this.appointments[index], ...data };
+      const { error } = await supabase.from('ced_appointments').update(data).eq('id', id);
+      if (error) throw error;
+
+      this.appointments[index] = updated;
       // Auto-actualizar paciente
-      this.addOrUpdatePatient({
+      await this.addOrUpdatePatient({
         name: data.patientName,
         phone: data.phone,
         insurance: data.insurance,
@@ -134,32 +184,41 @@ class AppState {
     }
   }
 
-  deleteAppointment(id) {
+  async deleteAppointment(id) {
+    const { error } = await supabase.from('ced_appointments').delete().eq('id', id);
+    if (error) throw error;
     this.appointments = this.appointments.filter(a => a.id !== id);
     this.save();
   }
 
-  addResource(type, name) {
+  async addResource(type, name) {
     const isDoctor = type === 'doctor';
     const list = isDoctor ? this.doctors : this.rooms;
     const newId = `${type}-${Date.now()}`;
     const color = isDoctor ? '#2563eb' : '#dc2626'; // Default colors
     
-    list.push({
+    const resource = {
       id: newId,
       name: name,
       color: color,
       visible: true,
       type: type
-    });
+    };
+
+    const { error } = await supabase.from('ced_resources').insert([resource]);
+    if (error) throw error;
+
+    list.push(resource);
     this.save();
     return newId;
   }
 
-  editResource(id, type, name) {
+  async editResource(id, type, name) {
     const list = type === 'doctor' ? this.doctors : this.rooms;
     const target = list.find(r => r.id === id);
     if (target) {
+      const { error } = await supabase.from('ced_resources').update({ name }).eq('id', id);
+      if (error) throw error;
       target.name = name;
       this.save();
       return true;
@@ -167,10 +226,9 @@ class AppState {
     return false;
   }
 
-  deleteResource(id, type) {
+  async deleteResource(id, type) {
     // Validation: Check for future/current appointments
     const now = new Date();
-    // Reset to start of day for comparison
     now.setHours(0, 0, 0, 0);
 
     const hasFutureAppointments = this.appointments.some(app => {
@@ -185,9 +243,8 @@ class AppState {
       return { success: false, message: "No puedes borrar este recurso porque aún tiene citas programadas hoy o en el futuro." };
     }
 
-    // Proceso de Borrado en Cascada (Eliminar citas históricas para mantener BD limpia, opcional pero necesario para consistencia estricta en este modo de UI)
-    // Wait, the user didn't authorise deleting historical data, only to ABORT if there are future appointments.
-    // If it's safe to delete (only past appointments), we will just remove the resource.
+    const { error } = await supabase.from('ced_resources').delete().eq('id', id);
+    if (error) throw error;
     
     if (type === 'doctor') {
       this.doctors = this.doctors.filter(d => d.id !== id);
