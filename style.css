@@ -31,22 +31,22 @@
 }
 
 [data-theme='dark'] {
-  --bg-main: #020617;
-  --bg-sidebar: #0f172a;
-  --bg-ribbon: #0f172a;
-  --bg-grid: #0f172a;
-  --bg-modal: #1e293b;
-  --bg-input: #334155;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --border-main: #1e293b;
-  --border-sidebar: #1e293b;
-  --border-ribbon: #1e293b;
+  --bg-main: #0a0a0a;
+  --bg-sidebar: #1a1a1a;
+  --bg-ribbon: #1a1a1a;
+  --bg-grid: #0d0d0d;
+  --bg-modal: #1a1a1a;
+  --bg-input: #1f2937;
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+  --border-main: #262626;
+  --border-sidebar: #262626;
+  --border-ribbon: #262626;
   --accent-color: #38bdf8;
-  --active-btn-bg: #1d4ed8;
-  --time-col-bg: #020617;
-  --time-digit-color: #64748b;
-  --header-gradient: linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%);
+  --active-btn-bg: #374151;
+  --time-col-bg: #0a0a0a;
+  --time-digit-color: #6b7280;
+  --header-gradient: linear-gradient(180deg, #1f2937 0%, #0a0a0a 100%);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -300,7 +300,7 @@ body {
 }
 
 [data-theme='dark'] .classic-time-header {
-  background: #020617;
+  background: #0a0a0a;
 }
 
 #ced-logo-agenda {
@@ -532,8 +532,18 @@ body {
 }
 
 .appointment .app-time { font-weight: bold; color: #2563eb; }
+[data-theme='dark'] .appointment .app-time { color: var(--accent-color); }
+
 .appointment .app-patient { font-weight: bold; margin-bottom: 2px; }
+
 .appointment .app-details { font-size: 9px; color: #444; font-style: italic; }
+[data-theme='dark'] .appointment .app-details { color: var(--text-muted); }
+
+[data-theme='dark'] .appointment {
+  background: #111827;
+  border-color: #374151;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
 
 /* Professional Modal (CED Pro Exact) */
 .classic-modal-overlay {
@@ -581,6 +591,16 @@ body {
   cursor: pointer;
   font-size: 10px;
   font-weight: bold;
+}
+[data-theme='dark'] .classic-modal {
+  background: var(--bg-modal);
+  border-color: var(--border-main);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+}
+
+[data-theme='dark'] .modal-title-bar {
+  background: linear-gradient(to bottom, #1f2937, #111827);
+  border-bottom: 1px solid var(--border-main);
 }
 
 .classic-modal-body {
