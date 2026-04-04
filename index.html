@@ -5,7 +5,7 @@
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>CED - Calendario Médico Pro Exact v4.9</title>
-  <script type="module" crossorigin src="/CitasMedicas/assets/index-DjD2sTI4.js"></script>
+  <script type="module" crossorigin src="/CitasMedicas/assets/index-Bp9yXEmG.js"></script>
   <link rel="stylesheet" crossorigin href="/CitasMedicas/assets/index-UQnI8TZ6.css">
 </head>
 <body class="classic-app">
@@ -38,6 +38,7 @@
   <div class="ribbon-tab-header">
     <button id="mobile-hamburger" class="mobile-menu-btn">☰</button>
     <div class="tab-header-btn active" data-ribbon="ajustes">Ajustes</div>
+    <div class="tab-header-btn admin-only" data-ribbon="mantenimiento" id="tab-header-mantenimiento" style="display: none;">Mantenimiento</div>
     <div class="tab-header-btn" data-ribbon="seguridad" id="tab-header-seguridad">Seguridad</div>
     <div class="tab-header-logout" id="btn-logout" style="margin-left: auto; color: #dc2626; padding-right: 15px; cursor:pointer;" title="Cerrar Sesión">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -131,6 +132,21 @@
       </div>
     </div>
     
+    <!-- MANTENIMIENTO TAB PANEL (Hidden by default) -->
+    <div class="ribbon-group-container" id="ribbon-mantenimiento" style="display: none;">
+      <div class="ribbon-group">
+        <div class="ribbon-buttons">
+          <button class="ribbon-btn" id="btn-archive-data" title="Descarga respaldo JSON y borra citas antiguas (> 6 meses)">
+            <div class="ribbon-btn-inner">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"></path><path d="M1 3h22v5H1z"></path><path d="M10 12h4"></path></svg>
+            </div>
+            <span>Archivar Citas<br>Antiguas</span>
+          </button>
+        </div>
+        <div class="ribbon-group-label">Control de Datos</div>
+      </div>
+    </div>
+
     <!-- SEGURIDAD TAB PANEL (Hidden by default) -->
     <div class="ribbon-group-container" id="ribbon-seguridad" style="display: none;">
       <div class="ribbon-group">
