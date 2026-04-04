@@ -608,11 +608,11 @@ function attachEventListeners() {
     }
   };
 
-  elements.form.onsubmit = (e) => {
+  elements.form.onsubmit = async (e) => {
     e.preventDefault();
     const data = {
-      patientName: elements.patientName.value,
-      phone: elements.patientPhone.value,
+      patientName: elements.patientName.value.trim(),
+      phone: elements.patientPhone.value.trim(),
       insurance: elements.insuranceSelect.value,
       providerId: elements.providerSelect.value,
       doctorId: elements.doctorAssignmentArea.style.display !== 'none' ? elements.doctorIdSelect.value : null,
@@ -627,14 +627,21 @@ function attachEventListeners() {
       return;
     }
 
-  if (state.selectedAppointment) state.updateAppointment(state.selectedAppointment.id, data);
-  else state.addAppointment({ ...data, recurrence: state.currentRecurrence });
-
-  elements.modal.style.display = 'none';
-  state.currentRecurrence = null; // Clear after save
-  clearSelection();
-  refreshUI();
-};
+    try {
+      if (state.selectedAppointment) {
+        await state.updateAppointment(state.selectedAppointment.id, data);
+      } else {
+        await state.addAppointment({ ...data, recurrence: state.currentRecurrence });
+      }
+      elements.modal.style.display = 'none';
+      state.currentRecurrence = null;
+      clearSelection();
+      refreshUI();
+    } catch (err) {
+      console.error('Error guardando cita:', err);
+      alert(`Error al guardar la cita: ${err.message || err}. Revise la consola.`);
+    }
+  };
 }
 
 function openModal(defs = {}) {

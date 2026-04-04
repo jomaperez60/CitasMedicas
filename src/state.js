@@ -210,16 +210,18 @@ class AppState {
       types: data.types || []
     };
 
-    // CRITICAL: mapAppToDB converts camelCase → lowercase to match Supabase column names
-    const { error } = await supabase.from('ced_appointments').upsert([mapAppToDB(app)]);
-    if (error) throw error;
-
-    this.appointments.push(app);
+    // STEP 1: Save patient FIRST (FK constraint: appointment.patientname → patients.name)
     await this.addOrUpdatePatient({
       name: data.patientName,
       phone: data.phone,
       insurance: data.insurance
     });
+
+    // STEP 2: Save appointment with exact lowercase column names matching Supabase schema
+    const { error } = await supabase.from('ced_appointments').upsert([mapAppToDB(app)]);
+    if (error) throw error;
+
+    this.appointments.push(app);
     this.save();
     return app;
   }
