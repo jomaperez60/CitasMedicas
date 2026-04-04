@@ -72,14 +72,15 @@ class AppState {
         await supabase.from('ced_resources').upsert([...this.doctors, ...this.rooms]);
       }
 
-      // Load patients FIRST (appointments may reference them via FK)
+      // Load patients FIRST (appointments reference them via FK)
       const { data: patData, error: patError } = await supabase.from('ced_patients').select('*');
       if (!patError && patData && patData.length > 0) {
         this.patients = patData;
       } else if (!patError && this.patients.length > 0) {
-        // Auto-migrate patients
+        // Auto-migrate patients - only valid DB columns (no 'id', no 'dob')
         for (const p of this.patients) {
-          await supabase.from('ced_patients').upsert([p]).catch(e => console.warn('Patient upsert:', e));
+          const dbPatient = { name: p.name, phone: p.phone || '', insurance: p.insurance || '' };
+          await supabase.from('ced_patients').upsert([dbPatient]).catch(e => console.warn('Patient migration error:', e));
         }
       }
 
@@ -87,17 +88,28 @@ class AppState {
       if (!appError && appData && appData.length > 0) {
         this.appointments = appData;
       } else if (!appError && this.appointments.length > 0) {
-        // Auto-migrate appointments one by one to avoid batch failures from FK issues
+        // Auto-migrate appointments - send only valid DB columns
         for (const app of this.appointments) {
-          // Ensure patient exists before inserting appointment
+          // Ensure patient exists first
           if (app.patientName) {
-            await supabase.from('ced_patients').upsert([{
-              name: app.patientName,
-              phone: app.phone || '',
-              insurance: app.insurance || 'Privado / Sin Seguro'
-            }]).catch(() => {});
+            const dbPat = { name: app.patientName, phone: app.phone || '', insurance: app.insurance || '' };
+            await supabase.from('ced_patients').upsert([dbPat]).catch(() => {});
           }
-          await supabase.from('ced_appointments').upsert([app]).catch(e => console.warn('Appointment upsert:', app.id, e));
+          const dbApp = {
+            id: app.id,
+            patientName: app.patientName,
+            phone: app.phone || null,
+            insurance: app.insurance || null,
+            providerId: app.providerId,
+            doctorId: app.doctorId || null,
+            startTime: app.startTime,
+            duration: app.duration,
+            status: app.status || 'scheduled',
+            clinicalNotes: app.clinicalNotes || null,
+            types: app.types || [],
+            recurrence: app.recurrence || null
+          };
+          await supabase.from('ced_appointments').upsert([dbApp]).catch(e => console.warn('Appointment migration error:', app.id, e.message));
         }
       }
     } catch (e) {
@@ -125,15 +137,19 @@ class AppState {
 
   async addOrUpdatePatient(patientData) {
     const index = this.patients.findIndex(p => p.name.toLowerCase() === patientData.name.toLowerCase());
+    // Only send valid columns to Supabase (name, phone, insurance — no id, no dob)
+    const dbPatient = {
+      name: patientData.name,
+      phone: patientData.phone || '',
+      insurance: patientData.insurance || ''
+    };
     if (index >= 0) {
       const updated = { ...this.patients[index], ...patientData };
-      const { error } = await supabase.from('ced_patients').update(patientData).eq('name', patientData.name);
-      if (error) throw error;
+      await supabase.from('ced_patients').upsert([dbPatient]).catch(e => console.warn('Patient update error:', e));
       this.patients[index] = updated;
     } else {
-      const newPat = { id: Date.now().toString(), ...patientData };
-      const { error } = await supabase.from('ced_patients').insert([newPat]);
-      if (error) throw error;
+      const newPat = { name: patientData.name, phone: patientData.phone || '', insurance: patientData.insurance || '' };
+      await supabase.from('ced_patients').upsert([dbPatient]).catch(e => console.warn('Patient insert error:', e));
       this.patients.push(newPat);
     }
     this.save();
@@ -156,6 +172,7 @@ class AppState {
   }
 
   async addAppointment(data) {
+    // Build the app object with all fields
     const app = { 
       id: Date.now().toString(), 
       ...data, 
@@ -163,16 +180,30 @@ class AppState {
       types: data.types || []
     };
     
-    const { error } = await supabase.from('ced_appointments').insert([app]);
+    // Send only the valid DB columns (no extra localStorage-only fields)
+    const dbApp = {
+      id: app.id,
+      patientName: app.patientName,
+      phone: app.phone || null,
+      insurance: app.insurance || null,
+      providerId: app.providerId,
+      doctorId: app.doctorId || null,
+      startTime: app.startTime,
+      duration: app.duration,
+      status: app.status,
+      clinicalNotes: app.clinicalNotes || null,
+      types: app.types,
+      recurrence: app.recurrence || null
+    };
+    const { error } = await supabase.from('ced_appointments').upsert([dbApp]);
     if (error) throw error;
 
     this.appointments.push(app);
-    // Auto-guardar paciente
+    // Auto-save patient (without dob)
     await this.addOrUpdatePatient({
       name: data.patientName,
       phone: data.phone,
-      insurance: data.insurance,
-      dob: data.dob
+      insurance: data.insurance
     });
     this.save();
     return app;
@@ -182,16 +213,29 @@ class AppState {
     const index = this.appointments.findIndex(app => app.id === id);
     if (index >= 0) {
       const updated = { ...this.appointments[index], ...data };
-      const { error } = await supabase.from('ced_appointments').update(data).eq('id', id);
+      // Send only valid DB columns
+      const dbApp = {
+        patientName: data.patientName,
+        phone: data.phone || null,
+        insurance: data.insurance || null,
+        providerId: data.providerId,
+        doctorId: data.doctorId || null,
+        startTime: data.startTime,
+        duration: data.duration,
+        status: data.status || updated.status,
+        clinicalNotes: data.clinicalNotes || null,
+        types: data.types || [],
+        recurrence: data.recurrence || null
+      };
+      const { error } = await supabase.from('ced_appointments').update(dbApp).eq('id', id);
       if (error) throw error;
 
       this.appointments[index] = updated;
-      // Auto-actualizar paciente
+      // Auto-update patient (without dob)
       await this.addOrUpdatePatient({
         name: data.patientName,
         phone: data.phone,
-        insurance: data.insurance,
-        dob: data.dob
+        insurance: data.insurance
       });
       this.save();
     }
