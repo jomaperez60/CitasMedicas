@@ -1,17 +1,15 @@
 :root {
-  --ribbon-bg: linear-gradient(180deg, #f3f6fa 0%, #e1e7f0 100%);
-  --ribbon-border: #cbd5e1;
-  --ribbon-text: #1e293b;
-  --active-btn-bg: #1e3a5f;
-  --sidebar-bg: #ffffff;
-  --sidebar-border: #e2e8f0;
-  --grid-border: #ccc;
-  --time-col-bg: #f0f0f0;
-  --bg-main: #fff;
-  --slot-height: 100px; /* Dynamic: Updated via JS Scale menu */
+  --sidebar-bg: #f5f7fa;
+  --sidebar-border: #d1d9e6;
+  --sidebar-active: #e2e8f0;
+  --grid-border: #e2e8f0;
+  --accent-color: #2563eb;
+  --ribbon-bg: #ffffff;
+  --time-col-bg: #f8fbff;
+  --header-height: 95px; /* Sincronización global de altura de cabecera */
+  --slot-height: 100px;
+  --navigator-right-width: 260px;
   --font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-  
-  --navigator-right-width: 220px;
 }
 
 [data-theme='dark'] {
@@ -211,9 +209,9 @@ body {
 }
 
 .classic-time-header {
-  height: 90px;
-  min-height: 90px;
-  max-height: 90px;
+  height: var(--header-height);
+  min-height: var(--header-height);
+  max-height: var(--header-height);
   background: var(--time-col-bg);
   box-shadow: inset 0 -1px 0 rgba(0,0,0,0.2);
   border-right: 1px solid var(--grid-border);
@@ -292,8 +290,8 @@ body {
 }
 
 .classic-col-header {
-  height: 90px;
-  max-height: 90px;
+  height: var(--header-height);
+  max-height: var(--header-height);
   background: linear-gradient(180deg, #1e3a5f 0%, #2c5282 100%);
   color: #fff;
   display: flex;
@@ -338,8 +336,34 @@ body {
   width: var(--navigator-right-width);
   background: var(--sidebar-bg);
   display: flex;
+  flex-direction: row; /* Para poner el handle al lado */
+  overflow: hidden;
+  transition: width 0.3s ease;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sidebar-navigator-right.collapsed {
+  width: 25px;
+}
+
+.sidebar-navigator-handle {
+  width: 25px;
+  background: linear-gradient(to left, #e0e0e0, #ccc);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid #aaa;
+  flex-shrink: 0;
+}
+
+.navigator-content-wrap {
+  flex: 1;
+  display: flex;
   flex-direction: column;
   padding: 10px;
+  overflow: hidden;
 }
 
 .navigator-container-v {
@@ -907,6 +931,10 @@ body.is-admin button.admin-only {
    ========================================================================== */
 
 @media (max-width: 768px) {
+  :root {
+    --header-height: 70px;
+  }
+  
   .mobile-only { display: flex !important; }
   .desktop-only { display: none !important; }
 
@@ -923,24 +951,25 @@ body.is-admin button.admin-only {
   }
   
   .tab-header-btn {
-    padding: 8px 15px !important;
-    font-size: 11px;
+    padding: 4px 10px !important;
+    font-size: 10px;
     color: rgba(255,255,255,0.7) !important;
     border-right: none !important;
+    min-height: 30px !important;
   }
   
   .tab-header-btn.active-tab {
     color: #fff !important;
-    border-bottom: 3px solid #ffd54f !important;
+    border-bottom: 2px solid #ffd54f !important;
     background: rgba(255,255,255,0.1);
   }
 
   .ribbon-group-container {
-    height: 70px;
+    height: 55px; /* Reducción de Ribbon */
     display: flex !important;
     overflow-x: auto;
-    padding: 5px;
-    gap: 15px;
+    padding: 2px 5px;
+    gap: 10px;
     background: #f8fbff;
   }
 
@@ -956,25 +985,29 @@ body.is-admin button.admin-only {
 
   .ribbon-btn {
     padding: 0;
-    min-width: 50px;
+    min-width: 45px;
+    min-height: 40px !important;
   }
   
   .ribbon-btn-text {
-    font-size: 9px;
-    margin-top: 2px;
+    font-size: 8px;
+    margin-top: 1px;
   }
 
   .ribbon-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
 
-  /* 2. Status Bar Adjustment */
+  /* 2. Status Bar Adjustment - Soporte Multi-línea */
   .status-bar-yellow {
-    font-size: 11px;
-    padding: 8px;
-    line-height: 1.3;
+    font-size: 10px;
+    padding: 10px 15px;
+    line-height: 1.4;
     text-align: center;
+    height: auto !important;
+    min-height: 35px;
+    white-space: normal !important;
   }
 
   /* 3. Hide Right Sidebar */
@@ -982,18 +1015,14 @@ body.is-admin button.admin-only {
     display: none !important;
   }
 
-  /* 4. Agenda Sizing */
+  /* 4. Agenda Sizing - Corner Logo */
   .classic-time-header {
-    width: 60px !important; /* Narrower corner */
-    height: 70px !important;
+    width: 65px !important;
+    height: var(--header-height) !important;
   }
   
   .classic-time-col {
-    width: 60px !important;
-  }
-
-  .classic-col-header {
-    height: 70px !important;
+    width: 65px !important;
   }
 
   /* 5. Mobile Sidebar Overlay */

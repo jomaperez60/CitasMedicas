@@ -80,7 +80,9 @@ const elements = {
   resourceName: document.getElementById('resource-name'),
   btnSaveResource: document.getElementById('btn-save-resource'),
   mobileHamburger: document.getElementById('mobile-hamburger'),
-  dateNavigatorMobile: document.getElementById('date-navigator-mobile')
+  dateNavigatorMobile: document.getElementById('date-navigator-mobile'),
+  rightSidebar: document.getElementById('right-sidebar'),
+  rightSidebarHandle: document.getElementById('right-sidebar-handle')
 };
 
 let selectionInfo = {
@@ -246,7 +248,11 @@ function renderTimeSlotsPro() {
       </div>
     `);
   }
-  const totalHeight = 90 + 15 * (state.slotHeight || 100);
+  
+  // Sincronización con CSS variable --header-height
+  const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 95;
+  const totalHeight = headerHeight + 15 * (state.slotHeight || 100);
+  
   elements.timeColumn.style.height = `${totalHeight}px`;
   elements.timeColumn.innerHTML = slots.join('');
 }
@@ -1134,6 +1140,14 @@ elements.mobileHamburger.addEventListener('click', (e) => {
   elements.leftSidebar.classList.toggle('mobile-open');
   document.body.classList.toggle('mobile-overlay-active');
 });
+
+// Right Sidebar Toggle (Tablet/iPad)
+if (elements.rightSidebarHandle) {
+  elements.rightSidebarHandle.addEventListener('click', () => {
+    elements.rightSidebar.classList.toggle('collapsed');
+    setTimeout(refreshUI, 350); 
+  });
+}
 
 // Close mobile sidebar when clicking outside (on the overlay)
 document.addEventListener('click', (e) => {

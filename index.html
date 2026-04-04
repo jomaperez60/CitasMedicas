@@ -234,15 +234,20 @@
       </main>
 
       <!-- Right Navigator Bar (Static as per image) -->
-      <aside class="sidebar-navigator-right">
-        <div id="date-navigator-container" class="navigator-container-v">
-           <!-- Two months will be rendered here via main.js -->
+      <aside class="sidebar-navigator-right" id="right-sidebar">
+        <div id="right-sidebar-handle" class="sidebar-navigator-handle">
+           <div class="handle-dots">⋮</div>
         </div>
-        <div class="navigator-footer">
-          <input type="text" class="classic-input" placeholder="Buscar Paciente..." style="width: 100%;">
-          <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-             <button class="classic-btn-action icon-sm">🔍</button>
-             <button class="classic-btn-action icon-sm">👥</button>
+        <div class="navigator-content-wrap">
+          <div id="date-navigator-container" class="navigator-container-v">
+             <!-- Two months will be rendered here via main.js -->
+          </div>
+          <div class="navigator-footer">
+            <input type="text" class="classic-input" placeholder="Buscar Paciente..." style="width: 100%;">
+            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+               <button class="classic-btn-action icon-sm">🔍</button>
+               <button class="classic-btn-action icon-sm">👥</button>
+            </div>
           </div>
         </div>
       </aside>
