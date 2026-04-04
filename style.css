@@ -32,21 +32,21 @@
 
 [data-theme='dark'] {
   --bg-main: #0a0a0a;
-  --bg-sidebar: #1a1a1a;
-  --bg-ribbon: #1a1a1a;
+  --bg-sidebar: #111111;
+  --bg-ribbon: #111111;
   --bg-grid: #0d0d0d;
-  --bg-modal: #1a1a1a;
-  --bg-input: #1f2937;
-  --text-main: #e5e7eb;
-  --text-muted: #9ca3af;
-  --border-main: #262626;
-  --border-sidebar: #262626;
-  --border-ribbon: #262626;
-  --accent-color: #38bdf8;
-  --active-btn-bg: #374151;
+  --bg-modal: #1c1c1e;
+  --bg-input: #2c2c2e;
+  --text-main: #ffffff;
+  --text-muted: #8e8e93;
+  --border-main: #222222;
+  --border-sidebar: #222222;
+  --border-ribbon: #222222;
+  --accent-color: #0a84ff;
+  --active-btn-bg: #2c2c2e;
   --time-col-bg: #0a0a0a;
-  --time-digit-color: #6b7280;
-  --header-gradient: linear-gradient(180deg, #1f2937 0%, #0a0a0a 100%);
+  --time-digit-color: #636366;
+  --header-gradient: linear-gradient(180deg, #1c1c1e 0%, #0a0a0a 100%);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -159,7 +159,7 @@ body {
 .ribbon-btn.active {
   background: var(--active-btn-bg);
   color: #fff;
-  border-color: #0f172a;
+  border-color: rgba(255,255,255,0.1);
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
@@ -301,6 +301,7 @@ body {
 
 [data-theme='dark'] .classic-time-header {
   background: #0a0a0a;
+  border-bottom: 1px solid var(--border-main);
 }
 
 #ced-logo-agenda {
@@ -400,18 +401,19 @@ body {
 
 .classic-col-header .header-icon {
   background: rgba(255,255,255,0.9);
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 [data-theme='dark'] .classic-col-header .header-icon {
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: none;
 }
 
 .classic-col-header .header-name {
@@ -540,9 +542,9 @@ body {
 [data-theme='dark'] .appointment .app-details { color: var(--text-muted); }
 
 [data-theme='dark'] .appointment {
-  background: #111827;
-  border-color: #374151;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  background: #1c1c1e;
+  border-color: #2c2c2e;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
 }
 
 /* Professional Modal (CED Pro Exact) */
