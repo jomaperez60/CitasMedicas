@@ -138,12 +138,21 @@ class AppState {
         }
       }
 
-      // 3. Appointments
-      const { data: appData, error: appError } = await supabase.from('ced_appointments').select('*');
+      // 3. Appointments (Optimized for Egress: last 60 days to +365 days)
+      const sixtyDaysAgo = new Date();
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+      const oneYearAhead = new Date();
+      oneYearAhead.setDate(oneYearAhead.getDate() + 365);
+
+      const { data: appData, error: appError } = await supabase.from('ced_appointments')
+        .select('*')
+        .gte('starttime', sixtyDaysAgo.toISOString())
+        .lte('starttime', oneYearAhead.toISOString());
+
       console.log('[DB] ced_appointments:', appData?.length ?? 0, appError ? '❌ ' + appError.message : '✅');
       if (!appError && appData && appData.length > 0) {
         this.appointments = appData.map(mapAppFromDB);
-        console.log('[DB] Loaded', this.appointments.length, 'appointments from cloud ✅');
+        console.log('[DB] Loaded', this.appointments.length, 'appointments from cloud (last 60d to +1y) ✅');
       } else if (!appError && this.appointments.length > 0) {
         console.log('[DB] Migrating', this.appointments.length, 'local appointments...');
         for (const app of this.appointments) {
@@ -173,6 +182,70 @@ class AppState {
       else { ok++; console.log('[ForceSync] OK:', app.id, app.patientName); }
     }
     alert(`Sincronización: ${ok} citas enviadas ✅, ${fail} fallidas ❌`);
+  }
+
+  /**
+   * Backs up appointments older than X months to a JSON file and deletes them from Supabase.
+   */
+  async archiveOldAppointments(monthsThreshold = 6) {
+    const thresholdDate = new Date();
+    thresholdDate.setMonth(thresholdDate.getMonth() - monthsThreshold);
+    const dateStr = thresholdDate.toISOString();
+
+    console.log('[Archive] Searching for appointments older than:', dateStr);
+
+    // 1. Fetch old appointments
+    const { data: oldApps, error: fetchErr } = await supabase
+      .from('ced_appointments')
+      .select('*')
+      .lt('starttime', dateStr);
+
+    if (fetchErr) {
+      alert('Error al buscar citas antiguas: ' + fetchErr.message);
+      return;
+    }
+
+    if (!oldApps || oldApps.length === 0) {
+      alert('No se encontraron citas anteriores a ' + monthsThreshold + ' meses para archivar.');
+      return;
+    }
+
+    // 2. Download as JSON
+    const fileName = `archivo_citas_ced_${new Date().toISOString().split('T')[0]}.json`;
+    const dataStr = JSON.stringify(oldApps, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    // 3. Ask for confirmation before deleting
+    const confirmDelete = confirm(`Se han descargado ${oldApps.length} citas antiguas en el archivo "${fileName}".\n\n¿Desea ELIMINARLAS de la base de datos de la nube para liberar espacio ahora? Esta acción no se puede deshacer.`);
+    
+    if (confirmDelete) {
+      const idsToDelete = oldApps.map(a => a.id);
+      
+      // Supabase delete with .in() filter
+      const { error: delErr } = await supabase
+        .from('ced_appointments')
+        .delete()
+        .in('id', idsToDelete);
+
+      if (delErr) {
+        alert('Respaldo descargado, pero hubo un error al borrar de la nube: ' + delErr.message);
+      } else {
+        alert(`Éxito: ${oldApps.length} citas archivadas y eliminadas de la nube.`);
+        // Refresh local state to remove archived items
+        this.appointments = this.appointments.filter(a => !idsToDelete.includes(a.id));
+        this.save();
+      }
+    } else {
+      alert('Respaldo descargado. Las citas NO fueron eliminadas de la nube.');
+    }
   }
 
   async save() {

@@ -68,6 +68,9 @@ const elements = {
   tabHeaderSeguridad: document.getElementById('tab-header-seguridad'),
   ribbonSeguridad: document.getElementById('ribbon-seguridad'),
   btnManageUsers: document.getElementById('btn-manage-users'),
+  tabHeaderMantenimiento: document.getElementById('tab-header-mantenimiento'),
+  ribbonMantenimiento: document.getElementById('ribbon-mantenimiento'),
+  btnArchiveData: document.getElementById('btn-archive-data'),
   usersModal: document.getElementById('users-modal'),
   btnCreateUser: document.getElementById('btn-create-user'),
   newUserEmail: document.getElementById('new-user-email'),
@@ -1083,27 +1086,36 @@ function handleSession(session) {
     if (role === 'admin') {
       document.body.classList.add('is-admin');
       elements.tabHeaderSeguridad.style.display = 'block';
+      if (elements.tabHeaderMantenimiento) elements.tabHeaderMantenimiento.style.display = 'block';
       if (tabAjustes) tabAjustes.style.display = 'block';
     } else {
       document.body.classList.remove('is-admin');
       elements.tabHeaderSeguridad.style.display = 'none';
+      if (elements.tabHeaderMantenimiento) elements.tabHeaderMantenimiento.style.display = 'none';
       if (tabAjustes) {
         tabAjustes.style.display = 'none';
         ribbonAjustes.style.display = 'none';
       }
     }
 
-    // Ribbon Tab Nav Logic
+    // Ribbon Tab Nav Logic (Simplified selector to catch all)
     document.querySelectorAll('.tab-header-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.tab-header-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.ribbon-group-container').forEach(c => c.style.display = 'none');
-        e.target.classList.add('active');
-        const targetId = 'ribbon-' + e.target.getAttribute('data-ribbon');
+        e.currentTarget.classList.add('active');
+        const targetId = 'ribbon-' + e.currentTarget.getAttribute('data-ribbon');
         const targetContainer = document.getElementById(targetId);
         if (targetContainer) targetContainer.style.display = 'flex';
       });
     });
+
+    // Mantenimiento Logic
+    if (elements.btnArchiveData) {
+      elements.btnArchiveData.onclick = () => {
+        state.archiveOldAppointments(6); // Default 6 months
+      };
+    }
     
     init(); // Run the rest of the application
   } else {
