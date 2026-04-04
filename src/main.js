@@ -331,8 +331,15 @@ function renderAppointmentsPro() {
     
     // Position calc - header is always 90px (matches --header-height CSS variable)
     const HEADER_H = 90;
-    div.style.top = `${calculatePosition(app.startTime, HEADER_H, state.slotHeight)}px`;
-    div.style.height = `${calculateHeight(app.duration, state.slotHeight)}px`;
+    const topPx = calculatePosition(app.startTime, HEADER_H, state.slotHeight);
+    const heightPx = calculateHeight(app.duration, state.slotHeight);
+    const gridHeight = 90 + 15 * state.slotHeight;
+    
+    // Skip appointments outside the visible grid (before 6am or past end of day)
+    if (topPx < HEADER_H || topPx >= gridHeight) return;
+    
+    div.style.top = `${topPx}px`;
+    div.style.height = `${heightPx}px`;
     
     const doctorName = app.doctorId ? (state.doctors.find(d => d.id === app.doctorId)?.name || '') : '';
     
@@ -620,7 +627,8 @@ function attachEventListeners() {
       providerId: elements.providerSelect.value,
       doctorId: elements.doctorAssignmentArea.style.display !== 'none' ? elements.doctorIdSelect.value : null,
       duration: parseInt(elements.appointmentDuration.value),
-      startTime: `${elements.appointmentDate.value}T${elements.appointmentTime.value}:00`,
+      // Convert local time to UTC ISO string for correct timezone storage in Supabase
+      startTime: new Date(`${elements.appointmentDate.value}T${elements.appointmentTime.value}:00`).toISOString(),
       clinicalNotes: elements.clinicalNotes.value,
       types: Array.from(document.querySelectorAll('input[name="appointment-type"]:checked')).map(cb => cb.value)
     };
