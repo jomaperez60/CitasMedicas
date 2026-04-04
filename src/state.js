@@ -106,46 +106,74 @@ class AppState {
     try {
       // 1. Resources (doctors + rooms)
       const { data: resData, error: resError } = await supabase.from('ced_resources').select('*');
+      console.log('[Supabase] ced_resources:', resData?.length ?? 'null', resError ? '❌ '+resError.message : '✅');
       if (!resError && resData && resData.length > 0) {
         this.doctors = resData.filter(r => r.type === 'doctor');
         this.rooms = resData.filter(r => r.type === 'room');
       } else if (!resError) {
-        await supabase.from('ced_resources').upsert([...this.doctors, ...this.rooms]);
+        const { error: upErr } = await supabase.from('ced_resources').upsert([...this.doctors, ...this.rooms]);
+        console.log('[Supabase] resources migration:', upErr ? '❌ '+upErr.message : '✅');
       }
 
       // 2. Patients FIRST (appointments reference them via FK on 'name')
       const { data: patData, error: patError } = await supabase.from('ced_patients').select('*');
+      console.log('[Supabase] ced_patients:', patData?.length ?? 'null', patError ? '❌ '+patError.message : '✅');
       if (!patError && patData && patData.length > 0) {
         this.patients = patData;
       } else if (!patError && this.patients.length > 0) {
+        console.log('[Supabase] Migrating', this.patients.length, 'patients...');
         for (const p of this.patients) {
           const dbRow = { name: p.name, phone: p.phone || '', insurance: p.insurance || '' };
-          await supabase.from('ced_patients').upsert([dbRow])
-            .catch(e => console.warn('Patient migration error:', e.message));
+          const { error: pErr } = await supabase.from('ced_patients').upsert([dbRow]);
+          if (pErr) console.error('[Supabase] Patient migration FAILED:', p.name, pErr.message, pErr.code);
         }
       }
 
-      // 3. Appointments (using column-name mapper to handle lowercase DB columns)
+      // 3. Appointments
       const { data: appData, error: appError } = await supabase.from('ced_appointments').select('*');
+      console.log('[Supabase] ced_appointments:', appData?.length ?? 'null', appError ? '❌ '+appError.message : '✅');
       if (!appError && appData && appData.length > 0) {
-        // DB returns lowercase columns → convert to camelCase for JS
         this.appointments = appData.map(mapAppFromDB);
-      } else if (!appError && this.appointments.length > 0) {
-        // Migrate local appointments → cloud
-        for (const app of this.appointments) {
-          // Ensure patient exists first (FK constraint)
-          if (app.patientName) {
-            const dbPat = { name: app.patientName, phone: app.phone || '', insurance: app.insurance || '' };
-            await supabase.from('ced_patients').upsert([dbPat]).catch(() => {});
+        console.log('[Supabase] Loaded', this.appointments.length, 'appointments from cloud ✅');
+      } else if (!appError) {
+        // Cloud has 0 appointments but we have local ones — migrate all
+        if (this.appointments.length > 0) {
+          console.log('[Supabase] Migrating', this.appointments.length, 'local appointments to cloud...');
+          for (const app of this.appointments) {
+            if (app.patientName) {
+              const dbPat = { name: app.patientName, phone: app.phone || '', insurance: app.insurance || '' };
+              const { error: pErr } = await supabase.from('ced_patients').upsert([dbPat]);
+              if (pErr) console.error('[Supabase] Pre-migration patient FAILED:', app.patientName, pErr.message);
+            }
+            const dbRow = mapAppToDB(app);
+            const { error: aErr } = await supabase.from('ced_appointments').upsert([dbRow]);
+            if (aErr) console.error('[Supabase] Appointment migration FAILED:', app.id, aErr.message, aErr.code, JSON.stringify(dbRow));
+            else console.log('[Supabase] Appointment migrated OK:', app.id);
           }
-          // Use mapAppToDB to send EXACT lowercase column names
-          await supabase.from('ced_appointments').upsert([mapAppToDB(app)])
-            .catch(e => console.warn('Appointment migration error:', app.id, e.message));
         }
       }
     } catch (e) {
-      console.error('Error loading/migrating to Supabase:', e);
+      console.error('[Supabase] CRITICAL load error:', e);
     }
+  }
+
+  /** Force-pushes ALL local appointments to Supabase (call from browser console: state.forceSyncAll()) */
+  async forceSyncAll() {
+    console.log('[ForceSync] Starting forced sync of', this.appointments.length, 'appointments...');
+    let ok = 0, fail = 0;
+    for (const app of this.appointments) {
+      if (app.patientName) {
+        const dbPat = { name: app.patientName, phone: app.phone || '', insurance: app.insurance || '' };
+        await supabase.from('ced_patients').upsert([dbPat])
+          .then(({ error }) => { if (error) console.error('[ForceSync] Patient FAILED:', app.patientName, error.message); });
+      }
+      const dbRow = mapAppToDB(app);
+      const { error } = await supabase.from('ced_appointments').upsert([dbRow]);
+      if (error) { fail++; console.error('[ForceSync] App FAILED:', app.id, error.message, error.code); }
+      else { ok++; console.log('[ForceSync] App OK:', app.id, app.patientName); }
+    }
+    console.log(`[ForceSync] Done: ${ok} ok, ${fail} failed`);
+    alert(`Sincronización forzada completada: ${ok} citas enviadas, ${fail} fallidas. Revisa la consola para detalles.`);
   }
 
   async save() {
