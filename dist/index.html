@@ -5,8 +5,8 @@
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>CED - Calendario Médico Pro Exact v4.9</title>
-  <script type="module" crossorigin src="/CitasMedicas/assets/index-DYh8at3U.js"></script>
-  <link rel="stylesheet" crossorigin href="/CitasMedicas/assets/index-0nwFHRld.css">
+  <script type="module" crossorigin src="/CitasMedicas/assets/index-BALFs0Zt.js"></script>
+  <link rel="stylesheet" crossorigin href="/CitasMedicas/assets/index-C3ZbXeeR.css">
 </head>
 <body class="classic-app">
 
@@ -60,12 +60,6 @@
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
             </div>
             <div class="ribbon-btn-text">Semana</div>
-          </button>
-          <button class="ribbon-btn" id="view-month">
-            <div class="ribbon-btn-inner">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            </div>
-            <div class="ribbon-btn-text">Mes</div>
           </button>
         </div>
         <div class="ribbon-group-label mobile-hide">Vistas</div>
@@ -169,8 +163,14 @@
   </header>
 
   <!-- Barra de Mensajes Amarilla -->
-  <div class="status-bar-yellow">
-    <strong>Información:</strong> <span id="status-message">Usted está viendo citas para el día <span id="current-date-text"></span></span>
+  <div class="status-bar-yellow" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 15px;">
+    <div>
+      <strong>Información:</strong> <span id="status-message">Usted está viendo citas para el día <span id="current-date-text"></span></span>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <button id="btn-prev-date" class="classic-btn-action" style="padding: 2px 8px; font-size: 14px;" title="Anterior">&lt;</button>
+      <button id="btn-next-date" class="classic-btn-action" style="padding: 2px 8px; font-size: 14px;" title="Siguiente">&gt;</button>
+    </div>
   </div>
 
   <div class="main-app-layout">
@@ -598,6 +598,24 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Selección de Vista Semanal -->
+  <div class="modal" id="week-view-selection-modal" style="display: none; z-index: 3000;">
+    <div class="modal-content" style="max-width: 400px; padding: 20px;">
+      <h3 style="margin-top: 0; color: var(--accent-color); font-size: 1.2rem;">Supervisión Semanal (At a Glance)</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Seleccione los recursos que desea ver en la agenda de la semana:</p>
+      
+      <div class="week-option-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px;">
+        <button class="classic-btn-action" id="wk-opt-all-rooms" style="text-align: left; padding: 12px;">📊 Ver Todas las Salas de Endoscopía</button>
+        <button class="classic-btn-action" id="wk-opt-all-doctors" style="text-align: left; padding: 12px;">👨‍⚕️ Ver Todos los Médicos</button>
+        <button class="classic-btn-action" id="wk-opt-current" style="text-align: left; padding: 12px;">👤 Ver solo el Recurso Actual</button>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="classic-btn-action" id="wk-cancel" style="background: var(--bg-input); border-color: var(--grid-border-faint); color: var(--text-main);">Cancelar</button>
       </div>
     </div>
   </div>

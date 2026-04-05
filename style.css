@@ -389,10 +389,28 @@ body {
 .classic-grid {
   flex: 1;
   display: flex;
-  overflow: visible;
+  overflow-x: auto;
+  background: var(--bg-card);
   position: relative;
-  background-color: var(--bg-grid);
-  min-height: max-content;
+}
+
+.day-group {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.day-group-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg-card);
+  border-bottom: 2px solid var(--grid-border);
+  color: var(--accent-color);
+  font-weight: bold;
+  text-align: center;
+  padding: 8px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .classic-provider-col {

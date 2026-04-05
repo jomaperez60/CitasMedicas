@@ -112,6 +112,7 @@ class AppState {
     this.selectedAppointment = null;
     this.currentUser = null;
     this.searchTerm = '';
+    this.selectedWeekResources = []; 
     this.navigatorBaseDate = new Date(this.currentDate);
   }
 

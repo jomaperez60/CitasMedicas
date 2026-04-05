@@ -58,8 +58,17 @@ const elements = {
   cancelRecurrenceX: document.getElementById('cancel-recurrence-x'),
   saveRecurrence: document.getElementById('save-recurrence'),
   recurrenceBanner: document.getElementById('recurrence-summary-banner'),
+  btnPrevDate: document.getElementById('btn-prev-date'),
+  btnNextDate: document.getElementById('btn-next-date'),
   recurrenceText: document.getElementById('recurrence-summary-text'),
   removeRecurrenceBtn: document.getElementById('remove-recurrence-btn'),
+  // Week Selection Modal
+  weekSelectionModal: document.getElementById('week-view-selection-modal'),
+  wkOptAllRooms: document.getElementById('wk-opt-all-rooms'),
+  wkOptAllDoctors: document.getElementById('wk-opt-all-doctors'),
+  wkOptCurrent: document.getElementById('wk-opt-current'),
+  wkCancel: document.getElementById('wk-cancel'),
+  wkCancelX: document.getElementById('wk-cancel-x'),
   // Sync Data
   btnSyncData: document.getElementById('btn-sync-data'),
   syncModal: document.getElementById('sync-modal'),
@@ -143,6 +152,11 @@ function refreshUI() {
   renderDateNavigatorRight();
   renderPhysicianSidebar();
   populateDropdowns(); // Update dropdowns when visibility changes
+
+  // Update view mode button highlights
+  if (elements.viewDay) elements.viewDay.classList.toggle('active', state.viewMode === 'day');
+  if (elements.viewWeek) elements.viewWeek.classList.toggle('active', state.viewMode === 'week');
+  if (elements.viewMonth) elements.viewMonth.classList.toggle('active', state.viewMode === 'month');
   
   if (state.activeTab === 'agenda') {
     renderTimeSlotsPro();
@@ -156,7 +170,14 @@ function refreshUI() {
 }
 
 function updateStatusMessage() {
-  elements.dateText.textContent = formatDate(state.currentDate);
+  if (state.viewMode === 'day') {
+    elements.dateText.textContent = formatDate(state.currentDate);
+    elements.statusMessage.innerHTML = `Usted está viendo citas para el día <span id="current-date-text">${formatDate(state.currentDate)}</span>`;
+  } else {
+    const week = getWeekDates(state.currentDate);
+    const range = `${formatDateShort(week[0])} al ${formatDateShort(week[5])}`;
+    elements.statusMessage.innerHTML = `Usted está viendo la agenda de la semana del <span id="current-date-text">${range}</span>`;
+  }
 }
 
 function applyTheme() {
@@ -332,25 +353,39 @@ function renderGridPro() {
       </div>
     `).join('');
     elements.calendarGrid.style.height = `${90 + 15 * (state.slotHeight || 100)}px`;
-  } else {
-    const provider = providers[0];
+  } else if (state.viewMode === 'week') {
+    // Multi-resource Week View: Grouped by Day
     const weekDates = getWeekDates(state.currentDate);
+    const resourceIds = state.selectedWeekResources && state.selectedWeekResources.length > 0 
+      ? state.selectedWeekResources 
+      : (state.selectedProviderId ? [state.selectedProviderId] : [providers[0]?.id]);
+
+    const activeResources = providers.filter(p => resourceIds.includes(p.id));
+
     elements.calendarGrid.innerHTML = weekDates.map(d => `
-      <div class="classic-provider-col" data-provider-id="${provider.id}" data-date="${d.toISOString()}">
-        <div class="classic-col-header">
-           <div class="header-icon">📅</div>
-           <div class="header-name">${new Intl.DateTimeFormat('es', { weekday: 'long' }).format(d).toUpperCase()}</div>
-           <div class="header-sub">${formatDateShort(d)}</div>
+      <div class="day-group" style="display: flex; flex-direction: column; border-right: 2px solid var(--grid-border);">
+        <div class="day-group-header" style="height: 35px; background: var(--bg-card); border-bottom: 1px solid var(--grid-border); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px; position: sticky; top: 0; z-index: 10;">
+          ${new Intl.DateTimeFormat('es', { weekday: 'long', day: 'numeric', month: 'short' }).format(d).toUpperCase()}
         </div>
-        ${Array.from({ length: 15 }).map(() => `
-          <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box; border-bottom: none;">
-            ${Array.from({ length: subCount }).map((_, i) => `
-              <div class="grid-sub-slot" style="flex: 1; display: flex; box-sizing: border-box; border-top: ${i === 0 ? '1px solid var(--grid-border)' : '1px solid var(--grid-border-faint)'};"></div>
-            `).join('')}
-          </div>
-        `).join('')}
+        <div style="display: flex;">
+          ${activeResources.map(p => `
+            <div class="classic-provider-col" data-provider-id="${p.id}" data-date="${d.toISOString().substring(0, 10)}" style="min-width: 151px;">
+              <div class="classic-col-header" style="height: 55px; font-size: 10px; background: var(--bg-input);">
+                 <div class="header-name" style="font-size: 10px;">${p.name}</div>
+              </div>
+              ${Array.from({ length: 15 }).map(() => `
+                <div class="hour-slot-container" style="height: var(--slot-height); border-bottom: none;">
+                  ${Array.from({ length: subCount }).map((_, i) => `
+                    <div class="grid-sub-slot" style="flex: 1; border-top: ${i === 0 ? '1px solid var(--grid-border)' : '1px solid var(--grid-border-faint)'};"></div>
+                  `).join('')}
+                </div>
+              `).join('')}
+            </div>
+          `).join('')}
+        </div>
       </div>
     `).join('');
+    // Width is automatic now because of flex
     elements.calendarGrid.style.height = `${90 + 15 * (state.slotHeight || 100)}px`;
   }
   attachGridEventsPro();
@@ -380,9 +415,11 @@ function renderAppointmentsPro() {
   
   const draw = (app, dateContext = null) => {
     const targetDate = dateContext || new Date(app.startTime);
+    const dateStr = targetDate.toISOString().substring(0, 10);
+    
     const selector = state.viewMode === 'day' 
       ? `.classic-provider-col[data-provider-id="${app.providerId}"]`
-      : `.classic-provider-col[data-date^="${targetDate.toISOString().substring(0, 10)}"]`;
+      : `.classic-provider-col[data-date="${dateStr}"][data-provider-id="${app.providerId}"]`;
     
     const col = document.querySelector(selector);
     if (!col) return;
@@ -435,10 +472,14 @@ function renderAppointmentsPro() {
 
   if (state.viewMode === 'day') {
     state.getAppointmentsForDate(state.currentDate).forEach(a => draw(a));
-  } else {
+  } else if (state.viewMode === 'week') {
+    const resourceIds = state.selectedWeekResources && state.selectedWeekResources.length > 0 
+      ? state.selectedWeekResources 
+      : (state.selectedProviderId ? [state.selectedProviderId] : []);
+      
     getWeekDates(state.currentDate).forEach(d => {
       state.getAppointmentsForDate(d)
-        .filter(a => a.providerId === state.selectedProviderId)
+        .filter(a => resourceIds.includes(a.providerId))
         .forEach(a => draw(a, d));
     });
   }
@@ -465,6 +506,25 @@ function renderPhysicianSidebar() {
   
   render(state.rooms, elements.roomsFilter);
   render(state.doctors, elements.doctorsFilter);
+
+  // Quick select in week mode & visual highlight
+  document.querySelectorAll('.classic-physician-item').forEach(item => {
+    const checkbox = item.querySelector('input[type="checkbox"]');
+    const id = checkbox.dataset.id;
+
+    if (state.viewMode === 'week' && id === state.selectedProviderId) {
+      item.style.background = 'var(--accent-faint)';
+      item.style.borderRadius = '4px';
+      item.style.border = '1px solid var(--accent-color)';
+    }
+
+    item.onclick = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.closest('button')) return;
+      state.selectedProviderId = id;
+      state.save();
+      refreshUI();
+    };
+  });
 
   // Attach delete events
   document.querySelectorAll('.delete-resource-btn').forEach(btn => {
@@ -609,8 +669,8 @@ function attachEventListeners() {
   });
 
   elements.viewDay.onclick = () => { state.viewMode = 'day'; refreshUI(); };
-  elements.viewWeek.onclick = () => { state.viewMode = 'week'; refreshUI(); };
-  elements.viewMonth.onclick = () => { state.viewMode = 'month'; refreshUI(); };
+  elements.viewWeek.onclick = () => { elements.weekSelectionModal.style.display = 'flex'; };
+  // elements.viewMonth is removed from index.html
   elements.addBtn.onclick = () => openModal();
   elements.printBtn.onclick = () => window.print();
 
@@ -618,6 +678,24 @@ function attachEventListeners() {
     state.timeFormat = state.timeFormat === '24h' ? '12h' : '24h';
     state.save();
     elements.timeFormatToggle.textContent = state.timeFormat;
+    refreshUI();
+  };
+
+  elements.btnPrevDate.onclick = (e) => {
+    e.stopPropagation();
+    const jump = state.viewMode === 'week' ? 7 : 1;
+    state.currentDate.setDate(state.currentDate.getDate() - jump);
+    state.save();
+    updateStatusMessage();
+    refreshUI();
+  };
+
+  elements.btnNextDate.onclick = (e) => {
+    e.stopPropagation();
+    const jump = state.viewMode === 'week' ? 7 : 1;
+    state.currentDate.setDate(state.currentDate.getDate() + jump);
+    state.save();
+    updateStatusMessage();
     refreshUI();
   };
 
@@ -644,6 +722,35 @@ function attachEventListeners() {
       refreshUI();
     }
   });
+
+  elements.wkCancel.onclick = () => { elements.weekSelectionModal.style.display = 'none'; };
+  elements.wkCancelX.onclick = () => { elements.weekSelectionModal.style.display = 'none'; };
+  
+  elements.wkOptAllRooms.onclick = () => {
+    state.selectedWeekResources = state.rooms.filter(r => r.visible).map(r => r.id);
+    state.viewMode = 'week';
+    elements.weekSelectionModal.style.display = 'none';
+    refreshUI();
+  };
+
+  elements.wkOptAllDoctors.onclick = () => {
+    state.selectedWeekResources = state.doctors.filter(d => d.visible).map(d => d.id);
+    state.viewMode = 'week';
+    elements.weekSelectionModal.style.display = 'none';
+    refreshUI();
+  };
+
+  elements.wkOptCurrent.onclick = () => {
+    if (state.selectedProviderId) {
+      state.selectedWeekResources = [state.selectedProviderId];
+    } else {
+      const first = [...state.rooms, ...state.doctors].filter(p => p.visible)[0];
+      state.selectedWeekResources = first ? [first.id] : [];
+    }
+    state.viewMode = 'week';
+    elements.weekSelectionModal.style.display = 'none';
+    refreshUI();
+  };
 
   document.getElementById('label-picker').addEventListener('click', (e) => {
     const swatch = e.target.closest('.label-swatch');

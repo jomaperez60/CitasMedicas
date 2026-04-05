@@ -83,11 +83,16 @@ export function getTimeFromPosition(y, headerHeight = 90, slotHeight = 100) {
 
 export function getWeekDates(date) {
   const curr = new Date(date);
-  const first = curr.getDate() - curr.getDay(); // First day is Sunday (0)
+  const day = curr.getDay(); // 0 is Sunday, 1 is Monday...
   
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(curr);
-    d.setDate(first + i);
+  // Calculate Monday (Lunes)
+  const monday = new Date(curr);
+  monday.setDate(curr.getDate() - (day === 0 ? 6 : day - 1));
+  monday.setHours(0, 0, 0, 0);
+  
+  return Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
     return d;
   });
 }
