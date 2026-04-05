@@ -189,7 +189,7 @@ ${_}`}class ht extends Error{constructor({message:t,code:r,cause:a,name:n}){var 
       <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box;">
         ${c}
       </div>
-    `)}const n=90+15*(L.slotHeight||100);E.timeColumn.style.height=`${n}px`,E.timeColumn.innerHTML=a.join("")}function uu(){var a;const e=[...L.rooms,...L.doctors].filter(n=>n.visible),r=60/(L.slotInterval||30);if(L.viewMode==="day")E.calendarGrid.innerHTML=e.map(n=>{const s=n.type==="doctor",i=n.color||"#475569",o=s?`background-color: ${i}0D;`:"",c=s?`background-color: ${i}33; border-left-color: ${i};`:"";return`
+    `)}const n=90+15*(L.slotHeight||100);E.timeColumn.style.height=`${n}px`,E.timeColumn.innerHTML=a.join("")}function uu(){var a;const e=[...L.rooms,...L.doctors].filter(n=>n.visible),r=60/(L.slotInterval||30);if(L.viewMode==="day")E.calendarGrid.innerHTML=e.map(n=>{const s=n.type==="doctor",i=n.color||"#475569",o=s?`background-color: ${i}0D;`:"",c=s?`background-color: ${i}CC; border-left-color: ${i}; color: #000000;`:"";return`
         <div class="classic-provider-col" data-provider-id="${n.id}" style="${o}">
           <div class="classic-col-header" style="${c}">
              <div class="header-icon">${s?DT:PT}</div>
