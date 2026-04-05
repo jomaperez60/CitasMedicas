@@ -1,6 +1,7 @@
 import { state, APPOINTMENT_TYPES, HONDURAS_INSURANCES } from './state.js';
 import { formatDate, formatDateShort, formatTime, getISOStringFromDate, calculatePosition, calculateHeight, getTimeFromPosition, getWeekDates } from './utils.js';
 import { supabase } from './supabaseClient.js';
+import * as XLSX from 'xlsx';
 
 // Expose state globally for browser console access (e.g. state.forceSyncAll())
 window.state = state;
@@ -58,6 +59,21 @@ const elements = {
   recurrenceBanner: document.getElementById('recurrence-summary-banner'),
   recurrenceText: document.getElementById('recurrence-summary-text'),
   removeRecurrenceBtn: document.getElementById('remove-recurrence-btn'),
+  // Sync Data
+  btnSyncData: document.getElementById('btn-sync-data'),
+  syncModal: document.getElementById('sync-modal'),
+  closeSyncModal: document.getElementById('close-sync-modal'),
+  tabExportData: document.getElementById('tab-export-data'),
+  tabImportData: document.getElementById('tab-import-data'),
+  syncExportView: document.getElementById('sync-export-view'),
+  syncImportView: document.getElementById('sync-import-view'),
+  syncExportStart: document.getElementById('sync-export-start'),
+  syncExportEnd: document.getElementById('sync-export-end'),
+  syncExportProvider: document.getElementById('sync-export-provider'),
+  btnDoExportExcel: document.getElementById('btn-do-export-excel'),
+  btnDoExportICal: document.getElementById('btn-do-export-ical'),
+  syncFileInput: document.getElementById('sync-file-input'),
+  btnDoImportExcel: document.getElementById('btn-do-import-excel'),
   contextMenu: null, // Dynamic
   loginOverlay: document.getElementById('login-overlay'),
   loginForm: document.getElementById('login-form'),
@@ -948,6 +964,192 @@ function showZoomMenu(x, y) {
   elements.contextMenu = menu;
 }
 
+// ==========================================
+// DATA IMPORT/EXPORT (XLSX, ICAL)
+// ==========================================
+function getFilteredAppointmentsForExport() {
+  const startDateStr = elements.syncExportStart.value;
+  const endDateStr = elements.syncExportEnd.value;
+  const providerId = elements.syncExportProvider.value;
+  
+  let validAppointments = state.appointments;
+  
+  if (startDateStr) {
+    const startObj = new Date(startDateStr + 'T00:00:00');
+    validAppointments = validAppointments.filter(app => new Date(app.startTime) >= startObj);
+  }
+  if (endDateStr) {
+    const endObj = new Date(endDateStr + 'T23:59:59');
+    validAppointments = validAppointments.filter(app => new Date(app.startTime) <= endObj);
+  }
+  if (providerId) {
+    validAppointments = validAppointments.filter(app => app.providerId === providerId || app.doctorId === providerId);
+  }
+  return validAppointments;
+}
+
+function handleExport(format) {
+  const apps = getFilteredAppointmentsForExport();
+  if (apps.length === 0) {
+    alert("No hay citas que coincidan con estos filtros.");
+    return;
+  }
+  
+  if (format === 'excel') {
+    const exportData = apps.map(app => {
+      const doc = state.doctors.find(d => d.id === app.doctorId) || {name: ''};
+      const room = state.rooms.find(r => r.id === app.providerId) || {name: ''};
+      return {
+        'Paciente': app.patientName,
+        'Teléfono': app.phone || '',
+        'Seguro': app.insurance || '',
+        'Fecha y Hora': new Date(app.startTime).toLocaleString('es-HN'),
+        'Duración (Minutos)': app.duration,
+        'Médico': doc.name,
+        'Sala': room.name,
+        'Notas Clínicas': app.clinicalNotes || ''
+      };
+    });
+    
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Agenda");
+    XLSX.writeFile(wb, `Agenda_CED_${formatDateShort(new Date()).replace(/\//g, '-')}.xlsx`);
+  } else if (format === 'ical') {
+    let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//CED//Agenda Medica//ES\n";
+    apps.forEach(app => {
+      const doc = state.doctors.find(d => d.id === app.doctorId) || {name: ''};
+      const room = state.rooms.find(r => r.id === app.providerId) || {name: ''};
+      
+      const start = new Date(app.startTime);
+      const end = new Date(start.getTime() + app.duration * 60000);
+      
+      const formatICSDate = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + "Z";
+      
+      icsContent += "BEGIN:VEVENT\n";
+      icsContent += `DTSTART:${formatICSDate(start)}\n`;
+      icsContent += `DTEND:${formatICSDate(end)}\n`;
+      icsContent += `SUMMARY:Cita: ${app.patientName}\n`;
+      icsContent += `DESCRIPTION:Médico: ${doc.name}\\nTel: ${app.phone || ''}\\nSeguro: ${app.insurance || ''}\\nNotas: ${app.clinicalNotes ? app.clinicalNotes.replace(/\n/g, '\\n') : ''}\n`;
+      icsContent += `LOCATION:${room.name}\n`;
+      icsContent += "END:VEVENT\n";
+    });
+    icsContent += "END:VCALENDAR";
+    
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Agenda_CED_${formatDateShort(new Date()).replace(/\//g, '-')}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+}
+
+async function handleImport() {
+  const file = elements.syncFileInput.files[0];
+  if (!file) {
+    alert("Por favor selecciona un archivo de Excel (.xlsx)");
+    return;
+  }
+  
+  elements.btnDoImportExcel.disabled = true;
+  elements.btnDoImportExcel.textContent = "Procesando...";
+  
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, {type: 'array'});
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
+      
+      let importedCount = 0;
+      let conflictCount = 0;
+      
+      for (const row of json) {
+        const patientName = row['Paciente'] || row['Nombre'] || row['Patient'];
+        if (!patientName) continue;
+        
+        let startTime;
+        const dateRaw = row['Fecha'] || row['Fecha y Hora'] || row['Date'];
+        if (!dateRaw) continue;
+        
+        startTime = new Date(dateRaw);
+        if (isNaN(startTime.getTime())) {
+            const hourStr = row['HoraInicial'] || row['Hora Inicial'] || row['Time'];
+            if (hourStr) {
+               startTime = new Date(`${dateRaw} ${hourStr}`);
+            }
+        }
+        
+        if (isNaN(startTime.getTime())) continue;
+        
+        const duration = parseInt(row['Duración'] || row['Duracion'] || row['Duración (Minutos)']) || 30;
+        const endTime = new Date(startTime.getTime() + duration * 60000);
+        
+        const docName = row['Médico'] || row['Medico'] || row['Doctor'];
+        const doc = state.doctors.find(d => d.name.toLowerCase().includes((docName||'').toLowerCase())) || state.doctors[0];
+        
+        const roomName = row['Sala'] || row['Room'];
+        const room = state.rooms.find(r => r.name.toLowerCase().includes((roomName||'').toLowerCase())) || state.rooms[0];
+        
+        const hasConflict = state.appointments.some(app => {
+          if (app.providerId !== room.id && app.doctorId !== doc.id) return false;
+          const exStart = new Date(app.startTime).getTime();
+          const exEnd = exStart + app.duration * 60000;
+          const newStart = startTime.getTime();
+          const newEnd = endTime.getTime();
+          return (newStart < exEnd && newEnd > exStart);
+        });
+        
+        if (hasConflict) {
+          conflictCount++;
+          const doImport = confirm(`Alerta: La cita para ${patientName} en ${room.name} empalma con una cita existente.\n\n¿Deseas sobreescribir / guardarla de todas formas?`);
+          if (!doImport) continue;
+        }
+        
+        const newApp = {
+          id: `app_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          patientName: patientName,
+          phone: row['Teléfono'] || row['Telefono'] || '',
+          insurance: row['Seguro'] || row['Insurance'] || 'Privado / Sin Seguro',
+          providerId: room.id,
+          doctorId: doc.id,
+          startTime: startTime.toISOString(),
+          duration: duration,
+          clinicalNotes: row['Notas'] || row['Notas Clínicas'] || '',
+          types: ['consulta'],
+          status: 'scheduled'
+        };
+        
+        try {
+          await state.addAppointment(newApp);
+          importedCount++;
+        } catch (err) {
+          console.error("Error inserting imported appointment:", err);
+        }
+      }
+      
+      alert(`Importación finalizada.\n\nAsignadas exitosamente: ${importedCount}\nConflictos detectados: ${conflictCount}`);
+      elements.syncModal.style.display = 'none';
+      renderApp();
+    } catch (err) {
+      console.error(err);
+      alert("Hubo un error procesando el archivo de Excel.");
+    } finally {
+      elements.btnDoImportExcel.disabled = false;
+      elements.btnDoImportExcel.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        Comenzar Importación
+      `;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
 async function initAuth() {
   const { data: { session } } = await supabase.auth.getSession();
   await state.load();
@@ -1205,11 +1407,67 @@ elements.sidebarHandle.addEventListener('click', (e) => {
 });
 
 // Mobile Hamburger Toggle
-elements.mobileHamburger.addEventListener('click', (e) => {
-  e.stopPropagation();
-  elements.leftSidebar.classList.toggle('mobile-open');
-  document.body.classList.toggle('mobile-overlay-active');
-});
+  elements.mobileHamburger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    elements.leftSidebar.classList.toggle('mobile-open');
+  });
+
+  // Sync data modal listeners
+  if (elements.btnSyncData) {
+    elements.btnSyncData.addEventListener('click', () => {
+      elements.syncModal.style.display = 'flex';
+      elements.tabExportData.classList.add('active-tab');
+      elements.tabImportData.classList.remove('active-tab');
+      elements.syncExportView.style.display = 'block';
+      elements.syncImportView.style.display = 'none';
+      
+      // Populate providers dynamically
+      elements.syncExportProvider.innerHTML = '<option value="">Todas las citas (Sin Filtro)</option>';
+      const allProviders = [...state.rooms, ...state.doctors];
+      allProviders.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = p.name;
+        elements.syncExportProvider.appendChild(option);
+      });
+      // Default to today
+      elements.syncExportStart.value = formatDate(new Date());
+    });
+  }
+
+  if (elements.closeSyncModal) {
+    elements.closeSyncModal.addEventListener('click', () => {
+      elements.syncModal.style.display = 'none';
+    });
+  }
+
+  if (elements.tabExportData) {
+    elements.tabExportData.addEventListener('click', () => {
+      elements.tabExportData.classList.add('active-tab');
+      elements.tabImportData.classList.remove('active-tab');
+      elements.syncExportView.style.display = 'block';
+      elements.syncImportView.style.display = 'none';
+    });
+  }
+
+  if (elements.tabImportData) {
+    elements.tabImportData.addEventListener('click', () => {
+      elements.tabImportData.classList.add('active-tab');
+      elements.tabExportData.classList.remove('active-tab');
+      elements.syncImportView.style.display = 'block';
+      elements.syncExportView.style.display = 'none';
+    });
+  }
+
+  if (elements.btnDoExportExcel) {
+    elements.btnDoExportExcel.addEventListener('click', () => handleExport('excel'));
+  }
+  if (elements.btnDoExportICal) {
+    elements.btnDoExportICal.addEventListener('click', () => handleExport('ical'));
+  }
+  if (elements.btnDoImportExcel) {
+    elements.btnDoImportExcel.addEventListener('click', handleImport);
+  }
 
 // Right Sidebar Toggle (Tablet/iPad)
 if (elements.rightSidebarHandle) {
