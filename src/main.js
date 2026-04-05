@@ -1247,6 +1247,39 @@ function handleExport(format) {
   }
 }
 
+function parseBlockFormat(rawRows) {
+    const json = [];
+    let currentApp = null;
+    
+    for (const row of rawRows) {
+        if (!row || row.length === 0) continue;
+        
+        const firstCell = String(row[0] || '').trim();
+        const secondCell = String(row[1] || '').trim();
+        
+        // Detect "Event X" header
+        if (firstCell.toLowerCase().startsWith('event')) {
+            if (currentApp) json.push(currentApp);
+            currentApp = {}; 
+            continue;
+        }
+        
+        // Map labels to values
+        if (currentApp) {
+            const label = firstCell;
+            const value = secondCell;
+            if (label && value) {
+                currentApp[label] = value;
+            }
+        }
+    }
+    
+    // Push last one
+    if (currentApp) json.push(currentApp);
+    
+    return json;
+}
+
 async function handleImport() {
   const file = elements.syncFileInput.files[0];
   if (!file) {
@@ -1264,17 +1297,43 @@ async function handleImport() {
       const workbook = XLSX.read(data, {type: 'array'});
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
-      const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
+      
+      // Detection: Is it a block format (Event 0, Event 1...)?
+      const rawRows = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false});
+      const isBlockFormat = rawRows.some(row => row[0] && String(row[0]).toLowerCase().includes('event 0'));
+      
+      let json = [];
+      if (isBlockFormat) {
+          json = parseBlockFormat(rawRows);
+      } else {
+          json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
+      }
       
       let importedCount = 0;
       let conflictCount = 0;
       
       for (const row of json) {
-        const patientName = row['Paciente'] || row['Nombre'] || row['Patient'];
+        // Normalización de campos para ambos formatos
+        const rawSubject = row['Subject'] || '';
+        let patientName = row['Paciente'] || row['Nombre'] || row['Patient'] || rawSubject;
         if (!patientName) continue;
         
+        let extractedTypes = [];
+        const subjectUpper = rawSubject.toUpperCase();
+        
+        // Mapeo específico solicitado por el usuario
+        if (subjectUpper.includes('GASTRO')) extractedTypes.push('endoscopia-alta');
+        if (subjectUpper.includes('COLONO')) extractedTypes.push('colonoscopia');
+        
+        // Refinamiento para formato "Procedimiento / Nombre Paciente"
+        if (patientName.includes('/') && (patientName.includes('+') || patientName.includes('DR'))) {
+            const parts = patientName.split('/');
+            // El nombre suele ser la última parte
+            patientName = parts[parts.length - 1].trim();
+        }
+
         let startTime;
-        const dateRaw = row['Fecha'] || row['Fecha y Hora'] || row['Date'];
+        const dateRaw = row['Fecha'] || row['Fecha y Hora'] || row['Date'] || row['Start'];
         if (!dateRaw) continue;
         
         startTime = new Date(dateRaw);
@@ -1287,14 +1346,42 @@ async function handleImport() {
         
         if (isNaN(startTime.getTime())) continue;
         
-        const duration = parseInt(row['Duración'] || row['Duracion'] || row['Duración (Minutos)']) || 30;
+        const durationRaw = row['Duración'] || row['Duracion'] || row['Duración (Minutos)'];
+        let duration = parseInt(durationRaw) || 30;
+        
+        // Si no hay duración pero hay "Finish" (formato bloque), calculamos
+        if (!durationRaw && row['Finish']) {
+            const endTime = new Date(row['Finish']);
+            if (!isNaN(endTime.getTime())) {
+                duration = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
+            }
+        }
+        
         const endTime = new Date(startTime.getTime() + duration * 60000);
         
+        // En el formato bloque NO suele venir médico/sala explícito, buscaremos en Subject o Description
         const docName = row['Médico'] || row['Medico'] || row['Doctor'];
-        const doc = state.doctors.find(d => d.name.toLowerCase().includes((docName||'').toLowerCase())) || state.doctors[0];
+        let doc = null;
+
+        // Mapeo específico para el Dr. Jorge Suazo
+        if (subjectUpper.includes('DR SUAZO')) {
+             doc = state.doctors.find(d => d.name.toLowerCase().includes('suazo'));
+        }
+
+        if (!doc) {
+            doc = state.doctors.find(d => d.name.toLowerCase().includes((docName||'').toLowerCase())) || state.doctors[0];
+        }
         
-        const roomName = row['Sala'] || row['Room'];
-        const room = state.rooms.find(r => r.name.toLowerCase().includes((roomName||'').toLowerCase())) || state.rooms[0];
+        // Intento de encontrar doctor en el Subject (ej: "DR SUAZO") genericamente
+        if (!docName && !doc && rawSubject) {
+            const foundDoc = state.doctors.find(d => subjectUpper.includes(d.name.toUpperCase().replace('DR. ', '').replace('DRA. ', '')));
+            if (foundDoc) doc = foundDoc;
+        }
+        
+        if (!doc) doc = state.doctors[0];
+
+        const roomName = row['Sala'] || row['Room'] || (extractedTypes.length > 0 ? 'Sala Endoscopía A' : '');
+        let room = state.rooms.find(r => r.name.toLowerCase().includes((roomName||'').toLowerCase())) || state.rooms[0];
         
         const hasConflict = state.appointments.some(app => {
           if (app.providerId !== room.id && app.doctorId !== doc.id) return false;
@@ -1314,25 +1401,24 @@ async function handleImport() {
         const newApp = {
           id: `app_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           patientName: patientName,
-          phone: row['Teléfono'] || row['Telefono'] || '',
+          phone: row['Teléfono'] || row['Telefono'] || row['Location'] || '',
           insurance: row['Seguro'] || row['Insurance'] || 'Privado / Sin Seguro',
           providerId: room.id,
           doctorId: doc.id,
           startTime: startTime.toISOString(),
           duration: duration,
-          clinicalNotes: row['Notas'] || row['Notas Clínicas'] || '',
-          types: ['consulta'],
+          clinicalNotes: row['Notas'] || row['Notas Clínicas'] || row['Description'] || '',
+          types: extractedTypes.length > 0 ? extractedTypes : ['consulta'],
+          label: row['Categories'] || '',
           status: 'scheduled'
         };
         
         try {
           const localOnly = elements.importLocalOnly && elements.importLocalOnly.checked;
           if (localOnly) {
-            // Solo local: añadir al array en memoria y guardar en localStorage
             state.appointments.push(newApp);
             await state.save();
           } else {
-            // Sincronizar con la nube (Supabase)
             await state.addAppointment(newApp);
           }
           importedCount++;

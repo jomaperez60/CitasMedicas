@@ -8,9 +8,10 @@ export const INITIAL_ROOMS = [
 ];
 
 export const INITIAL_DOCTORS = [
-  { id: 'dr1', name: 'Dr. Alejandro Soto', color: '#2563eb', visible: true, type: 'doctor' },
-  { id: 'dr2', name: 'Dra. Elena Rivas', color: '#7c3aed', visible: true, type: 'doctor' },
-  { id: 'dr3', name: 'Dr. Roberto Méndez', color: '#059669', visible: true, type: 'doctor' }
+  { id: 'dr-jorge-suazo', name: 'Dr. Jorge Suazo', color: '#2563eb', visible: true, type: 'doctor' },
+  { id: 'dr1', name: 'Dr. Alejandro Soto', color: '#7c3aed', visible: true, type: 'doctor' },
+  { id: 'dr2', name: 'Dra. Elena Rivas', color: '#059669', visible: true, type: 'doctor' },
+  { id: 'dr3', name: 'Dr. Roberto Méndez', color: '#d97706', visible: true, type: 'doctor' }
 ];
 
 export const HONDURAS_INSURANCES = [
