@@ -30,6 +30,17 @@
 
 /* 2. Responsive Queries */
 @media (max-width: 1024px) {
+  /* Restore Scroll for iOS */
+  html, body {
+    height: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .classic-app {
+    height: auto !important;
+  }
+
   .mobile-fab {
     display: flex;
   }
@@ -42,6 +53,12 @@
   .ribbon-group-container {
     padding: 10px 5px !important;
     height: 70px !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ribbon-group-label {
+    display: none !important; /* Hide labels everywhere on small screens */
   }
 
   .ribbon-btn {
@@ -60,27 +77,41 @@
     padding: 5px !important;
   }
 
-  .app-patient {
-    font-size: 11px !important;
-    font-weight: 700 !important;
+  .classic-provider-col {
+    min-width: 250px !important;
   }
 
-  /* Sidebar Drawer Style */
+  /* Sidebar Drawer Styles (Left & Right) */
+  #left-sidebar, #right-sidebar {
+    position: fixed !important;
+    top: 0;
+    width: 300px !important;
+    height: 100vh;
+    z-index: 5000;
+    background: #fff;
+    box-shadow: 0 0 30px rgba(0,0,0,0.3);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex !important;
+  }
+
   #left-sidebar {
+    left: 0 !important;
+    transform: translateX(-100%);
     border-radius: 0 15px 15px 0;
-    overflow: hidden;
   }
 
-  #left-sidebar h2 {
-    padding: 20px !important;
-    background: var(--accent-color);
-    color: white;
-    margin: 0;
+  #right-sidebar {
+    right: 0 !important;
+    transform: translateX(100%);
+    border-radius: 15px 0 0 15px;
   }
 
-  /* Date Navigator Improvements */
-  .navigator-container-v {
-    gap: 15px !important;
+  #left-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  #right-sidebar.mobile-open-right {
+    transform: translateX(0);
   }
 
   /* Modal responsiveness */
@@ -93,14 +124,7 @@
   }
 }
 
-/* Tablet Portrait */
-@media (min-width: 600px) and (max-width: 1024px) {
-  .classic-provider-col {
-    min-width: 250px !important;
-  }
-}
-
-/* Phone Portrait */
+/* Phone Portrait Specifics */
 @media (max-width: 599px) {
   .classic-provider-col {
     min-width: 100% !important; /* One resource at a time */
@@ -110,7 +134,9 @@
     width: 60px !important;
   }
 
-  .app-time {
-    font-size: 8px !important;
+  .ribbon-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
   }
 }

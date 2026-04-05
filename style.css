@@ -1313,9 +1313,20 @@ body.is-admin button.admin-only {
     white-space: normal !important;
   }
 
-  /* 3. Hide Right Sidebar */
+  /* 3. Right Sidebar - Mobile Drawer Support */
   .sidebar-navigator-right {
+    display: flex !important; /* Ensure it's not hidden, logic in mobile_components.css handles drawer pos */
+  }
+
+  /* 4. Global Admin Permissions UI */
+  .admin-only {
     display: none !important;
+  }
+  body.is-admin .admin-only {
+    display: flex !important;
+  }
+  body.is-admin .tab-header-btn.admin-only {
+    display: block !important;
   }
 
   .classic-time-header {

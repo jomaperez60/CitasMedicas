@@ -133,7 +133,8 @@ const elements = {
   btnNextDate: document.getElementById('btn-next-date'),
   btnToday: document.getElementById('btn-today'),
   btnMasterSync: document.getElementById('btn-master-sync'),
-  btnMobileFab: document.getElementById('btn-mobile-fab')
+  btnMobileFab: document.getElementById('btn-mobile-fab'),
+  btnMobileCalendarToggle: document.getElementById('mobile-calendar-toggle')
 };
 
 let selectionInfo = {
@@ -1906,11 +1907,18 @@ function handleMedicalUserSession(session) {
       if (elements.tabHeaderInicio) elements.tabHeaderInicio.style.display = 'block';
       if (elements.tabHeaderMantenimiento) elements.tabHeaderMantenimiento.style.display = 'block';
       if (elements.tabHeaderSeguridad) elements.tabHeaderSeguridad.style.display = 'block';
+      // Ensure containers are visible if their tab is active
+      if (state.activeTab === 'mantenimiento') elements.ribbonMantenimiento.style.display = 'flex';
+      if (state.activeTab === 'seguridad') elements.ribbonSeguridad.style.display = 'flex';
     } else {
       document.body.classList.remove('is-admin');
       if (elements.tabHeaderInicio) elements.tabHeaderInicio.style.display = 'block';
       if (elements.tabHeaderMantenimiento) elements.tabHeaderMantenimiento.style.display = 'none';
       if (elements.tabHeaderSeguridad) elements.tabHeaderSeguridad.style.display = 'none';
+      
+      // Force hide admin ribbon containers
+      if (elements.ribbonMantenimiento) elements.ribbonMantenimiento.style.display = 'none';
+      if (elements.ribbonSeguridad) elements.ribbonSeguridad.style.display = 'none';
       
       // Force "Inicio" view for non-admins
       const tabInicio = elements.tabHeaderInicio;
@@ -2045,20 +2053,34 @@ elements.sidebarHandle.addEventListener('click', (e) => {
   setTimeout(refreshUI, 350); // Wait for transition
 });
 
-// Mobile Hamburger Toggle
+// Mobile Toggles
 if (elements.mobileHamburger) {
-  elements.mobileHamburger.addEventListener('click', (e) => {
+  elements.mobileHamburger.onclick = (e) => {
     e.stopPropagation();
     const isOpen = elements.leftSidebar.classList.toggle('mobile-open');
     document.body.classList.toggle('mobile-overlay-active', isOpen);
-  });
+    // Close right sidebar if left opens
+    elements.rightSidebar.classList.remove('mobile-open-right');
+  };
 }
 
-// Close mobile menu on body click if overlay is active
+if (elements.btnMobileCalendarToggle) {
+  elements.btnMobileCalendarToggle.onclick = (e) => {
+    e.stopPropagation();
+    const isOpen = elements.rightSidebar.classList.toggle('mobile-open-right');
+    document.body.classList.toggle('mobile-overlay-active', isOpen);
+    // Close left sidebar if right opens
+    elements.leftSidebar.classList.remove('mobile-open');
+  };
+}
+
+// Close mobile menus on body click if overlay is active
 document.addEventListener('click', (e) => {
   if (document.body.classList.contains('mobile-overlay-active')) {
-    if (!e.target.closest('#left-sidebar') && !e.target.closest('#mobile-hamburger')) {
+    if (!e.target.closest('#left-sidebar') && !e.target.closest('#right-sidebar') && 
+        !e.target.closest('#mobile-hamburger') && !e.target.closest('#mobile-calendar-toggle')) {
       elements.leftSidebar.classList.remove('mobile-open');
+      elements.rightSidebar.classList.remove('mobile-open-right');
       document.body.classList.remove('mobile-overlay-active');
     }
   }
