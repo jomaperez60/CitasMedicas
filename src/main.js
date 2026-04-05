@@ -143,6 +143,12 @@ function updateStatusMessage() {
 
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.theme);
+  
+  const logoA = document.getElementById('ced-logo-agenda');
+  if (logoA) {
+    logoA.src = state.theme === 'dark' ? './logo-ced-bw.jpg' : './logo-ced.png';
+  }
+
   if (elements.themeToggle) {
     const iconWrap = elements.themeToggle.querySelector('.ribbon-btn-inner');
     const textWrap = elements.themeToggle.querySelector('.ribbon-btn-text');
@@ -239,8 +245,8 @@ function renderTimeSlotsPro() {
   const interval = state.slotInterval || 30;
 
   let slots = [`
-    <div class="classic-time-header" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0;">
-       <img src="./logo-ced.png" id="ced-logo-agenda" alt="CED Logo">
+    <div class="classic-time-header" style="display: flex; align-items: center; justify-content: center;">
+       <img src="${state.theme === 'dark' ? './logo-ced-bw.jpg' : './logo-ced.png'}" id="ced-logo-agenda" alt="CED Logo" style="max-height: 50px; object-fit: contain;">
     </div>
   `];
   for (let h = startHour; h <= endHour; h++) {
@@ -251,20 +257,20 @@ function renderTimeSlotsPro() {
     for (let m = 0; m < 60; m += interval) {
       if (m === 0) {
         subSlots += `
-          <div class="time-sub-slot" style="flex: 1; display: flex; border-top: 1px solid rgba(0,0,0,0.15); position: relative; box-sizing: border-box; background: transparent;">
+          <div class="time-sub-slot" style="flex: 1; display: flex; border-top: 1px solid var(--grid-border); position: relative; box-sizing: border-box; background: transparent;">
             <div style="position: absolute; top: 0; right: 4px; padding-top: 2px; display: flex; flex-direction: column; align-items: flex-end; line-height: 1;">
               <div style="display: flex; align-items: flex-start; gap: 2px;">
-                <span style="font-size: 16px; font-weight: bold; color: #1e3a5f;">${hourVal}</span>
-                <span style="font-size: 10px; font-weight: bold; padding-top: 2px; color: #1e3a5f;">00</span>
+                <span style="font-size: 16px; font-weight: bold; color: var(--time-digit-color);">${hourVal}</span>
+                <span style="font-size: 10px; font-weight: bold; padding-top: 2px; color: var(--time-digit-color);">00</span>
               </div>
-              <span style="font-size: 9px; opacity: 0.6; color: #1e3a5f; margin-top: 1px;">${ampm}</span>
+              <span style="font-size: 9px; opacity: 0.6; color: var(--time-digit-color); margin-top: 1px;">${ampm}</span>
             </div>
           </div>
         `;
       } else {
         subSlots += `
-          <div class="time-sub-slot" style="flex: 1; display: flex; border-top: 1px solid rgba(0,0,0,0.05); position: relative; box-sizing: border-box; background: transparent;">
-            <div style="position: absolute; top: 0; right: 4px; padding-top: 2px; font-size: 10px; color: #1e3a5f; opacity: 0.7;">
+          <div class="time-sub-slot" style="flex: 1; display: flex; border-top: 1px solid var(--grid-border-faint); position: relative; box-sizing: border-box; background: transparent;">
+            <div style="position: absolute; top: 0; right: 4px; padding-top: 2px; font-size: 10px; color: var(--time-digit-color); opacity: 0.7;">
               ${String(m).padStart(2, '0')}
             </div>
           </div>
@@ -300,7 +306,7 @@ function renderGridPro() {
         ${Array.from({ length: 15 }).map(() => `
           <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box; border-bottom: none;">
             ${Array.from({ length: subCount }).map((_, i) => `
-              <div class="grid-sub-slot" style="flex: 1; display: flex; box-sizing: border-box; border-top: ${i === 0 ? '1px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.05)'};"></div>
+              <div class="grid-sub-slot" style="flex: 1; display: flex; box-sizing: border-box; border-top: ${i === 0 ? '1px solid var(--grid-border)' : '1px solid var(--grid-border-faint)'};"></div>
             `).join('')}
           </div>
         `).join('')}
@@ -320,7 +326,7 @@ function renderGridPro() {
         ${Array.from({ length: 15 }).map(() => `
           <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box; border-bottom: none;">
             ${Array.from({ length: subCount }).map((_, i) => `
-              <div class="grid-sub-slot" style="flex: 1; display: flex; box-sizing: border-box; border-top: ${i === 0 ? '1px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.05)'};"></div>
+              <div class="grid-sub-slot" style="flex: 1; display: flex; box-sizing: border-box; border-top: ${i === 0 ? '1px solid var(--grid-border)' : '1px solid var(--grid-border-faint)'};"></div>
             `).join('')}
           </div>
         `).join('')}
@@ -366,10 +372,10 @@ function renderAppointmentsPro() {
       <div class="app-time">${formatTime(app.startTime)} - ${formatTime(new Date(new Date(app.startTime).getTime() + app.duration * 60000))}</div>
       <div class="app-patient">${app.patientName.toUpperCase()} ${app.recurrence ? '🔁' : ''}</div>
       <div style="font-size: 9px; line-height: 1;">
-        ${doctorName ? `<span style="color: #2171b5; font-weight: bold;">Dr: ${doctorName}</span><br>` : ''}
+        ${doctorName ? `<span style="color: var(--accent-color); font-weight: bold;">Dr: ${doctorName}</span><br>` : ''}
         ${primaryType.label} ${app.phone ? `| T: ${app.phone}` : ''}
       </div>
-      ${app.clinicalNotes ? `<div class="app-details" style="color:#2c3e50; font-weight:bold; margin-top: 2px;">Nota: ${app.clinicalNotes.substring(0, 100)}</div>` : ''}
+      ${app.clinicalNotes ? `<div class="app-details" style="font-weight:bold; margin-top: 2px;">Nota: ${app.clinicalNotes.substring(0, 100)}</div>` : ''}
     `;
     
     div.onclick = () => editAppointment(app);
@@ -395,11 +401,11 @@ function renderPhysicianSidebar() {
       <div class="classic-physician-item" style="padding: 5px; border: 1px solid transparent; display: flex; align-items: center; gap: 8px; font-size: 11px;">
         <input type="checkbox" data-id="${p.id}" ${p.visible ? 'checked' : ''} style="width: 14px; height: 14px; cursor: pointer; margin:0;">
         <div class="sidebar-icon-wrap" style="transform: scale(0.85);">${p.type === 'doctor' ? ICON_DOCTOR : ICON_ROOM}</div>
-        <span style="font-weight: 500; font-size: 0.8rem; color: #444; flex: 1;">${p.name}</span>
-        <button class="admin-only edit-resource-btn" data-id="${p.id}" data-type="${p.type}" data-name="${p.name}" style="color:#2563eb; background:none; border:none; cursor:pointer; font-size:16px; padding:2px; display:flex; align-items:center;" title="Editar Nombre">
+        <span style="font-weight: 500; font-size: 0.8rem; color: var(--text-main); flex: 1;">${p.name}</span>
+        <button class="admin-only edit-resource-btn" data-id="${p.id}" data-type="${p.type}" data-name="${p.name}" style="color:var(--accent-color); background:none; border:none; cursor:pointer; font-size:16px; padding:2px; display:flex; align-items:center;" title="Editar Nombre">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
-        <button class="admin-only delete-resource-btn" data-id="${p.id}" data-type="${p.type}" style="color:#666; background:none; border:none; cursor:pointer; font-size:16px; padding:2px; display:flex; align-items:center;" title="Eliminar ${p.type === 'doctor' ? 'Médico' : 'Sala'}">
+        <button class="admin-only delete-resource-btn" data-id="${p.id}" data-type="${p.type}" style="color:var(--text-muted); background:none; border:none; cursor:pointer; font-size:16px; padding:2px; display:flex; align-items:center;" title="Eliminar ${p.type === 'doctor' ? 'Médico' : 'Sala'}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
         </button>
       </div>
