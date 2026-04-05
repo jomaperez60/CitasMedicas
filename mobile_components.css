@@ -1,0 +1,116 @@
+/* 
+  CED - Classic Pro Mobile Components 
+  Optimizado para pantallas pequeñas y tablets.
+*/
+
+/* 1. Floating Action Button (FAB) */
+.mobile-fab {
+  display: none; /* Oculto por defecto en desktop */
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  z-index: 6000;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.mobile-fab:active {
+  transform: scale(0.9);
+  background: #1a56db;
+}
+
+/* 2. Responsive Queries */
+@media (max-width: 1024px) {
+  .mobile-fab {
+    display: flex;
+  }
+
+  /* Ribbon optimization */
+  .ribbon-bar {
+    height: auto !important;
+  }
+
+  .ribbon-group-container {
+    padding: 10px 5px !important;
+    height: 70px !important;
+  }
+
+  .ribbon-btn {
+    min-width: 55px !important;
+    min-height: 50px !important;
+  }
+
+  .ribbon-btn-text {
+    font-size: 9px !important;
+    font-weight: 600;
+  }
+
+  /* Table density */
+  .classic-col-header {
+    font-size: 11px !important;
+    padding: 5px !important;
+  }
+
+  .app-patient {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+  }
+
+  /* Sidebar Drawer Style */
+  #left-sidebar {
+    border-radius: 0 15px 15px 0;
+    overflow: hidden;
+  }
+
+  #left-sidebar h2 {
+    padding: 20px !important;
+    background: var(--accent-color);
+    color: white;
+    margin: 0;
+  }
+
+  /* Date Navigator Improvements */
+  .navigator-container-v {
+    gap: 15px !important;
+  }
+
+  /* Modal responsiveness */
+  .classic-modal {
+    padding: 15px !important;
+  }
+
+  .modal-field-grid {
+    grid-template-columns: 1fr !important; /* Stack fields on mobile */
+  }
+}
+
+/* Tablet Portrait */
+@media (min-width: 600px) and (max-width: 1024px) {
+  .classic-provider-col {
+    min-width: 250px !important;
+  }
+}
+
+/* Phone Portrait */
+@media (max-width: 599px) {
+  .classic-provider-col {
+    min-width: 100% !important; /* One resource at a time */
+  }
+
+  .classic-time-col, .classic-time-header {
+    width: 60px !important;
+  }
+
+  .app-time {
+    font-size: 8px !important;
+  }
+}

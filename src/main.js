@@ -132,7 +132,8 @@ const elements = {
   btnPrevDate: document.getElementById('btn-prev-date'),
   btnNextDate: document.getElementById('btn-next-date'),
   btnToday: document.getElementById('btn-today'),
-  btnMasterSync: document.getElementById('btn-master-sync')
+  btnMasterSync: document.getElementById('btn-master-sync'),
+  btnMobileFab: document.getElementById('btn-mobile-fab')
 };
 
 let selectionInfo = {
@@ -894,8 +895,11 @@ function setupMedicalAppEventListeners() {
       if (tabId === 'pacientes') renderPatientsList();
       
       // Handle mobile menu closing
-      const mobileMenu = document.querySelector('.mobile-nav-menu');
-      if (mobileMenu) mobileMenu.classList.remove('active');
+      const mobileMenu = elements.leftSidebar;
+      if (mobileMenu && window.innerWidth <= 1024) {
+        mobileMenu.classList.remove('mobile-open');
+        document.body.classList.remove('mobile-overlay-active');
+      }
       
       refreshUI();
     };
@@ -956,6 +960,10 @@ function setupMedicalAppEventListeners() {
         }
       }
     };
+  }
+
+  if (elements.btnMobileFab) {
+    elements.btnMobileFab.onclick = () => openModal();
   }
 
   elements.btnPrevDate.onclick = (e) => {
@@ -2038,12 +2046,23 @@ elements.sidebarHandle.addEventListener('click', (e) => {
 });
 
 // Mobile Hamburger Toggle
+if (elements.mobileHamburger) {
   elements.mobileHamburger.addEventListener('click', (e) => {
     e.stopPropagation();
-    elements.leftSidebar.classList.toggle('mobile-open');
+    const isOpen = elements.leftSidebar.classList.toggle('mobile-open');
+    document.body.classList.toggle('mobile-overlay-active', isOpen);
   });
+}
 
-  // Sync data modal listeners
+// Close mobile menu on body click if overlay is active
+document.addEventListener('click', (e) => {
+  if (document.body.classList.contains('mobile-overlay-active')) {
+    if (!e.target.closest('#left-sidebar') && !e.target.closest('#mobile-hamburger')) {
+      elements.leftSidebar.classList.remove('mobile-open');
+      document.body.classList.remove('mobile-overlay-active');
+    }
+  }
+});
   if (elements.btnSyncData) {
     elements.btnSyncData.addEventListener('click', () => {
       elements.syncModal.style.display = 'flex';
