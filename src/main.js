@@ -12,6 +12,7 @@ const ICON_ROOM = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" s
 
 const elements = {
   tabButtons: document.querySelectorAll('.tab-btn'),
+  tabHeaderInicio: document.getElementById('tab-header-inicio'),
   tabContents: document.querySelectorAll('.tab-content'),
   dateText: document.getElementById('current-date-text'),
   statusMessage: document.getElementById('status-message'),
@@ -1894,16 +1895,19 @@ function handleMedicalUserSession(session) {
     
     if (role === 'admin') {
       document.body.classList.add('is-admin');
-      elements.tabHeaderSeguridad.style.display = 'block';
+      if (elements.tabHeaderInicio) elements.tabHeaderInicio.style.display = 'block';
       if (elements.tabHeaderMantenimiento) elements.tabHeaderMantenimiento.style.display = 'block';
-      if (tabInicio) tabInicio.style.display = 'block';
+      if (elements.tabHeaderSeguridad) elements.tabHeaderSeguridad.style.display = 'block';
     } else {
       document.body.classList.remove('is-admin');
-      elements.tabHeaderSeguridad.style.display = 'none';
+      if (elements.tabHeaderInicio) elements.tabHeaderInicio.style.display = 'block';
       if (elements.tabHeaderMantenimiento) elements.tabHeaderMantenimiento.style.display = 'none';
+      if (elements.tabHeaderSeguridad) elements.tabHeaderSeguridad.style.display = 'none';
+      
+      // Force "Inicio" view for non-admins
+      const tabInicio = elements.tabHeaderInicio;
       if (tabInicio) {
-        tabInicio.style.display = 'none';
-        ribbonInicio.style.display = 'none';
+        tabInicio.click(); // Trigger activation logic
       }
     }
 
