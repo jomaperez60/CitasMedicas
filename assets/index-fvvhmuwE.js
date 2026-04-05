@@ -167,7 +167,7 @@ ${_}`}class ht extends Error{constructor({message:t,code:r,cause:a,name:n}){var 
       <option value="${r.id}">${r.name}</option>
     `).join(""))}function fu(){const r=L.slotInterval||30;let a=[`
     <div class="classic-time-header" style="display: flex; align-items: center; justify-content: center;">
-       <img src="${L.theme==="dark"?"/logo-ced-bw.jpg":"/logo-ced.png"}" id="ced-logo-agenda" class="app-logo-img" alt="CED Logo" style="max-height: 50px; object-fit: contain;">
+       <img src="${L.theme==="dark"?"/logo-ced-bw.jpg":"/logo-ced.png"}" id="ced-logo-agenda" class="app-logo-img" onerror="fixLogoPath(this)" alt="CED Logo" style="max-height: 50px; object-fit: contain;">
     </div>
   `];for(let s=6;s<=20;s++){const i=s>12?s-12:s===0?12:s,o=s>=12?"pm":"am";let c="";for(let l=0;l<60;l+=r)l===0?c+=`
           <div class="time-sub-slot" style="flex: 1; display: flex; border-top: 1px solid var(--grid-border); position: relative; box-sizing: border-box; background: transparent;">
