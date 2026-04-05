@@ -353,7 +353,13 @@
         </div>
 
         <div class="modal-field-item">
-           <label>Procedimientos / Tipo de Cita:</label>
+           <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
+             <label style="margin: 0;">Procedimientos / Tipo de Cita:</label>
+           </div>
+           <!-- Leyenda dinámica de colores -->
+           <div id="types-legend" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; font-size: 11px; opacity: 0.9; background: var(--bg-card); padding: 5px; border-radius: 4px; border: 1px solid var(--grid-border);">
+              <!-- JS will populate legend -->
+           </div>
            <div id="types-selection" class="classic-checkbox-grid"></div>
         </div>
 
@@ -628,14 +634,17 @@
               <span style="font-size: 11px; opacity: 0.7;">Ver la agenda de todo el staff médico activo</span>
             </div>
           </button>
-          
-          <button class="classic-btn-action" id="wk-opt-current" style="text-align: left; padding: 15px; display: flex; align-items: center; gap: 15px; border-radius: 6px;">
-            <span style="font-size: 24px;">👤</span>
-            <div style="display: flex; flex-direction: column;">
-              <span style="font-weight: bold; font-size: 14px;">Recurso Seleccionado</span>
-              <span style="font-size: 11px; opacity: 0.7;">Ver la semana completa para el médico/sala actual</span>
+          <div class="classic-btn-action" id="wk-opt-custom-container" style="text-align: left; padding: 15px; display: flex; align-items: flex-start; gap: 15px; border-radius: 6px; cursor: default;">
+            <span style="font-size: 24px; cursor: pointer;" id="wk-opt-custom-icon">⚙️</span>
+            <div style="display: flex; flex-direction: column; width: 100%;">
+              <span style="font-weight: bold; font-size: 14px; cursor: pointer;" id="wk-opt-custom-title">Selección Personalizada</span>
+              <span style="font-size: 11px; opacity: 0.7; margin-bottom: 10px;">Elige manualmente qué salas o médicos ver en la semana</span>
+              <div id="wk-custom-list" style="max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 12px; margin-bottom: 10px; background: var(--bg-card); padding: 5px; border: 1px solid var(--grid-border); border-radius: 4px;">
+                 <!-- JS will populate checkboxes here -->
+              </div>
+              <button id="wk-custom-btn-apply" class="classic-btn-action" style="background: var(--accent-color); color: white; border-radius: 4px; padding: 6px 15px; align-self: flex-start; border: none; cursor: pointer;">Ver Recursos Seleccionados</button>
             </div>
-          </button>
+          </div>
         </div>
 
         <div style="display: flex; justify-content: flex-end; padding-top: 15px; border-top: 1px solid var(--grid-border-faint);">

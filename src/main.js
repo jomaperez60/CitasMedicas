@@ -66,7 +66,6 @@ const elements = {
   weekSelectionModal: document.getElementById('week-view-selection-modal'),
   wkOptAllRooms: document.getElementById('wk-opt-all-rooms'),
   wkOptAllDoctors: document.getElementById('wk-opt-all-doctors'),
-  wkOptCurrent: document.getElementById('wk-opt-current'),
   wkCancel: document.getElementById('wk-cancel'),
   wkCancelX: document.getElementById('wk-cancel-x'),
   // Sync Data
@@ -216,18 +215,32 @@ function populateDropdowns() {
 }
 
 function renderTypesSelection() {
-  elements.typesSelection.innerHTML = APPOINTMENT_TYPES.map(t => `
-    <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 8px; cursor: pointer;">
-      <input type="checkbox" name="appointment-type" value="${t.id}" data-can-consult="${t.id === 'consulta'}">
-      <div style="width: 10px; height: 10px; border-radius: 2px; background-color: ${t.color}; border: 1px solid rgba(0,0,0,0.1);"></div>
-      <span>${t.label}</span>
-    </label>
-  `).join('');
+  const container = elements.typesSelection;
+  const legend = document.getElementById('types-legend');
+  
+  if (container) {
+    container.innerHTML = APPOINTMENT_TYPES.map(t => `
+      <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" name="appointment-type" value="${t.id}" data-can-consult="${t.id === 'consulta'}">
+        <div style="width: 10px; height: 10px; border-radius: 2px; background-color: ${t.color}; border: 1px solid rgba(0,0,0,0.1);"></div>
+        <span>${t.label}</span>
+      </label>
+    `).join('');
 
-  // Add event listeners for contextual logic
-  elements.typesSelection.querySelectorAll('input').forEach(input => {
-    input.onchange = () => updateContextualSelection(input);
-  });
+    // Add event listeners for contextual logic
+    container.querySelectorAll('input').forEach(input => {
+      input.onchange = () => updateContextualSelection(input);
+    });
+  }
+
+  if (legend) {
+    legend.innerHTML = APPOINTMENT_TYPES.map(t => `
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${t.color};"></div>
+        <span>${t.label}</span>
+      </div>
+    `).join('');
+  }
 }
 
 function updateContextualSelection(changedInput) {
@@ -364,13 +377,13 @@ function renderGridPro() {
 
     elements.calendarGrid.innerHTML = weekDates.map(d => `
       <div class="day-group" style="display: flex; flex-direction: column; border-right: 2px solid var(--grid-border);">
-        <div class="day-group-header" style="height: 35px; background: var(--bg-card); border-bottom: 1px solid var(--grid-border); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px; position: sticky; top: 0; z-index: 10;">
+        <div class="day-group-header" style="height: 35px; border-bottom: 1px solid var(--grid-border); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px; position: sticky; top: 0; z-index: 10; background: var(--bg-main);">
           ${new Intl.DateTimeFormat('es', { weekday: 'long', day: 'numeric', month: 'short' }).format(d).toUpperCase()}
         </div>
         <div style="display: flex;">
           ${activeResources.map(p => `
             <div class="classic-provider-col" data-provider-id="${p.id}" data-date="${d.toISOString().substring(0, 10)}" style="min-width: 151px;">
-              <div class="classic-col-header" style="height: 55px; font-size: 10px; background: var(--bg-input);">
+              <div class="classic-col-header" style="height: 55px; font-size: 10px;">
                  <div class="header-name" style="font-size: 10px;">${p.name}</div>
               </div>
               ${Array.from({ length: 15 }).map(() => `
@@ -447,11 +460,15 @@ function renderAppointmentsPro() {
       // Create a faint version of the color (15% opacity) for the background
       div.style.background = `${app.label}26`; // 26 is ~15% in HEX
       div.style.borderLeft = `6px solid ${app.label}`;
-      div.style.color = 'var(--text-main)';
+      div.style.color = state.theme === 'dark' ? '#ffffff' : 'var(--text-main)';
+    } else if (app.typeIds && app.typeIds.length === 1 && primaryType) {
+      div.style.backgroundColor = primaryType.color;
+      div.style.color = '#ffffff';
     } else {
       // If multiple types, use a simple visual cue or just the first color
       div.style.borderLeft = `5px solid ${primaryType.color}`;
       div.style.background = 'var(--bg-input)';
+      div.style.color = state.theme === 'dark' ? '#ffffff' : 'var(--text-main)';
     }
     
     const doctorName = app.doctorId ? (state.doctors.find(d => d.id === app.doctorId)?.name || '') : '';
@@ -460,7 +477,7 @@ function renderAppointmentsPro() {
       <div class="app-time">${formatTime(app.startTime)} - ${formatTime(new Date(new Date(app.startTime).getTime() + app.duration * 60000))}</div>
       <div class="app-patient">${app.patientName.toUpperCase()} ${app.recurrence ? '🔁' : ''}</div>
       <div style="font-size: 9px; line-height: 1.1;">
-        ${doctorName ? `<span style="font-weight: bold;">${doctorName}</span><br>` : ''}
+        ${doctorName ? `<span style="font-weight: bold;">${doctorName.replace(/^Dr\.?\s+Dr\.?\s+/i, 'Dr. ')}</span><br>` : ''}
         <span style="font-weight: bold; color: inherit;">${typesLabel}</span> ${app.phone ? `| T: ${app.phone}` : ''}
       </div>
       ${app.clinicalNotes ? `<div class="app-details" style="font-weight:bold; margin-top: 2px;">Nota: ${app.clinicalNotes.substring(0, 100)}</div>` : ''}
@@ -669,7 +686,19 @@ function attachEventListeners() {
   });
 
   elements.viewDay.onclick = () => { state.viewMode = 'day'; refreshUI(); };
-  elements.viewWeek.onclick = () => { elements.weekSelectionModal.style.display = 'flex'; };
+  elements.viewWeek.onclick = () => { 
+    elements.weekSelectionModal.style.display = 'flex'; 
+    const listDiv = document.getElementById('wk-custom-list');
+    if (listDiv) {
+      const allResources = [...state.rooms, ...state.doctors];
+      listDiv.innerHTML = allResources.map(r => `
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px; border-radius: 4px; hover:background:var(--bg-hover);">
+          <input type="checkbox" value="${r.id}" ${state.selectedWeekResources.length > 0 ? (state.selectedWeekResources.includes(r.id) ? 'checked' : '') : (r.id === state.selectedProviderId ? 'checked' : '')} style="margin:0;">
+          <span style="font-size: 12px;">${r.name}</span>
+        </label>
+      `).join('');
+    }
+  };
   // elements.viewMonth is removed from index.html
   elements.addBtn.onclick = () => openModal();
   elements.printBtn.onclick = () => window.print();
@@ -740,17 +769,23 @@ function attachEventListeners() {
     refreshUI();
   };
 
-  elements.wkOptCurrent.onclick = () => {
-    if (state.selectedProviderId) {
-      state.selectedWeekResources = [state.selectedProviderId];
-    } else {
-      const first = [...state.rooms, ...state.doctors].filter(p => p.visible)[0];
-      state.selectedWeekResources = first ? [first.id] : [];
-    }
-    state.viewMode = 'week';
-    elements.weekSelectionModal.style.display = 'none';
-    refreshUI();
-  };
+  const wkCustomApply = document.getElementById('wk-custom-btn-apply');
+  if (wkCustomApply) {
+    wkCustomApply.onclick = () => {
+      const listDiv = document.getElementById('wk-custom-list');
+      const checked = Array.from(listDiv.querySelectorAll('input:checked')).map(cb => cb.value);
+      
+      if (checked.length === 0) {
+        alert("Por favor selecciona al menos un recurso.");
+        return;
+      }
+      
+      state.selectedWeekResources = checked;
+      state.viewMode = 'week';
+      elements.weekSelectionModal.style.display = 'none';
+      refreshUI();
+    };
+  }
 
   document.getElementById('label-picker').addEventListener('click', (e) => {
     const swatch = e.target.closest('.label-swatch');
