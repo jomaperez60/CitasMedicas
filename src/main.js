@@ -1,4 +1,5 @@
 import { state, APPOINTMENT_TYPES, HONDURAS_INSURANCES, RESOURCE_PALETTE } from './state.js';
+import { LOGO_CED_PNG, LOGO_CED_BW_JPG } from './assets_base64.js';
 import { formatDate, formatDateShort, formatTime, getISOStringFromDate, calculatePosition, calculateHeight, getTimeFromPosition, getWeekDates } from './utils.js';
 import { supabase } from './supabaseClient.js';
 import * as XLSX from 'xlsx';
@@ -197,7 +198,7 @@ function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.theme);
   
   document.querySelectorAll('.app-logo-img').forEach(img => {
-    img.src = state.theme === 'dark' ? '/logo-ced-bw.jpg' : '/logo-ced.png';
+    img.src = state.theme === 'dark' ? LOGO_CED_BW_JPG : LOGO_CED_PNG;
   });
 
   if (elements.themeToggle) {
@@ -312,7 +313,7 @@ function renderTimeSlotsPro() {
 
   let slots = [`
     <div class="classic-time-header" style="display: flex; align-items: center; justify-content: center;">
-       <img src="${state.theme === 'dark' ? '/logo-ced-bw.jpg' : '/logo-ced.png'}" id="ced-logo-agenda" class="app-logo-img" onerror="fixLogoPath(this)" alt="CED Logo" style="max-height: 50px; object-fit: contain;">
+       <img src="${state.theme === 'dark' ? LOGO_CED_BW_JPG : LOGO_CED_PNG}" id="ced-logo-agenda" class="app-logo-img" alt="CED Logo" style="max-height: 50px; object-fit: contain;">
     </div>
   `];
   for (let h = startHour; h <= endHour; h++) {
@@ -365,8 +366,9 @@ function renderGridPro() {
     elements.calendarGrid.innerHTML = providers.map(p => {
       const isDoc = p.type === 'doctor';
       const color = p.color || '#475569';
-      const colStyle = isDoc ? `background-color: ${color}0D;` : ''; 
-      const headerStyle = isDoc ? `background-color: ${color}CC; border-left-color: ${color}; color: #000000;` : '';
+      const isDark = state.theme === 'dark';
+      const colStyle = isDoc ? `background-color: ${color}${isDark ? '1A' : '0D'};` : ''; 
+      const headerStyle = isDoc ? `background-color: ${color}${isDark ? '80' : 'CC'}; border-left-color: ${color}; color: ${isDark ? '#ffffff' : '#000000'};` : '';
 
       return `
         <div class="classic-provider-col" data-provider-id="${p.id}" style="${colStyle}">

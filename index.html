@@ -7,16 +7,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>CED - Calendario Médico Pro Exact v4.9</title>
   <link rel="stylesheet" href="./style.css?v=3">
-  <script>
-    // Universal fix for GitHub Pages / Cloud subfolders
-    function fixLogoPath(img) {
-      if (!img.dataset.retried) {
-        img.dataset.retried = "true";
-        const filename = img.src.split('/').pop();
-        img.src = filename; // Try direct relative path
-      }
-    }
-  </script>
 </head>
 <body class="classic-app">
 
@@ -222,7 +212,7 @@
       <aside id="left-sidebar" class="sidebar-resizable collapsed">
         <div class="sidebar-content">
           <div class="sidebar-logo-container" style="text-align: center; padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
-            <img id="ced-logo-agenda" class="app-logo-img" src="/logo-ced.png" onerror="fixLogoPath(this)" alt="CED Logo" style="max-width: 140px; height: auto;">
+            <img id="ced-logo-agenda" class="app-logo-img" src="" alt="CED Logo" style="max-width: 140px; height: auto;">
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
             </h3>
