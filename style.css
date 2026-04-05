@@ -540,43 +540,51 @@ body {
 
 /* Right Sidebar (Navigator) */
 .sidebar-navigator-right {
-  width: var(--navigator-right-width);
+  width: 300px; /* Increased for breathing room */
   background: var(--sidebar-bg);
   display: flex;
-  flex-direction: row; /* Para poner el handle al lado */
+  flex-direction: row; 
   overflow: hidden;
   transition: width 0.3s ease;
   flex-shrink: 0;
   position: relative;
   color: var(--text-main);
+  border-left: 1px solid var(--grid-border);
 }
 
 .sidebar-navigator-right.collapsed {
   width: 25px;
+  border-left: none;
 }
 
 .sidebar-navigator-handle {
   width: 25px;
-  background: linear-gradient(to left, #e0e0e0, #ccc);
+  background: #f1f5f9;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-right: 1px solid #aaa;
+  border-right: 1px solid var(--grid-border);
   flex-shrink: 0;
   position: absolute;
   left: 0;
   top: 0;
   height: 100%;
-  z-index: 10;
+  z-index: 1000;
+  pointer-events: auto !important;
+  transition: background 0.2s;
+}
+
+.sidebar-navigator-handle:hover {
+  background: #e2e8f0;
 }
 
 .navigator-content-wrap {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 10px;
-  padding-left: 35px;
+  padding: 15px;
+  padding-left: 45px; /* Increased to avoid 'stuck' look next to handle */
   overflow: hidden;
   width: 100%;
   box-sizing: border-box;
@@ -587,7 +595,9 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  align-items: center; /* Crucial: evita que los hijos se estiren al ancho total */
   gap: 20px;
+  padding-top: 10px;
 }
 
 [data-theme='dark'] .sidebar-resizable { background-color: #28282c !important; border-color: #3b3b44 !important; }
@@ -604,29 +614,37 @@ body {
 [data-theme='dark'] .navigator-footer .classic-input { background: #2c2c30; color: #fff; border-color: #222; }
 
 .mini-month-navigator {
+  width: 195px; /* Altura y ancho fijos para que no se estiren */
+  margin: 0 auto;
   background: #fff;
-  border: 1px solid #ccc;
-  padding: 5px;
+  border: 1px solid #cce0ff;
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-sizing: border-box;
 }
 
 [data-theme='dark'] .mini-month-navigator {
   background: #18181a;
   border: 1px solid #222226;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 .mini-month-navigator .month-title {
-  background: #e1f5fe;
+  background: #e3efff;
   text-align: center;
   font-weight: bold;
   padding: 4px;
-  border-bottom: 1px solid #ccc;
-  margin-bottom: 5px;
+  border-bottom: 1px solid #cce0ff;
+  border-radius: 4px 4px 0 0;
+  margin-bottom: 8px;
+  color: #1e3a5f;
 }
 
 [data-theme='dark'] .mini-month-navigator .month-title {
   background: #1e1e24;
   border-bottom: 1px solid #222226;
-  color: #e0e0e0;
+  color: #ffffff;
 }
 
 .mini-month-navigator .days-grid {

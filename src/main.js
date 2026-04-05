@@ -183,49 +183,81 @@ function refreshUI() {
 
 function renderPatientsList() {
   const container = elements.patientsListBody;
-  const searchInput = document.getElementById('patient-search');
   if (!container) return;
 
-  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  
-  // Extract unique patients from appointments
+  // Extract unique patients and their appointment history
   const patientsMap = new Map();
   
   state.appointments.forEach(app => {
     const name = app.patientName || 'Paciente Sin Nombre';
+    const dateStr = new Date(app.startTime).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    
     if (!patientsMap.has(name)) {
       patientsMap.set(name, {
         name: name,
         phone: app.phone || '',
         insurance: app.insurance || '',
-        birthDate: app.birthDate || '', // Assuming metadata might exist eventually
-        count: 1
+        appointments: [dateStr]
       });
     } else {
       const p = patientsMap.get(name);
-      p.count++;
-      // Take phone/insurance from latest if missing
+      if (!p.appointments.includes(dateStr)) {
+        p.appointments.push(dateStr);
+      }
       if (!p.phone) p.phone = app.phone || '';
       if (!p.insurance) p.insurance = app.insurance || '';
     }
   });
 
   const sortedPatients = Array.from(patientsMap.values())
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .filter(p => p.name.toLowerCase().includes(query) || p.phone.includes(query));
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-  container.innerHTML = sortedPatients.map(p => `
-    <tr>
-      <td style="font-weight: 500; color: #1e3a5f;">${p.name}</td>
-      <td>${p.phone || '<span style="color:#cbd5e1">N/D</span>'}</td>
-      <td>${p.insurance || '<span style="color:#cbd5e1">Privado</span>'}</td>
-      <td>${p.birthDate || '<span style="color:#cbd5e1">-</span>'} <span style="font-size: 10px; color: #64748b; margin-left: 10px;">(${p.count} citas)</span></td>
-    </tr>
-  `).join('');
+  container.innerHTML = sortedPatients.map(p => {
+    const datesHtml = p.appointments.sort().map(d => {
+      // Find one of the actual appointment objects to get the full date
+      const firstApp = state.appointments.find(a => 
+        a.patientName === p.name && 
+        new Date(a.startTime).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }) === d
+      );
+      const isoDate = firstApp ? new Date(firstApp.startTime).toISOString().split('T')[0] : '';
+      
+      return `<span class="patient-date-badge" data-date="${isoDate}" style="display: inline-block; background: var(--accent-faint); color: var(--accent-color); padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-right: 4px; margin-bottom: 4px; border: 1px solid var(--accent-color); cursor: pointer; transition: all 0.2s;">${d}</span>`;
+    }).join('');
+    
+    return `
+      <tr>
+        <td style="font-weight: 600; color: var(--text-main); padding: 12px; border-bottom: 1px solid var(--grid-border);">${p.name}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--grid-border);">${p.phone || '<span style="color:var(--text-muted)">N/D</span>'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--grid-border);">${p.insurance || '<span style="color:var(--text-muted)">Privado</span>'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--grid-border);">${datesHtml}</td>
+      </tr>
+    `;
+  }).join('');
 
-  if (sortedPatients.length === 0) {
-    container.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: #64748b;">No se encontraron pacientes que coincidan con la búsqueda.</td></tr>`;
-  }
+  // Attach click events to badges
+  container.querySelectorAll('.patient-date-badge').forEach(badge => {
+    badge.onclick = (e) => {
+      const dateStr = badge.dataset.date;
+      if (!dateStr) return;
+      
+      state.currentDate = new Date(dateStr + 'T12:00:00'); // Midday to avoid timezone shifts
+      state.navigatorBaseDate = new Date(state.currentDate);
+      state.activeTab = 'agenda';
+      
+      // Update Tab UI
+      elements.tabButtons.forEach(b => b.classList.remove('active'));
+      const agendaBtn = document.querySelector('[data-tab="agenda"]');
+      if (agendaBtn) agendaBtn.classList.add('active');
+      
+      elements.tabContents.forEach(tc => tc.classList.remove('active'));
+      const target = document.getElementById('tab-agenda');
+      if (target) target.classList.add('active');
+
+      state.save();
+      updateStatusMessage();
+      refreshUI();
+    };
+  });
 }
 
 function updateStatusMessage() {
@@ -740,9 +772,9 @@ function renderDateNavigatorRight() {
   const containerMobile = elements.dateNavigatorMobile;
   if (!container && !containerMobile) return;
 
-  const current = new Date(state.navigatorBaseDate);
-  const next = new Date(current);
-  next.setMonth(current.getMonth() + 1);
+  const m1 = new Date(state.navigatorBaseDate);
+  const m2 = new Date(m1); m2.setMonth(m1.getMonth() + 1);
+  const m3 = new Date(m1); m3.setMonth(m1.getMonth() + 2);
   
   const navFooter = `
     <div class="navigator-nav-bar" style="margin-top: 15px;">
@@ -752,7 +784,7 @@ function renderDateNavigatorRight() {
     </div>
   `;
 
-  const monthsHtml = [current, next].map(m => `
+  const monthsHtml = [m1, m2, m3].map(m => `
     <div class="mini-month-navigator">
       <div class="month-title">${new Intl.DateTimeFormat('es', { month: 'long', year: 'numeric' }).format(m)}</div>
       <div class="days-grid">
@@ -855,12 +887,7 @@ function setupMedicalAppEventListeners() {
     };
   });
 
-  const patientSearch = document.getElementById('patient-search');
-  if (patientSearch) {
-    patientSearch.addEventListener('input', () => {
-      renderPatientsList();
-    });
-  }
+
 
   document.querySelectorAll('.recurrence-pattern-opt').forEach(btn => {
     btn.onclick = () => {
@@ -1930,28 +1957,41 @@ function renderUsersList() {
 
 // Sidebar Resizing Logic
 let isResizing = false;
+let isResizingRight = false; // Note: No longer used for dragging but kept for state if needed
 
 elements.sidebarHandle.addEventListener('mousedown', (e) => {
   isResizing = true;
   document.body.style.cursor = 'col-resize';
-  elements.leftSidebar.style.transition = 'none'; // Prevent lag while dragging
+  elements.leftSidebar.style.transition = 'none'; 
 });
 
 document.addEventListener('mousemove', (e) => {
-  if (!isResizing) return;
-  const newWidth = Math.max(200, Math.min(e.clientX, 800)); // Min 200px, Max 800px width limit
-  elements.leftSidebar.style.width = `${newWidth}px`;
-  elements.leftSidebar.classList.remove('collapsed');
+  if (isResizing) {
+    const nw = Math.max(200, Math.min(e.clientX, 800));
+    elements.leftSidebar.style.width = `${nw}px`;
+    elements.leftSidebar.classList.remove('collapsed');
+  }
 });
 
 document.addEventListener('mouseup', () => {
   if (isResizing) {
     isResizing = false;
     document.body.style.cursor = 'default';
-    elements.leftSidebar.style.transition = 'width 0.3s ease'; // Restore smooth transition for the handle toggle
-    refreshUI(); // Re-render grid lines
+    if (elements.leftSidebar) elements.leftSidebar.style.transition = 'width 0.3s ease';
+    refreshUI();
   }
+  isResizingRight = false;
 });
+
+if (elements.rightSidebarHandle) {
+  elements.rightSidebarHandle.addEventListener('mousedown', (e) => {
+    e.preventDefault(); // Prevent text selection or other default behaviors
+    elements.rightSidebar.classList.toggle('collapsed');
+    // Clear any inline width to let CSS transition handle it
+    elements.rightSidebar.style.width = ''; 
+    setTimeout(refreshUI, 400); // Pulse refresh after the transition completes
+  });
+}
 
 // Sidebar Handle Click (Toggle Collapse)
 elements.sidebarHandle.addEventListener('click', (e) => {

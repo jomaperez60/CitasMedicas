@@ -209,16 +209,13 @@
           <div class="sidebar-logo-container" style="text-align: center; padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
             <img id="ced-logo-agenda" class="app-logo-img" src="" alt="CED Logo" style="max-width: 140px; height: auto;">
           </div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-            </h3>
+          <div style="margin-bottom: 5px;">
+            <h3 class="classic-sidebar-title" style="margin: 0; font-size: 11px; color: var(--text-main); font-weight: bold; text-transform: uppercase;">Salas</h3>
           </div>
           <div id="rooms-filter" class="classic-filter-list"></div>
           
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; margin-top: 20px;">
-            <h3 class="classic-sidebar-title" style="margin: 0;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              Médicos
-            </h3>
+          <div style="margin-bottom: 5px; margin-top: 20px;">
+            <h3 class="classic-sidebar-title" style="margin: 0; font-size: 11px; color: var(--text-main); font-weight: bold; text-transform: uppercase;">Médicos</h3>
           </div>
           <div id="doctors-filter" class="classic-filter-list"></div>
         </div>
@@ -242,13 +239,11 @@
         <div id="tab-pacientes" class="tab-content" style="padding: 20px; background: #f8f9fa;">
           <div class="classic-modal" style="width: 100%; height: 100%; border: 1px solid #ddd;">
              <div class="modal-title-bar">Directorio de Pacientes</div>
-             <div style="padding: 15px; border-bottom: 1px solid #eee; background: #fff;">
-                <input type="text" id="patient-search" class="classic-input" style="max-width: 400px;" placeholder="Buscar por Nombre o Teléfono...">
-             </div>
+
              <div style="flex: 1; overflow-y: auto; background: #fff;">
                <table class="classic-table">
                  <thead>
-                   <tr><th>Nombre</th><th>Teléfono</th><th>Seguro / Plan</th><th>Nacimiento</th></tr>
+                   <tr><th style="width:30%; text-align: left; padding: 12px;">Nombre</th><th style="width:15%; text-align: left; padding: 12px;">Teléfono</th><th style="width:15%; text-align: left; padding: 12px;">Seguro / Plan</th><th style="width:40%; text-align: left; padding: 12px;">Citas</th></tr>
                  </thead>
                  <tbody id="patients-list-body"></tbody>
                </table>
@@ -264,22 +259,13 @@
       </main>
 
       <!-- Right Navigator Bar (Static as per image) -->
-      <aside class="sidebar-navigator-right" id="right-sidebar">
+      <aside class="sidebar-navigator-right collapsed" id="right-sidebar">
         <div id="right-sidebar-handle" class="sidebar-navigator-handle">
            <div class="handle-dots">⋮</div>
         </div>
-        <div class="navigator-content-wrap">
           <div id="date-navigator-container" class="navigator-container-v">
-             <!-- Two months will be rendered here via main.js -->
+             <!-- Three months will be rendered here via main.js -->
           </div>
-          <div class="navigator-footer">
-            <input type="text" class="classic-input" placeholder="Buscar Paciente..." style="width: 100%;">
-            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-               <button class="classic-btn-action icon-sm">🔍</button>
-               <button class="classic-btn-action icon-sm">👥</button>
-            </div>
-          </div>
-        </div>
       </aside>
 
     </div>
