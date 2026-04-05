@@ -1328,3 +1328,100 @@ body.is-admin button.admin-only {
   min-height: 40px;
 }
 
+/* =========================================
+   DARK MODE MODALS & CONTEXT MENUS 
+   ========================================= */
+[data-theme='dark'] {
+  color-scheme: dark; /* Allows native checkboxes & scrollbars to go dark */
+}
+
+[data-theme='dark'] .classic-checkbox-grid,
+[data-theme='dark'] .recurrence-grid {
+  background: var(--bg-input);
+  border-color: var(--border-main);
+  color: var(--text-main);
+}
+
+[data-theme='dark'] .modal-action-bar {
+  background: var(--bg-modal);
+  border-color: var(--border-main);
+  border-top: 1px solid var(--border-main);
+}
+
+[data-theme='dark'] .modal-section-title {
+  color: var(--accent-color);
+  border-bottom: 1px solid var(--border-main);
+}
+
+[data-theme='dark'] .modal-field-item label,
+[data-theme='dark'] .day-check {
+  color: var(--text-main);
+}
+
+[data-theme='dark'] .classic-input,
+[data-theme='dark'] .classic-textarea,
+[data-theme='dark'] .classic-select {
+  background: var(--bg-input);
+  color: var(--text-main);
+  border-color: var(--border-main);
+}
+
+[data-theme='dark'] .recurrence-pattern-opt {
+  background: var(--bg-modal);
+  border-color: var(--border-main);
+  color: var(--text-main);
+  box-shadow: none;
+}
+[data-theme='dark'] .recurrence-pattern-opt.active {
+  background: var(--active-btn-bg);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+/* Context Menus */
+[data-theme='dark'] .classic-context-menu {
+  background: var(--bg-modal);
+  border: 1px solid var(--border-main);
+  color: var(--text-main);
+}
+[data-theme='dark'] .context-menu-item {
+  color: var(--text-main);
+}
+[data-theme='dark'] .context-menu-item:hover {
+  background: var(--bg-input) !important;
+  color: var(--accent-color) !important;
+}
+[data-theme='dark'] .context-menu-item.active {
+  background: var(--bg-input);
+  color: var(--accent-color);
+}
+[data-theme='dark'] .context-menu-divider,
+[data-theme='dark'] .context-menu-separator {
+  background: var(--border-main);
+}
+
+/* Modal action buttons override */
+[data-theme='dark'] .classic-btn-action {
+  background: var(--bg-input);
+  border: 1px solid var(--border-main);
+  color: var(--text-main);
+}
+[data-theme='dark'] .classic-btn-action:hover {
+  background: var(--active-btn-bg);
+  border-color: var(--border-main);
+  color: var(--text-main);
+}
+[data-theme='dark'] .classic-modal .classic-btn-action.primary {
+  background: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  text-shadow: none;
+}
+[data-theme='dark'] .classic-modal .classic-btn-action.primary:hover {
+  background: #2563eb !important;
+}
+
+[data-theme='dark'] input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
