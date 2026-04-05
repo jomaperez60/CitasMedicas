@@ -312,7 +312,7 @@ function renderTimeSlotsPro() {
 
   let slots = [`
     <div class="classic-time-header" style="display: flex; align-items: center; justify-content: center;">
-       <img src="${state.theme === 'dark' ? '/logo-ced-bw.jpg' : '/logo-ced.png'}" id="ced-logo-agenda" class="app-logo-img" alt="CED Logo" style="max-height: 50px; object-fit: contain;">
+       <img src="${state.theme === 'dark' ? '/logo-ced-bw.jpg' : '/logo-ced.png'}" id="ced-logo-agenda" class="app-logo-img" onerror="fixLogoPath(this)" alt="CED Logo" style="max-height: 50px; object-fit: contain;">
     </div>
   `];
   for (let h = startHour; h <= endHour; h++) {
