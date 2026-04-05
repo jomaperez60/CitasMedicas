@@ -130,7 +130,8 @@ const elements = {
   appointmentDuration: document.getElementById('appointment-duration'),
   btnPrevDate: document.getElementById('btn-prev-date'),
   btnNextDate: document.getElementById('btn-next-date'),
-  btnToday: document.getElementById('btn-today')
+  btnToday: document.getElementById('btn-today'),
+  btnMasterSync: document.getElementById('btn-master-sync')
 };
 
 let selectionInfo = {
@@ -189,7 +190,11 @@ function renderPatientsList() {
   const patientsMap = new Map();
   
   state.appointments.forEach(app => {
-    const name = app.patientName || 'Paciente Sin Nombre';
+    // SECURITY/CLEANUP: Only show scheduled/active appointments. 
+    // Filter out canceled appointments and ensure patient data exists.
+    if (app.status === 'cancelled' || !app.patientName) return;
+
+    const name = app.patientName;
     const dateStr = new Date(app.startTime).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
     
     if (!patientsMap.has(name)) {
@@ -214,14 +219,19 @@ function renderPatientsList() {
 
   container.innerHTML = sortedPatients.map(p => {
     const datesHtml = p.appointments.sort().map(d => {
-      // Find one of the actual appointment objects to get the full date
+      // Find the appointment to get resource name for diagnostics
       const firstApp = state.appointments.find(a => 
         a.patientName === p.name && 
         new Date(a.startTime).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }) === d
       );
       const isoDate = firstApp ? new Date(firstApp.startTime).toISOString().split('T')[0] : '';
       
-      return `<span class="patient-date-badge" data-date="${isoDate}" style="display: inline-block; background: var(--accent-faint); color: var(--accent-color); padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-right: 4px; margin-bottom: 4px; border: 1px solid var(--accent-color); cursor: pointer; transition: all 0.2s;">${d}</span>`;
+      // Get the doctor/room name
+      const resourceName = firstApp ? (state.doctors.find(dr => dr.id === firstApp.doctorId)?.name || state.rooms.find(r => r.id === firstApp.providerId)?.name || 'Sin Recurso') : '';
+      
+      const badgeText = resourceName ? `${d} - ${resourceName.replace(/^Dr\.?\s+/i, '')}` : d;
+
+      return `<span class="patient-date-badge" data-date="${isoDate}" title="${resourceName}" style="display: inline-block; background: var(--accent-faint); color: var(--accent-color); padding: 4px 10px; border-radius: 4px; font-size: 10px; margin-right: 6px; margin-bottom: 6px; border: 1px solid var(--accent-color); cursor: pointer; transition: all 0.2s; font-weight: 500;">${badgeText}</span>`;
     }).join('');
     
     return `
@@ -229,7 +239,7 @@ function renderPatientsList() {
         <td style="font-weight: 600; color: var(--text-main); padding: 12px; border-bottom: 1px solid var(--grid-border);">${p.name}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--grid-border);">${p.phone || '<span style="color:var(--text-muted)">N/D</span>'}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--grid-border);">${p.insurance || '<span style="color:var(--text-muted)">Privado</span>'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--grid-border);">${datesHtml}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--grid-border); border-right: 1px solid var(--grid-border);">${datesHtml}</td>
       </tr>
     `;
   }).join('');
@@ -531,6 +541,9 @@ function renderAppointmentsPro() {
   document.querySelectorAll('.appointment').forEach(el => el.remove());
   
   const draw = (app, dateContext = null) => {
+    // Only draw active/scheduled appointments. Skip canceled ones.
+    if (app.status === 'cancelled') return;
+
     const targetDate = dateContext || new Date(app.startTime);
     const dateStr = targetDate.toISOString().substring(0, 10);
     
@@ -929,6 +942,20 @@ function setupMedicalAppEventListeners() {
     updateStatusMessage();
     refreshUI();
   };
+
+  if (elements.btnMasterSync) {
+    elements.btnMasterSync.onclick = async () => {
+      if (confirm('¿Ejecutar Sincronización Maestra? Esto limpiará la memoria local y recargará todos los datos desde la nube. Úsalo si ves datos inconsistentes o "fantasmas".')) {
+        try {
+          await state.hardReload();
+          alert('¡Sincronización Maestra completada! La aplicación se recargará ahora.');
+          window.location.reload(); 
+        } catch (err) {
+          alert('Error durante la sincronización: ' + err.message);
+        }
+      }
+    };
+  }
 
   elements.btnPrevDate.onclick = (e) => {
     e.stopPropagation();

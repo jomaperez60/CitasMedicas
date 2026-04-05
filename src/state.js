@@ -512,6 +512,14 @@ class AppState {
     else { const r = this.rooms.find(x => x.id === id); if (r) r.visible = !r.visible; }
     this.save();
   }
+  async hardReload() {
+    console.log('[Sync] Force hard reload initiated...');
+    localStorage.clear(); 
+    // Re-initialize from DB
+    await this.load();
+    this.save();
+    return true;
+  }
 }
 
 export const state = new AppState();
