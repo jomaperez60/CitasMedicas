@@ -176,10 +176,55 @@ function refreshUI() {
     renderTimeSlotsPro();
     renderGridPro();
     renderAppointmentsPro();
-  } else if (state.activeTab === 'lista') {
-    renderAppointmentsList();
   } else if (state.activeTab === 'pacientes') {
     renderPatientsList();
+  }
+}
+
+function renderPatientsList() {
+  const container = elements.patientsListBody;
+  const searchInput = document.getElementById('patient-search');
+  if (!container) return;
+
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  
+  // Extract unique patients from appointments
+  const patientsMap = new Map();
+  
+  state.appointments.forEach(app => {
+    const name = app.patientName || 'Paciente Sin Nombre';
+    if (!patientsMap.has(name)) {
+      patientsMap.set(name, {
+        name: name,
+        phone: app.phone || '',
+        insurance: app.insurance || '',
+        birthDate: app.birthDate || '', // Assuming metadata might exist eventually
+        count: 1
+      });
+    } else {
+      const p = patientsMap.get(name);
+      p.count++;
+      // Take phone/insurance from latest if missing
+      if (!p.phone) p.phone = app.phone || '';
+      if (!p.insurance) p.insurance = app.insurance || '';
+    }
+  });
+
+  const sortedPatients = Array.from(patientsMap.values())
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .filter(p => p.name.toLowerCase().includes(query) || p.phone.includes(query));
+
+  container.innerHTML = sortedPatients.map(p => `
+    <tr>
+      <td style="font-weight: 500; color: #1e3a5f;">${p.name}</td>
+      <td>${p.phone || '<span style="color:#cbd5e1">N/D</span>'}</td>
+      <td>${p.insurance || '<span style="color:#cbd5e1">Privado</span>'}</td>
+      <td>${p.birthDate || '<span style="color:#cbd5e1">-</span>'} <span style="font-size: 10px; color: #64748b; margin-left: 10px;">(${p.count} citas)</span></td>
+    </tr>
+  `).join('');
+
+  if (sortedPatients.length === 0) {
+    container.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: #64748b;">No se encontraron pacientes que coincidan con la búsqueda.</td></tr>`;
   }
 }
 
@@ -800,6 +845,7 @@ function setupMedicalAppEventListeners() {
       const target = document.getElementById('tab-' + tabId);
       if (target) target.classList.add('active');
       if (tabId === 'calendario') renderDateNavigatorRight();
+      if (tabId === 'pacientes') renderPatientsList();
       
       // Handle mobile menu closing
       const mobileMenu = document.querySelector('.mobile-nav-menu');
@@ -808,6 +854,13 @@ function setupMedicalAppEventListeners() {
       refreshUI();
     };
   });
+
+  const patientSearch = document.getElementById('patient-search');
+  if (patientSearch) {
+    patientSearch.addEventListener('input', () => {
+      renderPatientsList();
+    });
+  }
 
   document.querySelectorAll('.recurrence-pattern-opt').forEach(btn => {
     btn.onclick = () => {
