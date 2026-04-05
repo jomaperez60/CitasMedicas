@@ -6,8 +6,18 @@
   <link rel="apple-touch-icon" href="./app-icon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>CED - Calendario Médico Pro Exact v4.9</title>
-  <script type="module" crossorigin src="./assets/index-BMn-OJ-M.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-BJ9bxgQw.css">
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.app-logo-img').forEach(img => {
+        img.onerror = function() {
+          const filename = this.src.split('/').pop();
+          this.src = './' + filename;
+        };
+      });
+    });
+  </script>
+  <script type="module" crossorigin src="./assets/index-DCcKW5uL.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BwjAKhxZ.css">
 </head>
 <body class="classic-app">
 
