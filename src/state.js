@@ -14,6 +14,29 @@ export const INITIAL_DOCTORS = [
   { id: 'dr3', name: 'Dr. Roberto Méndez', color: '#d97706', visible: true, type: 'doctor' }
 ];
 
+export const RESOURCE_PALETTE = [
+  '#2563eb', // Blue
+  '#059669', // Green
+  '#7c3aed', // Purple
+  '#d97706', // Orange
+  '#dc2626', // Red
+  '#eab308', // Yellow
+  '#0891b2', // Teal
+  '#db2777', // Pink
+  '#475569'  // Slate/Gray
+];
+
+export const DOCTOR_ORDER = [
+  'Silvia Portillo',
+  'Ruth Banegas',
+  'Luis Ramirez',
+  'Jorge Suazo',
+  'Raúl Zelaya',
+  'Josué Umaña',
+  'Vilma Portillo',
+  'Celenia Godoy'
+];
+
 export const HONDURAS_INSURANCES = [
   'Privado / Sin Seguro',
   'Seguros Atlántida',
@@ -119,12 +142,20 @@ class AppState {
 
   async load() {
     try {
-      // 1. Resources
-      const { data: resData, error: resError } = await supabase.from('ced_resources').select('*');
+      // 1. Resources - Explicit order by ID (which contains Date.now() for custom resources) 
+      // to ensure columns always appear in the same order
+      const { data: resData, error: resError } = await supabase.from('ced_resources').select('*').order('id', { ascending: true });
       console.log('[DB] ced_resources:', resData?.length ?? 0, resError ? '❌ ' + resError.message : '✅');
       if (!resError && resData && resData.length > 0) {
-        this.doctors = resData.filter(r => r.type === 'doctor');
-        this.rooms = resData.filter(r => r.type === 'room');
+        this.doctors = resData.filter(r => r.type === 'doctor').sort((a, b) => {
+          const idxA = DOCTOR_ORDER.findIndex(name => a.name.toLowerCase().includes(name.toLowerCase()));
+          const idxB = DOCTOR_ORDER.findIndex(name => b.name.toLowerCase().includes(name.toLowerCase()));
+          if (idxA === -1 && idxB === -1) return a.name.localeCompare(b.name);
+          if (idxA === -1) return 1;
+          if (idxB === -1) return -1;
+          return idxA - idxB;
+        });
+        this.rooms = resData.filter(r => r.type === 'room').sort((a, b) => a.name.localeCompare(b.name));
       } else if (!resError) {
         const { error: upErr } = await supabase.from('ced_resources').upsert([...this.doctors, ...this.rooms]);
         if (upErr) console.error('[DB] Resources migration failed:', upErr.message);
@@ -351,11 +382,13 @@ class AppState {
     }
   }
 
-  async addResource(type, name) {
+  async addResource(type, name, color = null) {
     const list = type === 'doctor' ? this.doctors : this.rooms;
     const newId = `${type}-${Date.now()}`;
-    const color = type === 'doctor' ? '#2563eb' : '#dc2626';
-    const resource = { id: newId, name, color, visible: true, type };
+    // If no color provided, pick one from the palette based on index
+    const assignedColor = color || (type === 'doctor' ? RESOURCE_PALETTE[list.length % RESOURCE_PALETTE.length] : '#475569');
+    
+    const resource = { id: newId, name, color: assignedColor, visible: true, type };
     const { error } = await supabase.from('ced_resources').insert([resource]);
     if (error) throw new Error(error.message);
     list.push(resource);
@@ -363,13 +396,14 @@ class AppState {
     return newId;
   }
 
-  async editResource(id, type, name) {
+  async editResource(id, type, name, color) {
     const list = type === 'doctor' ? this.doctors : this.rooms;
     const target = list.find(r => r.id === id);
     if (target) {
-      const { error } = await supabase.from('ced_resources').update({ name }).eq('id', id);
+      const { error } = await supabase.from('ced_resources').update({ name, color }).eq('id', id);
       if (error) throw new Error(error.message);
       target.name = name;
+      target.color = color;
       this.save();
       return true;
     }

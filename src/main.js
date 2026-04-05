@@ -1,4 +1,4 @@
-import { state, APPOINTMENT_TYPES, HONDURAS_INSURANCES } from './state.js';
+import { state, APPOINTMENT_TYPES, HONDURAS_INSURANCES, RESOURCE_PALETTE } from './state.js';
 import { formatDate, formatDateShort, formatTime, getISOStringFromDate, calculatePosition, calculateHeight, getTimeFromPosition, getWeekDates } from './utils.js';
 import { supabase } from './supabaseClient.js';
 import * as XLSX from 'xlsx';
@@ -10,7 +10,6 @@ const ICON_DOCTOR = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"
 const ICON_ROOM = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ea4335;"><path d="M3 21h18"></path><path d="M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3"></path><path d="M19 21V11"></path><path d="M5 21V11"></path></svg>`;
 
 const elements = {
-  // ... existing elements ...
   tabButtons: document.querySelectorAll('.tab-btn'),
   tabContents: document.querySelectorAll('.tab-content'),
   dateText: document.getElementById('current-date-text'),
@@ -97,6 +96,7 @@ const elements = {
   tabHeaderMantenimiento: document.getElementById('tab-header-mantenimiento'),
   ribbonMantenimiento: document.getElementById('ribbon-mantenimiento'),
   btnArchiveData: document.getElementById('btn-archive-data'),
+  btnCleanupImport: document.getElementById('btn-cleanup-import'),
   usersModal: document.getElementById('users-modal'),
   btnCreateUser: document.getElementById('btn-create-user'),
   newUserEmail: document.getElementById('new-user-email'),
@@ -112,14 +112,24 @@ const elements = {
   resourceType: document.getElementById('resource-type'),
   resourceId: document.getElementById('resource-id'),
   resourceName: document.getElementById('resource-name'),
+  resourceColorPalette: document.getElementById('resource-color-palette'),
+  resourceColorValue: document.getElementById('resource-color-value'),
   btnSaveResource: document.getElementById('btn-save-resource'),
+  resourceManagementModal: document.getElementById('resource-management-modal'),
+  resourceMaintList: document.getElementById('resource-maint-list'),
+  btnMaintAddDoctor: document.getElementById('btn-maint-add-doctor'),
+  btnMaintAddRoom: document.getElementById('btn-maint-add-room'),
+  btnMaintListResources: document.getElementById('btn-maint-list-resources'),
   mobileHamburger: document.getElementById('mobile-hamburger'),
   dateNavigatorMobile: document.getElementById('date-navigator-mobile'),
   rightSidebar: document.getElementById('right-sidebar'),
   rightSidebarHandle: document.getElementById('right-sidebar-handle'),
   appointmentDate: document.getElementById('appointment-date'),
   appointmentTime: document.getElementById('appointment-time'),
-  appointmentDuration: document.getElementById('appointment-duration')
+  appointmentDuration: document.getElementById('appointment-duration'),
+  btnPrevDate: document.getElementById('btn-prev-date'),
+  btnNextDate: document.getElementById('btn-next-date'),
+  btnToday: document.getElementById('btn-today')
 };
 
 let selectionInfo = {
@@ -139,12 +149,16 @@ async function init() {
   
   // Apply persisted zoom
   document.documentElement.style.setProperty('--slot-height', `${state.slotHeight}px`);
+  
+  initResourceUI();
+  await repairResourceData();
+  
   populateDropdowns();
   renderTypesSelection();
   updateStatusMessage();
   applyTheme();
   refreshUI();
-  attachEventListeners();
+  setupMedicalAppEventListeners();
 }
 
 function refreshUI() {
@@ -182,10 +196,9 @@ function updateStatusMessage() {
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.theme);
   
-  const logoA = document.getElementById('ced-logo-agenda');
-  if (logoA) {
-    logoA.src = state.theme === 'dark' ? './logo-ced-bw.jpg' : './logo-ced.png';
-  }
+  document.querySelectorAll('.app-logo-img').forEach(img => {
+    img.src = state.theme === 'dark' ? '/logo-ced-bw.jpg' : '/logo-ced.png';
+  });
 
   if (elements.themeToggle) {
     const iconWrap = elements.themeToggle.querySelector('.ribbon-btn-inner');
@@ -299,7 +312,7 @@ function renderTimeSlotsPro() {
 
   let slots = [`
     <div class="classic-time-header" style="display: flex; align-items: center; justify-content: center;">
-       <img src="${state.theme === 'dark' ? './logo-ced-bw.jpg' : './logo-ced.png'}" id="ced-logo-agenda" alt="CED Logo" style="max-height: 50px; object-fit: contain;">
+       <img src="${state.theme === 'dark' ? '/logo-ced-bw.jpg' : '/logo-ced.png'}" id="ced-logo-agenda" class="app-logo-img" alt="CED Logo" style="max-height: 50px; object-fit: contain;">
     </div>
   `];
   for (let h = startHour; h <= endHour; h++) {
@@ -349,25 +362,31 @@ function renderGridPro() {
   const subCount = 60 / interval;
   
   if (state.viewMode === 'day') {
-    elements.calendarGrid.innerHTML = providers.map(p => `
-      <div class="classic-provider-col" data-provider-id="${p.id}">
-        <div class="classic-col-header">
-           <div class="header-icon">${p.type === 'doctor' ? ICON_DOCTOR : ICON_ROOM}</div>
-           <div class="header-name">${p.name}</div>
-           <div class="header-sub">${formatDateShort(state.currentDate)}</div>
-        </div>
-        ${Array.from({ length: 15 }).map(() => `
-          <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box; border-bottom: none;">
-            ${Array.from({ length: subCount }).map((_, i) => `
-              <div class="grid-sub-slot" style="flex: 1; display: flex; box-sizing: border-box; border-top: ${i === 0 ? '1px solid var(--grid-border)' : '1px solid var(--grid-border-faint)'};"></div>
-            `).join('')}
+    elements.calendarGrid.innerHTML = providers.map(p => {
+      const isDoc = p.type === 'doctor';
+      const color = p.color || '#475569';
+      const colStyle = isDoc ? `background-color: ${color}0D;` : ''; 
+      const headerStyle = isDoc ? `background-color: ${color}33; border-left-color: ${color};` : '';
+
+      return `
+        <div class="classic-provider-col" data-provider-id="${p.id}" style="${colStyle}">
+          <div class="classic-col-header" style="${headerStyle}">
+             <div class="header-icon">${isDoc ? ICON_DOCTOR : ICON_ROOM}</div>
+             <div class="header-name">${p.name}</div>
+             <div class="header-sub">${formatDateShort(state.currentDate)}</div>
           </div>
-        `).join('')}
-      </div>
-    `).join('');
+          ${Array.from({ length: 15 }).map(() => `
+            <div class="hour-slot-container" style="display: flex; flex-direction: column; height: var(--slot-height); flex-shrink: 0; box-sizing: border-box; border-bottom: none;">
+              ${Array.from({ length: subCount }).map((_, i) => `
+                <div class="grid-sub-slot" style="flex: 1; display: flex; box-sizing: border-box; border-top: ${i === 0 ? '1px solid var(--grid-border)' : '1px solid var(--grid-border-faint)'};"></div>
+              `).join('')}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }).join('');
     elements.calendarGrid.style.height = `${90 + 15 * (state.slotHeight || 100)}px`;
   } else if (state.viewMode === 'week') {
-    // Multi-resource Week View: Grouped by Day
     const weekDates = getWeekDates(state.currentDate);
     const resourceIds = state.selectedWeekResources && state.selectedWeekResources.length > 0 
       ? state.selectedWeekResources 
@@ -381,24 +400,30 @@ function renderGridPro() {
           ${new Intl.DateTimeFormat('es', { weekday: 'long', day: 'numeric', month: 'short' }).format(d).toUpperCase()}
         </div>
         <div style="display: flex;">
-          ${activeResources.map(p => `
-            <div class="classic-provider-col" data-provider-id="${p.id}" data-date="${d.toISOString().substring(0, 10)}" style="min-width: 151px;">
-              <div class="classic-col-header" style="height: 55px; font-size: 10px;">
-                 <div class="header-name" style="font-size: 10px;">${p.name}</div>
-              </div>
-              ${Array.from({ length: 15 }).map(() => `
-                <div class="hour-slot-container" style="height: var(--slot-height); border-bottom: none;">
-                  ${Array.from({ length: subCount }).map((_, i) => `
-                    <div class="grid-sub-slot" style="flex: 1; border-top: ${i === 0 ? '1px solid var(--grid-border)' : '1px solid var(--grid-border-faint)'};"></div>
-                  `).join('')}
+          ${activeResources.map(p => {
+            const isDoc = p.type === 'doctor';
+            const color = p.color || '#475569';
+            const colStyle = isDoc ? `background-color: ${color}0D;` : ''; 
+            const headerStyle = isDoc ? `background-color: ${color}33; border-left-color: ${color};` : '';
+            
+            return `
+              <div class="classic-provider-col" data-provider-id="${p.id}" data-date="${d.toISOString().substring(0, 10)}" style="min-width: 151px; ${colStyle}">
+                <div class="classic-col-header" style="height: 55px; font-size: 10px; ${headerStyle}">
+                   <div class="header-name" style="font-size: 10px;">${p.name}</div>
                 </div>
-              `).join('')}
-            </div>
-          `).join('')}
+                ${Array.from({ length: 15 }).map(() => `
+                  <div class="hour-slot-container" style="height: var(--slot-height); border-bottom: none;">
+                    ${Array.from({ length: subCount }).map((_, i) => `
+                      <div class="grid-sub-slot" style="flex: 1; border-top: ${i === 0 ? '1px solid var(--grid-border)' : '1px solid var(--grid-border-faint)'};"></div>
+                    `).join('')}
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }).join('')}
         </div>
       </div>
     `).join('');
-    // Width is automatic now because of flex
     elements.calendarGrid.style.height = `${90 + 15 * (state.slotHeight || 100)}px`;
   }
   attachGridEventsPro();
@@ -509,14 +534,8 @@ function renderPhysicianSidebar() {
     container.innerHTML = data.map(p => `
       <div class="classic-physician-item" style="padding: 5px; border: 1px solid transparent; display: flex; align-items: center; gap: 8px; font-size: 11px;">
         <input type="checkbox" data-id="${p.id}" ${p.visible ? 'checked' : ''} style="width: 14px; height: 14px; cursor: pointer; margin:0;">
-        <div class="sidebar-icon-wrap" style="transform: scale(0.85);">${p.type === 'doctor' ? ICON_DOCTOR : ICON_ROOM}</div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: ${p.color}; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;"></div>
         <span style="font-weight: 500; font-size: 0.8rem; color: var(--text-main); flex: 1;">${p.name}</span>
-        <button class="admin-only edit-resource-btn" data-id="${p.id}" data-type="${p.type}" data-name="${p.name}" style="color:var(--accent-color); background:none; border:none; cursor:pointer; font-size:16px; padding:2px; display:flex; align-items:center;" title="Editar Nombre">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-        </button>
-        <button class="admin-only delete-resource-btn" data-id="${p.id}" data-type="${p.type}" style="color:var(--text-muted); background:none; border:none; cursor:pointer; font-size:16px; padding:2px; display:flex; align-items:center;" title="Eliminar ${p.type === 'doctor' ? 'Médico' : 'Sala'}">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-        </button>
       </div>
     `).join('');
   };
@@ -535,43 +554,138 @@ function renderPhysicianSidebar() {
       item.style.border = '1px solid var(--accent-color)';
     }
 
-    item.onclick = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.closest('button')) return;
-      state.selectedProviderId = id;
-      state.save();
-      refreshUI();
-    };
-  });
+      item.onclick = (e) => {
+        if (e.target.tagName === 'INPUT') return;
+        state.selectedProviderId = id;
+        state.save();
+        refreshUI();
+      };
+    });
+}
 
-  // Attach delete events
-  document.querySelectorAll('.delete-resource-btn').forEach(btn => {
-    btn.onclick = (e) => {
-      const id = e.currentTarget.getAttribute('data-id');
-      const type = e.currentTarget.getAttribute('data-type');
-      if (confirm(`¿Está seguro que desea eliminar este ${type === 'doctor' ? 'médico' : 'sala'}? Esta acción eliminará su columna.`)) {
-        const result = state.deleteResource(id, type);
-        if (result.success) {
-          refreshUI();
-        } else {
-          alert(result.message);
-        }
-      }
-    };
-  });
+function renderManagementList() {
+  const container = elements.resourceMaintList;
+  const all = [...state.rooms, ...state.doctors];
+  
+  if (!container) return;
+  
+  container.innerHTML = `
+    <table class="classic-table" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+      <thead>
+        <tr style="background: #f1f5f9;">
+          <th style="padding: 8px; text-align: left; border-bottom: 2px solid #cbd5e1;">Tipo</th>
+          <th style="padding: 8px; text-align: left; border-bottom: 2px solid #cbd5e1;">Nombre</th>
+          <th style="padding: 8px; text-align: center; border-bottom: 2px solid #cbd5e1;">Color</th>
+          <th style="padding: 8px; text-align: center; border-bottom: 2px solid #cbd5e1;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${all.map(p => `
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; color: #64748b;">${p.type === 'doctor' ? '👨‍⚕️ Médico' : '🏢 Sala'}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">${p.name}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+              <div style="width: 16px; height: 16px; border-radius: 4px; background: ${p.color}; border: 1px solid rgba(0,0,0,0.1); display: inline-block;"></div>
+            </td>
+            <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+               <div style="display: flex; gap: 8px; justify-content: center;">
+                 <button class="maint-edit-btn" data-id="${p.id}" data-type="${p.type}" data-name="${p.name}" data-color="${p.color}" style="background:none; border:none; cursor:pointer; color:#2563eb;" title="Editar">
+                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                 </button>
+                 <button class="maint-delete-btn" data-id="${p.id}" data-type="${p.type}" style="background:none; border:none; cursor:pointer; color:#dc2626;" title="Eliminar">
+                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                 </button>
+               </div>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
 
-  // Attach edit events
-  document.querySelectorAll('.edit-resource-btn').forEach(btn => {
-    btn.onclick = (e) => {
-      const id = e.currentTarget.getAttribute('data-id');
-      const type = e.currentTarget.getAttribute('data-type');
-      const name = e.currentTarget.getAttribute('data-name');
+  // Attach Maint Edit/Delete events
+  container.querySelectorAll('.maint-edit-btn').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.id;
+      const type = btn.dataset.type;
+      const name = btn.dataset.name;
+      const color = btn.dataset.color || '#2563eb';
+      
       elements.resourceType.value = type;
       elements.resourceId.value = id;
       elements.resourceName.value = name;
+      elements.resourceColorValue.value = color;
+      updateResourceColorPickerUI(color);
+      
+      elements.resourceManagementModal.style.display = 'none';
       elements.resourceModal.style.display = 'flex';
       elements.resourceName.focus();
     };
   });
+
+  container.querySelectorAll('.maint-delete-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      const type = btn.dataset.type;
+      if (confirm(`¿ELIMINAR ESTE RECURSO?\n\nEsta acción quitará a ${type === 'doctor' ? 'este médico' : 'esta sala'} de la agenda permanentemente.`)) {
+         await state.deleteResource(id, type);
+         renderManagementList(); // Refresh list in modal
+         refreshUI();           // Refresh grid background
+      }
+    };
+  });
+}
+
+function updateResourceColorPickerUI(selectedColor) {
+  const swatches = elements.resourceColorPalette.querySelectorAll('.color-swatch');
+  swatches.forEach(sw => {
+    const isSelected = sw.dataset.color === selectedColor;
+    sw.style.outline = isSelected ? '3px solid var(--text-main)' : 'none';
+    sw.style.outlineOffset = isSelected ? '2px' : '0';
+    sw.style.transform = isSelected ? 'scale(1.1)' : 'scale(1)';
+  });
+}
+
+function initResourceUI() {
+  if (!elements.resourceColorPalette) return;
+  elements.resourceColorPalette.innerHTML = RESOURCE_PALETTE.map(c => `
+    <div class="color-swatch" data-color="${c}" style="width: 24px; height: 24px; border-radius: 4px; background: ${c}; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); transition: transform 0.2s;"></div>
+  `).join('');
+
+  elements.resourceColorPalette.querySelectorAll('.color-swatch').forEach(sw => {
+    sw.onclick = () => {
+      const color = sw.dataset.color;
+      elements.resourceColorValue.value = color;
+      updateResourceColorPickerUI(color);
+    };
+  });
+}
+
+async function repairResourceData() {
+  // One-time check: assign specific colors if doctors match by name
+  for (const doc of state.doctors) {
+    if (doc.name.toLowerCase().includes('silvia portillo') && doc.color !== '#d97706') {
+        console.log("🛠 Asignando NARANJA a Silvia Portillo...");
+        await state.editResource(doc.id, doc.type, doc.name, '#d97706');
+    }
+    if (doc.name.toLowerCase().includes('ruth banegas') && doc.color !== '#eab308') {
+        console.log("🛠 Asignando AMARILLO a Ruth Banegas...");
+        await state.editResource(doc.id, doc.type, doc.name, '#eab308');
+    }
+  }
+
+  // One-time check: if multiple doctors share the same default color (#2563eb), re-assign them from the palette.
+  const defaultBlue = '#2563eb';
+  const dups = state.doctors.filter(d => d.color === defaultBlue);
+  
+  if (dups.length > 1) {
+    console.log("🛠 Detectados colores de médico duplicados. Reparando...");
+    for (let i = 0; i < dups.length; i++) {
+        const newColor = RESOURCE_PALETTE[i % RESOURCE_PALETTE.length];
+        await state.editResource(dups[i].id, dups[i].type, dups[i].name, newColor);
+    }
+    refreshUI();
+  }
 }
 
 function renderDateNavigatorRight() {
@@ -583,11 +697,11 @@ function renderDateNavigatorRight() {
   const next = new Date(current);
   next.setMonth(current.getMonth() + 1);
   
-  const navHeader = `
-    <div class="navigator-nav-bar">
-      <button id="nav-prev-month" class="nav-arrow-btn">◀</button>
-      <div class="nav-current-view">Calendario</div>
-      <button id="nav-next-month" class="nav-arrow-btn">▶</button>
+  const navFooter = `
+    <div class="navigator-nav-bar" style="margin-top: 15px;">
+      <button class="nav-prev-month-btn classic-btn-action primary btn-pill" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 10px; padding: 0;">◀</button>
+      <button class="nav-today-btn classic-btn-action primary btn-pill" style="padding: 2px 10px; font-size: 10px; font-weight: bold;">HOY</button>
+      <button class="nav-next-month-btn classic-btn-action primary btn-pill" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 10px; padding: 0;">▶</button>
     </div>
   `;
 
@@ -601,26 +715,38 @@ function renderDateNavigatorRight() {
     </div>
   `).join('');
 
-  const fullHtml = navHeader + monthsHtml;
+  const fullHtml = monthsHtml + navFooter;
 
   if (container) container.innerHTML = fullHtml;
   if (containerMobile) containerMobile.innerHTML = fullHtml;
 
-  // Listeners (Desktop & Mobile share IDs, but usually only one is visible/active)
-  const bindEvents = (doc) => {
-    const prev = doc.getElementById('nav-prev-month');
-    const next = doc.getElementById('nav-next-month');
+  // Listeners (Using querySelector to handle both Desktop and Mobile containers)
+  [container, containerMobile].forEach(el => {
+    if (!el) return;
+    const prev = el.querySelector('.nav-prev-month-btn');
+    const next = el.querySelector('.nav-next-month-btn');
+    const today = el.querySelector('.nav-today-btn');
+    
     if (prev) prev.onclick = (e) => {
        e.stopPropagation();
        state.navigatorBaseDate.setMonth(state.navigatorBaseDate.getMonth() - 1);
-       refreshUI();
+       renderDateNavigatorRight();
     };
     if (next) next.onclick = (e) => {
        e.stopPropagation();
        state.navigatorBaseDate.setMonth(state.navigatorBaseDate.getMonth() + 1);
+       renderDateNavigatorRight();
+    };
+    if (today) today.onclick = (e) => {
+       e.stopPropagation();
+       state.currentDate = new Date();
+       state.navigatorBaseDate = new Date();
+       state.save();
+       updateStatusMessage();
        refreshUI();
     };
-    doc.querySelectorAll('.day-box').forEach(box => {
+
+    el.querySelectorAll('.day-box').forEach(box => {
       box.onclick = () => {
         state.currentDate = new Date(box.dataset.date);
         state.save();
@@ -628,9 +754,7 @@ function renderDateNavigatorRight() {
         refreshUI();
       };
     });
-  };
-
-  bindEvents(document);
+  });
 }
 
 function renderMiniMonthDays(date) {
@@ -650,12 +774,17 @@ function renderMiniMonthDays(date) {
 
 // --- Interaction Logic ---
 
-function attachEventListeners() {
+function setupMedicalAppEventListeners() {
+  attach_admin_listeners();
   if (elements.themeToggle) {
     elements.themeToggle.onclick = () => {
       state.theme = state.theme === 'light' ? 'dark' : 'light';
       state.save();
       applyTheme();
+      // Ensure the agenda grid re-renders to update the logo and backgrounds immediately
+      renderTimeSlotsPro();
+      renderGridPro();
+      renderAppointmentsPro();
     };
   }
 
@@ -710,10 +839,20 @@ function attachEventListeners() {
     refreshUI();
   };
 
+  elements.btnToday.onclick = (e) => {
+    e.stopPropagation();
+    state.currentDate = new Date();
+    state.navigatorBaseDate = new Date(); // Sync mini-calendar to now
+    state.save();
+    updateStatusMessage();
+    refreshUI();
+  };
+
   elements.btnPrevDate.onclick = (e) => {
     e.stopPropagation();
     const jump = state.viewMode === 'week' ? 7 : 1;
     state.currentDate.setDate(state.currentDate.getDate() - jump);
+    state.navigatorBaseDate = new Date(state.currentDate); // Sync mini-calendar
     state.save();
     updateStatusMessage();
     refreshUI();
@@ -723,6 +862,7 @@ function attachEventListeners() {
     e.stopPropagation();
     const jump = state.viewMode === 'week' ? 7 : 1;
     state.currentDate.setDate(state.currentDate.getDate() + jump);
+    state.navigatorBaseDate = new Date(state.currentDate); // Sync mini-calendar
     state.save();
     updateStatusMessage();
     refreshUI();
@@ -1394,8 +1534,7 @@ async function handleImport() {
         
         if (hasConflict) {
           conflictCount++;
-          const doImport = confirm(`Alerta: La cita para ${patientName} en ${room.name} empalma con una cita existente.\n\n¿Deseas sobreescribir / guardarla de todas formas?`);
-          if (!doImport) continue;
+          // Se procede automáticamente sin confirmar por petición del usuario
         }
         
         const newApp = {
@@ -1448,13 +1587,13 @@ async function handleImport() {
   reader.readAsArrayBuffer(file);
 }
 
-async function initAuth() {
+async function startMedicalAuthSession() {
   const { data: { session } } = await supabase.auth.getSession();
   await state.load();
-  handleSession(session);
+  handleMedicalUserSession(session);
 
   supabase.auth.onAuthStateChange((event, session) => {
-    handleSession(session);
+    handleMedicalUserSession(session);
   });
 
   // Login Form Submission
@@ -1486,114 +1625,145 @@ async function initAuth() {
       elements.loginForm.reset();
     }
   });
-
-  elements.btnSetupAdmin.addEventListener('click', async () => {
-    const email = elements.loginEmail.value.trim();
-    const password = elements.loginPassword.value.trim();
-    if (!email || !password) return;
-    
-    elements.loginError.textContent = 'Creando Administrador... (Nota: Desactiva "Confirm Email" en Supabase si falla)';
-    elements.loginError.style.color = '#059669';
-
-    const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-      options: {
-        data: { role: 'admin' }
-      }
-    });
-
-    if (error) {
-      elements.loginError.textContent = error.message;
-      elements.loginError.style.color = '#dc2626';
-    } else {
-      elements.loginError.textContent = 'Administrador Creado. Ahora puedes iniciar sesión.';
-      elements.btnSetupAdmin.style.display = 'none';
-    }
-  });
-
-  // Logout Button
-  elements.btnLogout.addEventListener('click', async () => {
-    await supabase.auth.signOut();
-  });
-
-  // User Management Admin Setup (Front-End Only / Simulado si no es superadmin)
-  elements.tabHeaderSeguridad.addEventListener('click', () => {
-    if (state.currentUser?.role === 'admin') {
-      elements.usersModal.style.display = 'flex';
-      renderUsersList();
-    } else {
-      alert('Se requieren privilegios de Administrador.');
-    }
-  });
-
-  elements.btnCreateUser.addEventListener('click', async () => {
-    const el = elements.newUserEmail.value.trim();
-    const pw = elements.newUserPassword.value.trim();
-    if (!el || !pw) return;
-    elements.userCreationStatus.textContent = 'Creando usuario...';
-    
-    // Create Standard User
-    const { data, error } = await supabase.auth.signUp({
-      email: el,
-      password: pw,
-      options: {
-        data: { role: 'standard' }
-      }
-    });
-    
-    if (error) {
-      elements.userCreationStatus.textContent = `Error: ${error.message}`;
-      elements.userCreationStatus.style.color = '#dc2626';
-    } else {
-      elements.userCreationStatus.textContent = 'Usuario creado y registrado exitosamente.';
-      elements.userCreationStatus.style.color = '#059669';
-      elements.newUserEmail.value = '';
-      elements.newUserPassword.value = '';
-      renderUsersList();
-    }
-  });
-
-  // Resource Creation Bindings
-  elements.btnAddRoom.addEventListener('click', () => {
-    elements.resourceType.value = 'room';
-    elements.resourceId.value = '';
-    elements.resourceName.value = '';
-    elements.resourceModal.style.display = 'flex';
-    elements.resourceName.focus();
-  });
-
-  elements.btnAddDoctor.addEventListener('click', () => {
-    elements.resourceType.value = 'doctor';
-    elements.resourceId.value = '';
-    elements.resourceName.value = '';
-    elements.resourceModal.style.display = 'flex';
-    elements.resourceName.focus();
-  });
-
-  elements.btnSaveResource.addEventListener('click', () => {
-    const name = elements.resourceName.value.trim();
-    if (!name) {
-      alert("Por favor, introduzca un nombre.");
-      return;
-    }
-    const type = elements.resourceType.value;
-    const id = elements.resourceId.value;
-    
-    if (id) {
-       // Edit Mode
-       state.editResource(id, type, name);
-    } else {
-       // Create Mode
-       state.addResource(type, name);
-    }
-    
-    elements.resourceModal.style.display = 'none';
-    refreshUI();
-  });
 }
 
-function handleSession(session) {
+function attach_admin_listeners() {
+  // Admin & Resource Management Listeners
+  if (elements.btnSetupAdmin) {
+    elements.btnSetupAdmin.addEventListener('click', async () => {
+      const email = elements.loginEmail.value.trim();
+      const password = elements.loginPassword.value.trim();
+      if (!email || !password) return;
+      
+      elements.loginError.textContent = 'Creando Administrador... (Nota: Desactiva "Confirm Email" en Supabase si falla)';
+      elements.loginError.style.color = '#059669';
+
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: { role: 'admin' }
+        }
+      });
+
+      if (error) {
+        elements.loginError.textContent = error.message;
+        elements.loginError.style.color = '#dc2626';
+      } else {
+        elements.loginError.textContent = 'Administrador Creado. Ahora puedes iniciar sesión.';
+        elements.btnSetupAdmin.style.display = 'none';
+      }
+    });
+  }
+
+  if (elements.btnLogout) {
+    elements.btnLogout.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+    });
+  }
+
+  if (elements.tabHeaderSeguridad) {
+    elements.tabHeaderSeguridad.addEventListener('click', () => {
+      // Tab selection logic is handled by the global ribbon listener
+      // We just ensure we don't trigger anything extra here.
+    });
+  }
+
+  if (elements.btnManageUsers) {
+    elements.btnManageUsers.addEventListener('click', () => {
+      if (state.currentUser?.role === 'admin') {
+        elements.usersModal.style.display = 'flex';
+        renderUsersList();
+      } else {
+        alert('Se requieren privilegios de Administrador.');
+      }
+    });
+  }
+
+  if (elements.btnCreateUser) {
+    elements.btnCreateUser.addEventListener('click', async () => {
+      const el = elements.newUserEmail.value.trim();
+      const pw = elements.newUserPassword.value.trim();
+      if (!el || !pw) return;
+      elements.userCreationStatus.textContent = 'Creando usuario...';
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: el,
+        password: pw,
+        options: {
+          data: { role: 'standard' }
+        }
+      });
+      
+      if (error) {
+        elements.userCreationStatus.textContent = `Error: ${error.message}`;
+        elements.userCreationStatus.style.color = '#dc2626';
+      } else {
+        elements.userCreationStatus.textContent = 'Usuario creado y registrado exitosamente.';
+        elements.userCreationStatus.style.color = '#059669';
+        elements.newUserEmail.value = '';
+        elements.newUserPassword.value = '';
+        renderUsersList();
+      }
+    });
+  }
+
+  if (elements.btnMaintAddDoctor) {
+    elements.btnMaintAddDoctor.addEventListener('click', () => {
+      elements.resourceType.value = 'doctor';
+      elements.resourceId.value = '';
+      elements.resourceName.value = '';
+      const defColor = RESOURCE_PALETTE[state.doctors.length % RESOURCE_PALETTE.length];
+      elements.resourceColorValue.value = defColor;
+      updateResourceColorPickerUI(defColor);
+      elements.resourceModal.style.display = 'flex';
+      elements.resourceName.focus();
+    });
+  }
+
+  if (elements.btnMaintAddRoom) {
+    elements.btnMaintAddRoom.addEventListener('click', () => {
+      elements.resourceType.value = 'room';
+      elements.resourceId.value = '';
+      elements.resourceName.value = '';
+      const defColor = '#475569';
+      elements.resourceColorValue.value = defColor;
+      updateResourceColorPickerUI(defColor);
+      elements.resourceModal.style.display = 'flex';
+      elements.resourceName.focus();
+    });
+  }
+
+  if (elements.btnMaintListResources) {
+    elements.btnMaintListResources.addEventListener('click', () => {
+      renderManagementList();
+      elements.resourceManagementModal.style.display = 'flex';
+    });
+  }
+
+  if (elements.btnSaveResource) {
+    elements.btnSaveResource.addEventListener('click', async () => {
+      const name = elements.resourceName.value.trim();
+      const color = elements.resourceColorValue.value;
+      if (!name) {
+        alert("Por favor, introduzca un nombre.");
+        return;
+      }
+      const type = elements.resourceType.value;
+      const id = elements.resourceId.value;
+      
+      if (id) {
+         await state.editResource(id, type, name, color);
+      } else {
+         await state.addResource(type, name, color);
+      }
+      
+      elements.resourceModal.style.display = 'none';
+    });
+  }
+}
+
+function handleMedicalUserSession(session) {
   if (session) {
     // Determine admin status by checking custom metadata or hardcoded user emails.
     // For this deployment, we define the administrator via their email, e.g. "admin@ced.com"
@@ -1610,21 +1780,21 @@ function handleSession(session) {
     elements.loginOverlay.style.display = 'none';
     
     // Configure Interface restrictions
-    const tabAjustes = document.querySelector('[data-ribbon="ajustes"]');
-    const ribbonAjustes = document.getElementById('ribbon-ajustes');
+    const tabInicio = document.querySelector('[data-ribbon="inicio"]');
+    const ribbonInicio = document.getElementById('ribbon-inicio');
     
     if (role === 'admin') {
       document.body.classList.add('is-admin');
       elements.tabHeaderSeguridad.style.display = 'block';
       if (elements.tabHeaderMantenimiento) elements.tabHeaderMantenimiento.style.display = 'block';
-      if (tabAjustes) tabAjustes.style.display = 'block';
+      if (tabInicio) tabInicio.style.display = 'block';
     } else {
       document.body.classList.remove('is-admin');
       elements.tabHeaderSeguridad.style.display = 'none';
       if (elements.tabHeaderMantenimiento) elements.tabHeaderMantenimiento.style.display = 'none';
-      if (tabAjustes) {
-        tabAjustes.style.display = 'none';
-        ribbonAjustes.style.display = 'none';
+      if (tabInicio) {
+        tabInicio.style.display = 'none';
+        ribbonInicio.style.display = 'none';
       }
     }
 
@@ -1647,11 +1817,48 @@ function handleSession(session) {
       };
     }
     
+    if (elements.btnCleanupImport) {
+      elements.btnCleanupImport.onclick = () => {
+        cleanupRecentImports(30);
+      };
+    }
+    
     init(); // Run the rest of the application
   } else {
     state.currentUser = null;
     elements.loginOverlay.style.display = 'flex';
   }
+}
+
+async function cleanupRecentImports(minutes = 30) {
+  const threshold = Date.now() - (minutes * 60 * 1000);
+  const toDelete = state.appointments.filter(app => {
+    if (!app.id || !String(app.id).startsWith('app_')) return false;
+    const parts = String(app.id).split('_');
+    const timestamp = parseInt(parts[1]);
+    return !isNaN(timestamp) && timestamp > threshold;
+  });
+
+  if (toDelete.length === 0) {
+    alert("No se encontraron citas importadas recientemente (últimos 30 min).");
+    return;
+  }
+
+  const confirmMsg = `Se han encontrado ${toDelete.length} citas importadas en los últimos ${minutes} minutos.\n\n¿Estás seguro de que deseas ELIMINARLAS permanentemente de la agenda y de la nube?`;
+  if (!confirm(confirmMsg)) return;
+
+  let deletedCount = 0;
+  for (const app of toDelete) {
+    try {
+      await state.deleteAppointment(app.id);
+      deletedCount++;
+    } catch (err) {
+      console.error("Error al borrar cita:", app.id, err);
+    }
+  }
+
+  alert(`Limpieza completada: ${deletedCount} citas eliminadas.`);
+  refreshUI();
 }
 
 function renderUsersList() {
@@ -1787,4 +1994,4 @@ document.addEventListener('click', (e) => {
 });
 
 // Intercept Standard App Init
-initAuth();
+startMedicalAuthSession();
