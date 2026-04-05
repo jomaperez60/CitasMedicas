@@ -7,6 +7,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>CED - Calendario Médico Pro Exact v4.9</title>
   <link rel="stylesheet" href="./style.css?v=3">
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.app-logo-img').forEach(img => {
+        img.onerror = function() {
+          const filename = this.src.split('/').pop();
+          this.src = './' + filename;
+        };
+      });
+    });
+  </script>
 </head>
 <body class="classic-app">
 

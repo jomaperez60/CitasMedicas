@@ -51,7 +51,7 @@
   --grid-border: rgba(255, 255, 255, 0.25);
   --grid-border-faint: rgba(255, 255, 255, 0.1);
   --header-gradient: #18181A;
-  --header-bg: #1e1e24;
+  --header-bg: #0f172a; /* Fully opaque dark slate */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -373,7 +373,7 @@ body {
   position: sticky !important;
   top: 0 !important;
   left: 0 !important;
-  z-index: 1100; /* Increased to stay above physician columns and lines */
+  z-index: 2000 !important;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -393,9 +393,10 @@ body {
   object-fit: contain;
 }
 
-[data-theme='dark'] #ced-logo-agenda {
-  filter: none;
-  mix-blend-mode: normal;
+[data-theme='dark'] .app-logo-img {
+  /* JPG transparency hack: Invert black drawing on white bg to white on black, then screen it */
+  filter: invert(1) brightness(1.2);
+  mix-blend-mode: screen;
 }
 
 .classic-time-col .hour-slot-container {
@@ -458,7 +459,7 @@ body {
 .day-group-header {
   position: sticky !important;
   top: 0 !important;
-  z-index: 800;
+  z-index: 1100;
   background: var(--header-bg) !important;
   border-bottom: 2px solid var(--grid-border);
   color: var(--accent-color);
@@ -498,7 +499,7 @@ body {
   padding: 5px;
   position: sticky !important;
   top: 0 !important;
-  z-index: 900;
+  z-index: 1100;
   box-sizing: border-box;
 }
 
