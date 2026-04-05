@@ -45,6 +45,7 @@ const elements = {
   patientDob: document.getElementById('patient-dob'),
   patientSuggestions: document.getElementById('patient-suggestions'),
   clinicalNotes: document.getElementById('clinical-notes'),
+  appointmentLabel: document.getElementById('appointment-label'),
   resourceLabel: document.getElementById('resource-label'),
   doctorAssignmentArea: document.getElementById('doctor-assignment-area'),
   doctorIdSelect: document.getElementById('doctor-id'),
@@ -74,6 +75,7 @@ const elements = {
   btnDoExportICal: document.getElementById('btn-do-export-ical'),
   syncFileInput: document.getElementById('sync-file-input'),
   btnDoImportExcel: document.getElementById('btn-do-import-excel'),
+  importLocalOnly: document.getElementById('import-local-only'),
   contextMenu: null, // Dynamic
   loginOverlay: document.getElementById('login-overlay'),
   loginForm: document.getElementById('login-form'),
@@ -194,8 +196,9 @@ function populateDropdowns() {
 
 function renderTypesSelection() {
   elements.typesSelection.innerHTML = APPOINTMENT_TYPES.map(t => `
-    <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 8px;">
+    <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 8px; cursor: pointer;">
       <input type="checkbox" name="appointment-type" value="${t.id}" data-can-consult="${t.id === 'consulta'}">
+      <div style="width: 10px; height: 10px; border-radius: 2px; background-color: ${t.color}; border: 1px solid rgba(0,0,0,0.1);"></div>
       <span>${t.label}</span>
     </label>
   `).join('');
@@ -353,6 +356,25 @@ function renderGridPro() {
   attachGridEventsPro();
 }
 
+// ── Label Picker ── (must be module-level so editAppointment can call it)
+function updateLabelPickerUI(color) {
+  const preview = document.getElementById('label-preview');
+  const swatches = document.querySelectorAll('.label-swatch');
+  if (!preview || !swatches.length) return;
+  swatches.forEach(sw => {
+    const isSelected = sw.dataset.label === color;
+    sw.style.outline = isSelected ? '3px solid var(--text-main)' : 'none';
+    sw.style.outlineOffset = isSelected ? '2px' : '0';
+  });
+  if (color) {
+    preview.textContent = 'Etiqueta seleccionada';
+    preview.style.color = color;
+  } else {
+    preview.textContent = 'Sin etiqueta';
+    preview.style.color = 'var(--text-muted)';
+  }
+}
+
 function renderAppointmentsPro() {
   document.querySelectorAll('.appointment').forEach(el => el.remove());
   
@@ -367,8 +389,9 @@ function renderAppointmentsPro() {
 
     const div = document.createElement('div');
     div.className = 'appointment';
-    const primaryType = APPOINTMENT_TYPES.find(t => (app.types || []).includes(t.id)) || APPOINTMENT_TYPES[0];
-    div.style.borderLeft = `4px solid ${primaryType.color}`;
+    const selectedTypes = APPOINTMENT_TYPES.filter(t => (app.types || []).includes(t.id));
+    const primaryType = selectedTypes[0] || APPOINTMENT_TYPES[0];
+    const typesLabel = selectedTypes.map(t => t.label).join(' + ');
     
     // Position calc - header is always 90px (matches --header-height CSS variable)
     const HEADER_H = 90;
@@ -382,14 +405,26 @@ function renderAppointmentsPro() {
     div.style.top = `${topPx}px`;
     div.style.height = `${heightPx}px`;
     
+    // Apply label color as background tint if set
+    if (app.label) {
+      // Create a faint version of the color (15% opacity) for the background
+      div.style.background = `${app.label}26`; // 26 is ~15% in HEX
+      div.style.borderLeft = `6px solid ${app.label}`;
+      div.style.color = 'var(--text-main)';
+    } else {
+      // If multiple types, use a simple visual cue or just the first color
+      div.style.borderLeft = `5px solid ${primaryType.color}`;
+      div.style.background = 'var(--bg-input)';
+    }
+    
     const doctorName = app.doctorId ? (state.doctors.find(d => d.id === app.doctorId)?.name || '') : '';
     
     div.innerHTML = `
       <div class="app-time">${formatTime(app.startTime)} - ${formatTime(new Date(new Date(app.startTime).getTime() + app.duration * 60000))}</div>
       <div class="app-patient">${app.patientName.toUpperCase()} ${app.recurrence ? '🔁' : ''}</div>
-      <div style="font-size: 9px; line-height: 1;">
-        ${doctorName ? `<span style="color: var(--accent-color); font-weight: bold;">Dr: ${doctorName}</span><br>` : ''}
-        ${primaryType.label} ${app.phone ? `| T: ${app.phone}` : ''}
+      <div style="font-size: 9px; line-height: 1.1;">
+        ${doctorName ? `<span style="font-weight: bold;">${doctorName}</span><br>` : ''}
+        <span style="font-weight: bold; color: inherit;">${typesLabel}</span> ${app.phone ? `| T: ${app.phone}` : ''}
       </div>
       ${app.clinicalNotes ? `<div class="app-details" style="font-weight:bold; margin-top: 2px;">Nota: ${app.clinicalNotes.substring(0, 100)}</div>` : ''}
     `;
@@ -610,9 +645,19 @@ function attachEventListeners() {
     }
   });
 
+  document.getElementById('label-picker').addEventListener('click', (e) => {
+    const swatch = e.target.closest('.label-swatch');
+    if (!swatch) return;
+    const color = swatch.dataset.label;
+    elements.appointmentLabel.value = color;
+    updateLabelPickerUI(color);
+  });
+
   elements.cancelModal.onclick = elements.cancelModalX.onclick = () => {
     elements.modal.style.display = 'none';
-    state.currentRecurrence = null; // Clear recurrence on cancel
+    elements.appointmentLabel.value = '';
+    updateLabelPickerUI('');
+    state.currentRecurrence = null;
   };
   
   elements.removeRecurrenceBtn.onclick = () => {
@@ -679,6 +724,7 @@ function attachEventListeners() {
       // Convert local time to UTC ISO string for correct timezone storage in Supabase
       startTime: new Date(`${elements.appointmentDate.value}T${elements.appointmentTime.value}:00`).toISOString(),
       clinicalNotes: elements.clinicalNotes.value,
+      label: elements.appointmentLabel.value || null,
       types: Array.from(document.querySelectorAll('input[name="appointment-type"]:checked')).map(cb => cb.value)
     };
 
@@ -709,6 +755,14 @@ function openModal(defs = {}) {
   state.selectedAppointment = null;
   elements.deleteBtn.style.display = 'none';
   elements.conflictWarning.style.display = 'none';
+  
+  // Reset label picker
+  if (elements.appointmentLabel) {
+    elements.appointmentLabel.value = '';
+    document.querySelectorAll('.label-swatch').forEach(sw => { sw.style.outline = 'none'; });
+    const lp = document.getElementById('label-preview');
+    if (lp) { lp.textContent = 'Sin etiqueta'; lp.style.color = 'var(--text-muted)'; }
+  }
   
   elements.appointmentDate.value = state.currentDate.toISOString().split('T')[0];
   if (defs.startTime) elements.appointmentTime.value = defs.startTime;
@@ -772,6 +826,10 @@ function editAppointment(app) {
   
   // Set checkboxes
   elements.typesSelection.querySelectorAll('input').forEach(cb => cb.checked = (app.types || []).includes(cb.value));
+  
+  // Set label color
+  elements.appointmentLabel.value = app.label || '';
+  updateLabelPickerUI(app.label || '');
   
   // Sync recurrence display logic
   if (app.recurrence) {
@@ -1126,14 +1184,26 @@ async function handleImport() {
         };
         
         try {
-          await state.addAppointment(newApp);
+          const localOnly = elements.importLocalOnly && elements.importLocalOnly.checked;
+          if (localOnly) {
+            // Solo local: añadir al array en memoria y guardar en localStorage
+            state.appointments.push(newApp);
+            await state.save();
+          } else {
+            // Sincronizar con la nube (Supabase)
+            await state.addAppointment(newApp);
+          }
           importedCount++;
         } catch (err) {
           console.error("Error inserting imported appointment:", err);
         }
       }
       
-      alert(`Importación finalizada.\n\nAsignadas exitosamente: ${importedCount}\nConflictos detectados: ${conflictCount}`);
+      const modoStr = (elements.importLocalOnly && elements.importLocalOnly.checked)
+        ? '📱 Solo local (datos en este navegador, NO en la nube)'
+        : '☁️ Sincronizado con la nube (Supabase)';
+      
+      alert(`Importación finalizada.\n\n✅ Importadas exitosamente: ${importedCount}\n⚠️ Conflictos detectados: ${conflictCount}\n\nModo: ${modoStr}`);
       elements.syncModal.style.display = 'none';
       renderApp();
     } catch (err) {

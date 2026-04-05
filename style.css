@@ -5,7 +5,7 @@
   --bg-grid: #ffffff;
   --bg-modal: #ffffff;
   --bg-input: #ffffff;
-  --text-main: #1e293b;
+  --text-main: #000000;
   --text-muted: #64748b;
   --border-main: #cbd5e1;
   --border-sidebar: #cbd5e1;
@@ -38,7 +38,7 @@
   --bg-grid: #131316;
   --bg-modal: #1c1c1e;
   --bg-input: #1e1e24;
-  --text-main: #e0e0e0;
+  --text-main: #ffffff;
   --text-muted: #9a9a9f;
   --border-main: #222226;
   --border-sidebar: #222226;
@@ -597,21 +597,21 @@ body {
   z-index: 20;
 }
 
-.appointment .app-time { font-weight: bold; color: #2563eb; }
-[data-theme='dark'] .appointment .app-time { color: var(--accent-color); }
+.appointment .app-time { font-weight: bold; color: inherit; }
+[data-theme='dark'] .appointment .app-time { color: inherit; }
 
 .appointment .app-patient { font-weight: bold; margin-bottom: 2px; }
 
-.appointment .app-details { font-size: 9px; color: #444; font-style: italic; }
-[data-theme='dark'] .appointment .app-details { color: var(--text-muted); }
+.appointment .app-details { font-size: 9px; color: inherit; font-style: italic; opacity: 0.8; }
+[data-theme='dark'] .appointment .app-details { color: inherit; }
 
 [data-theme='dark'] .appointment {
-  background: #23232b;
-  color: #f5f5f5;
+  background: var(--bg-input);
+  color: #ffffff;
   border-color: #3b3b44;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6);
 }
-[data-theme='dark'] .appointment .app-patient { color: #ffffff; }
+[data-theme='dark'] .appointment .app-patient { color: inherit; }
 
 /* Professional Modal (CED Pro Exact) */
 .classic-modal-overlay {

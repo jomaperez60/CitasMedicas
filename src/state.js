@@ -59,7 +59,8 @@ function mapAppToDB(app) {
     status: app.status || 'scheduled',
     clinicalnotes: app.clinicalNotes || null,
     types: app.types || [],
-    recurrence: app.recurrence || null
+    recurrence: app.recurrence || null,
+    label: app.label || null
   };
 }
 
@@ -77,7 +78,8 @@ function mapAppFromDB(row) {
     status: row.status,
     clinicalNotes: row.clinicalnotes,
     types: row.types || [],
-    recurrence: row.recurrence || null
+    recurrence: row.recurrence || null,
+    label: row.label || null
   };
 }
 // ─────────────────────────────────────────────────────────────────────────────
