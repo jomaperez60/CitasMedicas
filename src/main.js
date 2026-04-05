@@ -366,7 +366,7 @@ function renderGridPro() {
       const isDoc = p.type === 'doctor';
       const color = p.color || '#475569';
       const colStyle = isDoc ? `background-color: ${color}0D;` : ''; 
-      const headerStyle = isDoc ? `background-color: ${color}33; border-left-color: ${color};` : '';
+      const headerStyle = isDoc ? `background-color: ${color}CC; border-left-color: ${color}; color: #000000;` : '';
 
       return `
         <div class="classic-provider-col" data-provider-id="${p.id}" style="${colStyle}">
