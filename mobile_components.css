@@ -147,6 +147,36 @@
     z-index: 9999 !important;
   }
 
+  /* 5. Final Visual Polish (Fixes for Ribbon & Alignment) */
+  .ribbon-btn.active {
+    background: rgba(255, 255, 255, 0.15) !important; /* Subtle highlight, not white */
+    border-radius: 6px;
+  }
+
+  .ribbon-btn svg {
+    margin-bottom: 2px !important;
+  }
+
+  /* Remove any ghost/extra icons in the ribbon on mobile */
+  #mobile-calendar-toggle.mobile-menu-btn {
+    display: none !important; 
+  }
+
+  /* Precision Alignment for Appointments (Red Arrow Fix) */
+  .classic-scheduler {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  .classic-provider-col {
+    padding-top: 0 !important; /* Forces top alignment with time column */
+    background-image: none !important; /* Clean bg for grid columns */
+  }
+
+  .classic-appointment {
+    margin-top: -1px !important; /* Compensates for the 1px border-top of the slot */
+  }
+
   /* Sidebar Drawer Styles */
   #left-sidebar, #right-sidebar {
     position: fixed !important;
@@ -196,5 +226,9 @@
     position: sticky;
     top: 0;
     z-index: 1000;
+  }
+
+  .classic-scheduler {
+    border-top: none !important;
   }
 }
