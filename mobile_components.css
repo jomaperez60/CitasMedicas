@@ -117,9 +117,28 @@
     transform: translateX(0);
   }
 
+  /* 4. Grid Alignment Sync (Landscape/Portrait Fix) */
+  .classic-time-slot, .classic-slot {
+    height: var(--slot-height) !important;
+    min-height: var(--slot-height) !important;
+    box-sizing: border-box !important;
+    border-top: 1px solid var(--grid-border-faint) !important;
+    border-bottom: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .classic-time-slot::after {
+    content: none !important; /* Prevents pseudo-element heights from drifting */
+  }
+
   /* Modal responsiveness */
   .classic-modal {
     width: 96% !important;
+    max-width: 96% !important;
     padding: 12px !important;
   }
 }

@@ -1273,7 +1273,18 @@ body.is-admin button.admin-only {
     overflow-x: auto;
     padding: 2px 5px;
     gap: 10px;
-    background: #f8fbff;
+    background: var(--bg-ribbon); /* Dark from the theme */
+    border-bottom: 1px solid var(--border-ribbon);
+  }
+
+  .ribbon-btn-text {
+    color: var(--text-main) !important;
+  }
+
+  .ribbon-group {
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-ribbon) !important;
+    padding: 0 5px;
   }
 
   .ribbon-group {
