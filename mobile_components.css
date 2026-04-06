@@ -149,16 +149,17 @@
 
   /* 5. Final Visual Polish (Fixes for Ribbon & Alignment) */
   .ribbon-btn.active {
-    background: rgba(255, 255, 255, 0.15) !important; /* Subtle highlight, not white */
-    border-radius: 6px;
+    background: transparent !important; /* Quita el recuadro claro */
+    border: none !important;
+    box-shadow: none !important;
   }
 
   .ribbon-btn svg {
     margin-bottom: 2px !important;
   }
 
-  /* Remove any ghost/extra icons in the ribbon on mobile */
-  #mobile-calendar-toggle.mobile-menu-btn {
+  /* Remove any ghost/extra icons in the ribbon on mobile (Fixing selector) */
+  #nav-calendario.mobile-only {
     display: none !important; 
   }
 
@@ -173,7 +174,7 @@
     background-image: none !important; /* Clean bg for grid columns */
   }
 
-  .classic-appointment {
+  .appointment {
     margin-top: -1px !important; /* Compensates for the 1px border-top of the slot */
   }
 
