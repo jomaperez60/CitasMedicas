@@ -1269,7 +1269,7 @@ body.is-admin button.admin-only {
 
   .ribbon-group-container {
     height: 55px; /* Reducción de Ribbon */
-    display: flex !important;
+    display: flex; /* NO !important to allow JS display: none to work */
     overflow-x: auto;
     padding: 2px 5px;
     gap: 10px;
