@@ -174,10 +174,6 @@
     background-image: none !important; /* Clean bg for grid columns */
   }
 
-  .appointment {
-    margin-top: -1px !important; /* Compensates for the 1px border-top of the slot */
-  }
-
   /* Sidebar Drawer Styles */
   #left-sidebar, #right-sidebar {
     position: fixed !important;

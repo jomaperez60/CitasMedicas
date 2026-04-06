@@ -563,13 +563,16 @@ function renderAppointmentsPro() {
     const primaryType = selectedTypes[0] || APPOINTMENT_TYPES[0];
     const typesLabel = selectedTypes.map(t => t.label).join(' + ');
     
-    // Position calc - header is always 90px (matches --header-height CSS variable)
-    const HEADER_H = 90;
-    const topPx = calculatePosition(app.startTime, HEADER_H, state.slotHeight);
-    const heightPx = calculateHeight(app.duration, state.slotHeight);
-    const gridHeight = 90 + 15 * state.slotHeight;
+    // Dynamic sync for high-precision alignment (especially on mobile/zoom)
+    const styles = getComputedStyle(document.documentElement);
+    const HEADER_H = parseInt(styles.getPropertyValue('--header-height')) || 90;
+    const slotHeight = parseInt(styles.getPropertyValue('--slot-height')) || state.slotHeight || 100;
     
-    // Skip appointments outside the visible grid (before 6am or past end of day)
+    const topPx = calculatePosition(app.startTime, HEADER_H, slotHeight);
+    const heightPx = calculateHeight(app.duration, slotHeight);
+    const gridHeight = HEADER_H + 15 * slotHeight;
+    
+    // Skip appointments outside the visible grid
     if (topPx < HEADER_H || topPx >= gridHeight) return;
     
     div.style.top = `${topPx}px`;
