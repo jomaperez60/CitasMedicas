@@ -48,20 +48,41 @@
     height: auto !important;
   }
 
-  /* Force Dark Ribbon Theme */
+  /* Force Dark Ribbon Theme (Sync Portrait & Landscape) */
+  .ribbon-bar, .ribbon-tab-header, .ribbon-group-container {
+    background: #334155 !important;
+    border: none !important;
+  }
+
   .ribbon-bar {
     height: auto !important;
-    background: #334155 !important; /* Unified medical dark-gray */
     border-bottom: 2px solid #1e293b !important;
+  }
+
+  .ribbon-tab-header {
+    padding: 0 5px !important;
+    gap: 2px !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+  }
+
+  .tab-header-btn {
+    padding: 10px 15px !important;
+    font-size: 10px !important;
+    background: transparent !important;
+    color: rgba(255,255,255,0.6) !important;
+    border: none !important;
+  }
+
+  .tab-header-btn.active {
+    color: #ffffff !important;
+    border-bottom: 2px solid #ffd54f !important;
   }
 
   .ribbon-group-container {
     padding: 8px 5px !important;
     height: 65px !important;
-    background: #334155 !important;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    border: none !important;
   }
 
   .ribbon-btn-text {
@@ -118,6 +139,12 @@
 
   .classic-provider-col {
     min-width: 280px !important;
+  }
+
+  /* 4. Restore FABs (Z-INDEX FIX) */
+  .mobile-fab, .mobile-fab-secondary {
+    display: flex !important;
+    z-index: 9999 !important;
   }
 
   /* Sidebar Drawer Styles */
