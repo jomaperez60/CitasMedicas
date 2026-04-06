@@ -48,42 +48,72 @@
     height: auto !important;
   }
 
-  .mobile-fab, .mobile-fab-secondary {
-    display: flex;
-  }
-
-  /* Ribbon optimization */
+  /* Force Dark Ribbon Theme */
   .ribbon-bar {
     height: auto !important;
+    background: #334155 !important; /* Unified medical dark-gray */
+    border-bottom: 2px solid #1e293b !important;
   }
 
   .ribbon-group-container {
     padding: 8px 5px !important;
-    height: 65px !important; /* Slightly more compact */
+    height: 65px !important;
+    background: #334155 !important;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-  }
-
-  .ribbon-group-label {
-    display: none !important;
-  }
-
-  .ribbon-btn {
-    min-width: 50px !important;
-    min-height: 45px !important;
+    border: none !important;
   }
 
   .ribbon-btn-text {
+    color: #ffffff !important;
     font-size: 8px !important;
     font-weight: 600;
   }
 
-  /* Table density */
-  .classic-col-header {
-    font-size: 10px !important;
-    padding: 4px !important;
-    height: auto !important;
-    min-height: 50px;
+  .ribbon-btn svg {
+    stroke: #e2e8f0 !important;
+  }
+
+  /* 3. High-Precision Grid Alignment */
+  .classic-time-header, .classic-col-header {
+    height: var(--header-height) !important; /* Exact 90px sync */
+    min-height: var(--header-height) !important;
+    max-height: var(--header-height) !important;
+    box-sizing: border-box !important;
+    border-bottom: 1px solid var(--grid-border) !important;
+    background: #f1f5f9 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  [data-theme='dark'] .classic-time-header, 
+  [data-theme='dark'] .classic-col-header {
+    background: #0a0a0a !important;
+  }
+
+  #ced-logo-agenda {
+    max-height: 55px !important; /* Prevents stretching the header */
+    width: auto !important;
+  }
+
+  .classic-time-slot, .classic-slot {
+    height: var(--slot-height) !important; /* Exact 100px sync */
+    min-height: var(--slot-height) !important;
+    max-height: var(--slot-height) !important;
+    box-sizing: border-box !important;
+    border-top: 1px solid var(--grid-border-faint) !important;
+    border-bottom: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .classic-time-slot::after {
+    content: none !important; /* Prevents pseudo-element drifting */
   }
 
   .classic-provider-col {
@@ -115,24 +145,6 @@
 
   #left-sidebar.mobile-open, #right-sidebar.mobile-open-right {
     transform: translateX(0);
-  }
-
-  /* 4. Grid Alignment Sync (Landscape/Portrait Fix) */
-  .classic-time-slot, .classic-slot {
-    height: var(--slot-height) !important;
-    min-height: var(--slot-height) !important;
-    box-sizing: border-box !important;
-    border-top: 1px solid var(--grid-border-faint) !important;
-    border-bottom: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-  }
-
-  .classic-time-slot::after {
-    content: none !important; /* Prevents pseudo-element heights from drifting */
   }
 
   /* Modal responsiveness */
